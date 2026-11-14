@@ -126,7 +126,13 @@ export function Skyline({ profile }: { profile: Float32Array }) {
         <lineBasicMaterial color="#ffffff" transparent opacity={0.07} depthWrite={false} />
       </lineSegments>
       {labels.map((l) => (
-        <Html key={l.az} position={l.pos as [number, number, number]} center style={{ pointerEvents: "none" }}>
+        <Html
+          key={l.az}
+          position={l.pos as [number, number, number]}
+          center
+          zIndexRange={[2, 0]}
+          style={{ pointerEvents: "none" }}
+        >
           <span className="tabular text-2xs text-white/40">{l.az}°</span>
         </Html>
       ))}

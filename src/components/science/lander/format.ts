@@ -46,6 +46,7 @@ export interface Screening {
 export function screen(a: PointAnalysis): Screening {
   const slope = a.slopeDeg < CRITERIA.maxSlopeDeg;
   const earth = a.earthMean >= CRITERIA.minEarth;
-  const sun = a.sunMean >= CRITERIA.minSun;
+  // Sun criterion is a share of time with the Sun in view, not the mean visible disc fraction.
+  const sun = a.sunAny >= CRITERIA.minSun;
   return { slope, earth, sun, go: slope && earth && sun };
 }

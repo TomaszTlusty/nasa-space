@@ -22,11 +22,14 @@ export function SiteMarkers({
   centerHeight,
   onSelect,
   dimmed,
+  occupied,
 }: {
   region: LoadedRegion;
   centerHeight: number;
   onSelect: (site: RegionSite) => void;
   dimmed: boolean;
+  /** placed lander positions: pins under a lander are hidden so the lander tag stays readable */
+  occupied: { x: number; y: number }[];
 }) {
   const groups = useMemo(() => {
     const out: RegionSite[][] = [];
@@ -42,15 +45,19 @@ export function SiteMarkers({
     <>
       {groups.map((sites) => {
         const s = sites[0];
+        if (occupied.some((o) => Math.hypot(o.x - s.x, o.y - s.y) < MERGE_DISTANCE_M)) return null;
         return (
           <group key={s.id} position={[s.x / 1000, sceneY(s.elevation, s.x, s.y, centerHeight), -s.y / 1000]}>
-            <Html center zIndexRange={[7, 0]} style={{ pointerEvents: dimmed ? "none" : "auto" }}>
+            <Html center zIndexRange={[7, 0]} style={{ pointerEvents: "none" }}>
+              {/* tabIndex -1: the same sites are keyboard-reachable in the lander panel's quick picks; this keeps
+                  3D labels out of the tab order and out of modal focus loops. */}
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => onSelect(s)}
                 title={sites.map((x) => x.note ?? x.name).join("\n")}
                 className={`flex -translate-y-3 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-black/55 py-0.5 pr-2 pl-1.5 text-2xs text-fg-muted ring-1 ring-white/10 backdrop-blur-md transition-[opacity,background-color,color] duration-150 hover:bg-black/80 hover:text-fg ${
-                  dimmed ? "opacity-0" : "opacity-100"
+                  dimmed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
                 }`}
               >
                 {sites.map((x) => (

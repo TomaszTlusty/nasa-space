@@ -11,7 +11,17 @@ import { type ChatMode, countSteps, MAX_HISTORY, MAX_STEPS, type MissionUIMessag
  * against the real analysis engine; results are sent back automatically until the turn is done.
  */
 
-function createChat(mode: ChatMode): Chat<MissionUIMessage> {
+export interface AssistantChat {
+  chat: Chat<MissionUIMessage>;
+  /**
+   * Ids of messages whose turn the user stopped. A stopped turn is never auto-continued, even if a
+   * browser-side tool finishes after Stop.
+   */
+  stopped: Set<string>;
+}
+
+function createChat(mode: ChatMode): AssistantChat {
+  const stopped = new Set<string>();
   const chat: Chat<MissionUIMessage> = new Chat<MissionUIMessage>({
     transport: new DefaultChatTransport<MissionUIMessage>({
       api: "/api/chat",
@@ -19,8 +29,15 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
         body: { id, mode, messages: messages.slice(-MAX_HISTORY) },
       }),
     }),
-    sendAutomaticallyWhen: ({ messages }) =>
-      lastAssistantMessageIsCompleteWithToolCalls({ messages }) && countSteps(messages.at(-1)) < MAX_STEPS,
+    sendAutomaticallyWhen: ({ messages }) => {
+      const last = messages.at(-1);
+      return (
+        last !== undefined &&
+        !stopped.has(last.id) &&
+        lastAssistantMessageIsCompleteWithToolCalls({ messages }) &&
+        countSteps(last) < MAX_STEPS
+      );
+    },
     onToolCall: async ({ toolCall }) => {
       if (toolCall.dynamic) return;
       const { toolCallId } = toolCall;
@@ -87,12 +104,12 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
       }
     },
   });
-  return chat;
+  return { chat, stopped };
 }
 
-const chats: Partial<Record<ChatMode, Chat<MissionUIMessage>>> = {};
+const chats: Partial<Record<ChatMode, AssistantChat>> = {};
 
-export function getChat(mode: ChatMode): Chat<MissionUIMessage> {
+export function getChat(mode: ChatMode): AssistantChat {
   chats[mode] ??= createChat(mode);
   return chats[mode];
 }

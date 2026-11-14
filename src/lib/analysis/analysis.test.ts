@@ -11,6 +11,7 @@ import {
   pointTimeline,
   stillValid,
   toTransitions,
+  transitionsAt,
 } from "@/lib/analysis/compute";
 import { SOLAR_CONSTANT_W_M2, simulatePower } from "@/lib/analysis/power";
 import { type LoadedRegion, loadRegion } from "@/lib/moon/horizon";
@@ -89,19 +90,21 @@ describe("simulatePower", () => {
 });
 
 describe("longestZeroRunHours", () => {
+  // samples are step intervals [t, t + step); the last sample is the window's closing endpoint
   test("runs at the start, middle and end", () => {
     expect(longestZeroRunHours([0, 0, 0, 1, 0, 1], 60)).toBe(3);
     expect(longestZeroRunHours([1, 0, 0, 0, 0, 1, 0], 60)).toBe(4);
-    expect(longestZeroRunHours([1, 0, 1, 0, 0], 60)).toBe(2);
+    expect(longestZeroRunHours([1, 0, 1, 0, 0, 0], 60)).toBe(2);
   });
   test("all lit, all dark, empty, and non-hourly steps", () => {
     expect(longestZeroRunHours([0.1, 1, 0.01], 60)).toBe(0);
-    expect(longestZeroRunHours(new Float32Array(10), 60)).toBe(10);
+    // a 9-hour window has 10 samples: never more darkness than the window itself
+    expect(longestZeroRunHours(new Float32Array(10), 60)).toBe(9);
     expect(longestZeroRunHours([], 60)).toBe(0);
-    expect(longestZeroRunHours([0, 0, 0], 120)).toBe(6);
+    expect(longestZeroRunHours([0, 0, 0], 120)).toBe(4);
   });
   test("a partially visible disc counts as light", () => {
-    expect(longestZeroRunHours([0, 1e-6, 0], 60)).toBe(1);
+    expect(longestZeroRunHours([0, 1e-6, 0, 0, 1], 60)).toBe(2);
   });
 });
 
@@ -142,6 +145,18 @@ describe("transitions bookkeeping", () => {
     };
     expect(stillValid(none, T0 + 23 * HOUR)).toBe(true);
     expect(stillValid(none, T0 + 25 * HOUR)).toBe(false);
+  });
+  test("re-basing onto the playhead", () => {
+    const t = toTransitions(up, down, T0);
+    expect(transitionsAt(t, T0 + 2 * HOUR, true, false)).toEqual({ ...t, from: T0 + 2 * HOUR });
+    // playhead before the search start, past an event, or live state disagreeing: stale
+    expect(transitionsAt(t, T0 - HOUR, true, false)).toBeNull();
+    expect(transitionsAt(t, T0 + 3 * HOUR, true, false)).toBeNull();
+    expect(transitionsAt(t, T0 + 2 * HOUR, false, false)).toBeNull();
+    expect(transitionsAt(t, T0 + 2 * HOUR, true, true)).toBeNull();
+    const none = toTransitions({ from: T0, up: true, first: null, second: null }, up, T0);
+    expect(transitionsAt(none, T0 + 4 * HOUR, true, true)).not.toBeNull();
+    expect(transitionsAt(none, T0 + 4 * HOUR + 86_400_000, true, true)).toBeNull();
   });
 });
 
@@ -199,9 +214,13 @@ describe("Shackleton point analysis (real data)", () => {
     const ridge = analyzeTimeline(shackleton, "A", ridgeQ, pointTimeline(shackleton, ridgeQ, T0, 30), power);
     const crater = analyzeTimeline(shackleton, "B", floorQ, pointTimeline(shackleton, floorQ, T0, 30), power);
     expect(ridge.sunMean).toBeGreaterThan(0.8);
+    expect(ridge.sunAny).toBeGreaterThanOrEqual(ridge.sunMean);
     expect(ridge.power.depletedAt).toBeNull();
     expect(crater.sunMean).toBeLessThan(0.02);
+    expect(crater.sunAny).toBeLessThan(0.05);
     expect(crater.longestDarkHours).toBeGreaterThan(700);
+    expect(crater.longestDarkHours).toBeLessThanOrEqual(30 * 24);
+    expect(crater.longestBlackoutHours).toBeLessThanOrEqual(30 * 24);
     expect(crater.power.depletedAt).toBe(T0 + 20 * HOUR);
     expect(ridge.series.sunFraction.length).toBe(30 * 24 + 1);
     expect(ridge.lat).toBeLessThan(-89);

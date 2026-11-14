@@ -254,7 +254,8 @@ function WhyBody() {
       <Text>
         At the pole the Sun circles only about <Num>1.5°</Num> above or below the horizon, so a high ridge peeks over
         the hills while a deep crater floor never can. Over many years, Connecting Ridge gets about <Num>76%</Num>{" "}
-        sunlight.
+        sunlight. Still, no peak near the south pole is lit all the time: the best spots reach about <Num>88%</Num> with
+        panels 2 m up.
       </Text>
       <Readout
         items={[
@@ -366,8 +367,8 @@ function TwoWeeksBody() {
   return (
     <>
       <Text>
-        Near the pole, Earth spends about two weeks above the horizon and then about two weeks below it. While it is
-        down, a lander cannot radio home directly.
+        Near the pole, Earth is often up for about two weeks and then down for about two weeks; high or Earth-facing
+        spots see it longer. While it is down, a lander cannot radio home directly.
       </Text>
       <Readout
         items={[
@@ -463,8 +464,8 @@ function SurviveBody() {
   return (
     <>
       <Text>
-        Every dark hour runs on batteries, so the longest night decides how big the battery must be. Even on Connecting
-        Ridge, the longest darkness can last about <Num>112 h</Num>.
+        Every dark hour runs on batteries, so the longest night decides how big the battery must be. Even at the best
+        spot on Connecting Ridge, with panels 2 m up, the longest darkness lasts about <Num>112 h</Num>.
       </Text>
       <Readout
         items={[
@@ -557,7 +558,7 @@ export const LESSONS: Lesson[] = [
       {
         title: "Night that never ends",
         Body: FloorBody,
-        source: SOURCES.moonWater,
+        source: SOURCES.paige2010,
         apply: ({ region }) => {
           const app = useApp.getState();
           app.setPlaying(false);
@@ -619,7 +620,7 @@ export const LESSONS: Lesson[] = [
       {
         title: "Find Earth",
         Body: FindEarthBody,
-        source: SOURCES.hls2024,
+        source: SOURCES.amt2023,
         apply: async ({ region, isCurrent }) => {
           resetView("none");
           const site = findRidge(region.meta) ?? region.meta.sites[0];
@@ -656,7 +657,7 @@ export const LESSONS: Lesson[] = [
       {
         title: "The libration wobble",
         Body: LibrationBody,
-        source: SOURCES.hls2024,
+        source: SOURCES.amt2023,
       },
       {
         title: "Two weeks on, two weeks off",

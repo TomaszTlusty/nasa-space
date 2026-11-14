@@ -55,7 +55,7 @@ export function Segmented<T extends string>({
           aria-label={o.ariaLabel}
           disabled={o.disabled}
           className={cn(
-            "relative inline-flex select-none items-center justify-center gap-1.5 rounded-full font-medium text-fg-muted",
+            "relative inline-flex select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-medium text-fg-muted",
             "transition-[background-color,color,box-shadow,transform] duration-150 ease-(--ease-out)",
             "hover:text-fg active:scale-[0.97] data-disabled:opacity-40",
             "data-pressed:bg-surface-3 data-pressed:text-fg data-pressed:shadow-[inset_0_1px_0_oklch(1_0_0/0.08),0_1px_3px_oklch(0_0_0/0.4)]",

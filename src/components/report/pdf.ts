@@ -1,9 +1,10 @@
 import { jsPDF } from "jspdf";
 import { AI_DISCLOSURE, assumptions, type SourceLink } from "@/components/about/content";
-import { formatClock, formatDayMonth, formatUtc } from "@/components/hud/format";
+import { formatClock, formatDate, formatDayMonth, formatUtc } from "@/components/hud/format";
 import { CRITERIA, CRITERIA_SOURCE, screen } from "@/components/science/lander/format";
 import type { Interval, PointAnalysis } from "@/lib/analysis/types";
 import { DAY, type DiscoveryResult, HOUR, type PowerPreset } from "@/lib/store";
+import type { DiscoveryStamp } from "./discovery-stamp";
 
 /**
  * "Site Selection Report" PDF, drawn directly with jsPDF (text, lines, rects, one JPEG): no HTML
@@ -23,6 +24,12 @@ export interface ReportSnapshot {
   height: number;
 }
 
+/** Discovery results go into the report only when they were computed for the report's window and criteria. */
+export type ReportDiscovery =
+  | { status: "none" }
+  | { status: "stale" }
+  | { status: "fresh"; results: DiscoveryResult[]; stamp: DiscoveryStamp };
+
 export interface ReportInput {
   regionId: string;
   regionName: string;
@@ -30,7 +37,7 @@ export interface ReportInput {
   windowStart: number;
   windowDays: number;
   landers: ReportLander[];
-  discovery: DiscoveryResult[];
+  discovery: ReportDiscovery;
   snapshot: ReportSnapshot | null;
   power: PowerPreset;
   /** observer height of the precomputed skyline grid, m */
@@ -99,17 +106,28 @@ export interface Verdict {
   go: boolean;
 }
 
+/**
+ * Fraction of the window with any part of the Sun above the skyline: the quantity the "Sun >= 5 % of the
+ * time" screening rule refers to. Uses `sunAny` from the analysis when present, else derives it from the series.
+ */
+export function sunAnyOf(a: PointAnalysis): number {
+  const given = (a as PointAnalysis & { sunAny?: number }).sunAny;
+  if (given != null && Number.isFinite(given)) return given;
+  const f = a.series.sunFraction;
+  let lit = 0;
+  for (const v of f) if (v > 0) lit++;
+  return f.length > 0 ? lit / f.length : 0;
+}
+
 export function verdict(a: PointAnalysis): Verdict {
   const s = screen(a);
+  const sun = sunAnyOf(a) >= CRITERIA.minSun;
   const survives = a.power.depletedAt === null;
-  return {
-    slope: s.slope,
-    earth: s.earth,
-    sun: s.sun,
-    survives,
-    go: s.go && survives,
-  };
+  return { slope: s.slope, earth: s.earth, sun, survives, go: s.slope && s.earth && sun && survives };
 }
+
+const windowLabel = (start: number, days: number) =>
+  `${formatDate(start)} to ${formatDate(start + days * DAY)} (${days} days)`;
 
 const pct = (f: number) => `${(f * 100).toFixed(0)} %`;
 
@@ -157,8 +175,9 @@ class Writer {
     this.y += lines.length * lh + (opts.gap ?? 0);
   }
 
-  heading(text: string) {
-    this.ensure(14);
+  /** Section heading; `keep` reserves room for the content that must stay on the same page. */
+  heading(text: string, keep = 0) {
+    this.ensure(12 + keep);
     this.y += 3;
     this.draw(C.line);
     this.doc.line(M, this.y, M + CW, this.y);
@@ -184,7 +203,12 @@ interface Column {
   color?: RGB;
 }
 
-function table(w: Writer, columns: Column[], rows: Cell[][], rowH = 6) {
+const ROW_H = 6;
+
+/** Height `table()` will take, for keeping a heading and its table on one page. */
+const tableHeight = (rows: number) => (rows + 1) * ROW_H;
+
+function table(w: Writer, columns: Column[], rows: Cell[][], rowH = ROW_H) {
   const { doc } = w;
   const header = () => {
     w.font(7, C.faint, "bold");
@@ -410,6 +434,10 @@ function landerRows(landers: ReportLander[]): Cell[][] {
       text: pct(l.analysis.sunMean),
       color: C.sun,
     })),
+    row("Sun above skyline (any part)", (l) => ({
+      text: pct(sunAnyOf(l.analysis)),
+      color: C.sun,
+    })),
     row("Earth in view", (l) => ({
       text: pct(l.analysis.earthMean),
       color: C.earth,
@@ -503,7 +531,9 @@ export function downloadReportPdf(input: ReportInput): void {
     });
   }
 
-  w.heading("Landers");
+  const rows = landerRows(input.landers);
+  w.heading("Landers", 8 + tableHeight(rows.length));
+  w.para(`Mission window ${windowLabel(input.windowStart, input.windowDays)}`, 7.5, C.muted, { gap: 1.5 });
   const labelW = 54;
   const colW = (CW - labelW) / input.landers.length;
   table(
@@ -516,17 +546,32 @@ export function downloadReportPdf(input: ReportInput): void {
         color: C.ink,
       })),
     ],
-    landerRows(input.landers),
+    rows,
   );
   w.y += 2;
   w.para(
-    `Screening: landing slope < ${CRITERIA.maxSlopeDeg}°, Earth in view >= ${CRITERIA.minEarth * 100} % and Sun >= ${CRITERIA.minSun * 100} % of the time (${CRITERIA_SOURCE}). GO means the site passes screening and the battery never runs empty during the window with the illustrative power preset below.`,
+    `Screening: landing slope < ${CRITERIA.maxSlopeDeg}°, Earth in view >= ${CRITERIA.minEarth * 100} % of the time and some of the Sun above the skyline >= ${CRITERIA.minSun * 100} % of the time (${CRITERIA_SOURCE}). GO means the site passes screening and the battery never runs empty during the window with the illustrative power preset below.`,
     7,
     C.muted,
   );
 
-  if (input.discovery.length > 0) {
-    w.heading("Best sites found by search");
+  if (input.discovery.status === "stale") {
+    w.heading("Best sites found by search", 10);
+    w.para(
+      "The last site search used a different mission window or criteria, so its results are left out. Run site search again for this window.",
+      8,
+      C.muted,
+    );
+  } else if (input.discovery.status === "fresh" && input.discovery.results.length > 0) {
+    const { stamp } = input.discovery;
+    const found = input.discovery.results.slice(0, 12);
+    w.heading("Best sites found by search", 12 + tableHeight(found.length));
+    w.para(
+      `Searched over ${windowLabel(stamp.windowStart, stamp.windowDays)}: slope < ${stamp.criteria.maxSlopeDeg}°, mean sunlight >= ${Math.round(stamp.criteria.minSun * 100)} %, Earth in view >= ${Math.round(stamp.criteria.minEarth * 100)} % of the time.`,
+      7.5,
+      C.muted,
+      { gap: 1.5 },
+    );
     table(
       w,
       [
@@ -539,18 +584,16 @@ export function downloadReportPdf(input: ReportInput): void {
         { header: "Slope", width: 20, align: "right" },
         { header: "Longest dark", width: CW - 146, align: "right" },
       ],
-      input.discovery
-        .slice(0, 12)
-        .map((d) => [
-          { text: String(d.rank), color: C.muted },
-          { text: `${d.lat.toFixed(3)}°` },
-          { text: `${d.lon.toFixed(3)}°` },
-          { text: d.score.toFixed(2) },
-          { text: pct(d.sun), color: C.sun },
-          { text: pct(d.earth), color: C.earth },
-          { text: `${d.slopeDeg.toFixed(1)}°` },
-          { text: `${d.longestDarkHours.toFixed(0)} h` },
-        ]),
+      found.map((d) => [
+        { text: String(d.rank), color: C.muted },
+        { text: `${d.lat.toFixed(3)}°` },
+        { text: `${d.lon.toFixed(3)}°` },
+        { text: d.score.toFixed(2) },
+        { text: pct(d.sun), color: C.sun },
+        { text: pct(d.earth), color: C.earth },
+        { text: `${d.slopeDeg.toFixed(1)}°` },
+        { text: `${d.longestDarkHours.toFixed(0)} h` },
+      ]),
     );
   }
 

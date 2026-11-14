@@ -18,8 +18,9 @@ const SUN_CSS = toCss(INSTANT_SUN);
 const SHADOW_CSS = toCss(INSTANT_SHADOW);
 // The shader mixes unshaded Earth blue over the already shaded shadow colour.
 const EARTH_STRIPE_CSS = toCss(mix(mix([0, 0, 0], INSTANT_SHADOW, FLAT_SHADE), INSTANT_EARTH, EARTH_HATCH_MIX), 1);
-// Shader stripes: step(0.82, fract((x + y) / 160 m)) -> 18% duty diagonal hatching.
-const HATCH = `repeating-linear-gradient(135deg, ${EARTH_STRIPE_CSS} 0 1.5px, ${SHADOW_CSS} 1.5px 7px)`;
+// Shader stripes: step(0.62, fract((fragX + fragY) / 9 px)) -> "\" diagonals, 9 px pitch along x
+// (9/√2 ≈ 6.4 px across the stripes), stripe = 38% of the pitch.
+const HATCH = `repeating-linear-gradient(45deg, ${EARTH_STRIPE_CSS} 0 2.42px, ${SHADOW_CSS} 2.42px 6.36px)`;
 
 const AVERAGE_STOPS = Array.from({ length: 21 }, (_, i) => i / 20);
 const AVERAGE_GRADIENT = `linear-gradient(90deg, ${AVERAGE_STOPS.map(
@@ -100,8 +101,8 @@ export function OverlayLegend({ overlay }: { overlay: Overlay }) {
   if (overlay === "average") {
     return (
       <div>
-        <div className="flex items-baseline justify-between text-2xs text-fg-muted">
-          <span>Share of the window in sunlight</span>
+        <div className="flex items-baseline justify-between gap-3 text-2xs text-fg-muted">
+          <span>Average sunlight — mean share of the Sun's disc visible over the window</span>
           <SourceLink href={AVERAGE_SOURCE} />
         </div>
         <div

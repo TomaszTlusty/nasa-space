@@ -139,9 +139,10 @@ const fragment = /* glsl */ `
     if (uOverlay == 1) {
       vec3 sunCol = mix(vec3(0.16, 0.17, 0.24), vec3(0.98, 0.72, 0.30), sunVis);
       outc = mix(outc, sunCol * shade3, uOverlayOpacity);
-      // Earth-visible ground gets fine diagonal hatching in Earth blue.
-      float stripe = step(0.82, fract((p.x + p.y) / 160.0));
-      outc = mix(outc, vec3(0.45, 0.72, 1.0), stripe * step(0.001, earthVis) * 0.7 * uOverlayOpacity);
+      // Earth-visible ground gets diagonal hatching in Earth blue. Screen-space (constant 9 px pitch) so it
+      // never aliases into moiré on distant terrain.
+      float stripe = step(0.62, fract((gl_FragCoord.x + gl_FragCoord.y) / 9.0));
+      outc = mix(outc, vec3(0.45, 0.72, 1.0), stripe * step(0.001, earthVis) * 0.9);
     } else if (uOverlay == 2) {
       vec2 g = ((p - uHorizonGrid.xy) / uHorizonGrid.z + 0.5) / uHorizonSize.xy;
       vec4 avg = texture(uOverlayTex, g);

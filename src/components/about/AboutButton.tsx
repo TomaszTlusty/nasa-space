@@ -26,7 +26,7 @@ function steps(meta: RegionMeta | null): { title: string; body: string }[] {
     {
       title: "Real terrain",
       body: meta
-        ? `NASA's LOLA laser altimeter mapped the ground; we use its heights every ${meta.terrain.step} m across this ${meta.extent / 1000} km region.`
+        ? `NASA's LOLA laser altimeter mapped the ground; we use its heights every ${meta.terrain.step} m across this ${Math.round(meta.extent / 1000)} × ${Math.round(meta.extent / 1000)} km region.`
         : "NASA's LOLA laser altimeter mapped the ground; we use its heights across the region.",
     },
     {

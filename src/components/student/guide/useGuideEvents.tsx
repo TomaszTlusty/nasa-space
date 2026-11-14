@@ -70,7 +70,7 @@ export function useGuideEvents(): void {
               higher ground!
             </>
           ),
-          source: SOURCES.moonWater,
+          source: SOURCES.paige2010,
         });
       } else if (analysis.sunMean > 0.7) {
         say({
@@ -133,7 +133,7 @@ export function useGuideEvents(): void {
         text:
           live.earthElev > 0
             ? "A mountain is blocking Earth! No pictures home until it rises again."
-            : `Earth just slipped below the horizon at lander ${id}. Near the pole it is up for about two weeks, then down for about two weeks, so no direct radio link for a while.`,
+            : `Earth just slipped below the horizon at lander ${id}, so no direct radio link for a while. Near the pole, Earth is often up about two weeks and down about two weeks; high or Earth-facing spots see it longer.`,
         source: SOURCES.hls2024,
       });
     }

@@ -11,6 +11,8 @@ import { MultiDem } from "./dem";
 import { HorizonMarcher } from "./horizon-core";
 import { HorizonPool } from "./pool";
 import {
+  ARTEMIS_REGIONS_URL,
+  CLPS_URL,
   DATA_BOOK_URL,
   GLASER_2018_URL,
   LOLA_GDR_URL,
@@ -209,7 +211,13 @@ function malapertReferences(s: RegionSampler, site23: { x: number; y: number }):
   ];
 }
 
-async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | null, pool: HorizonPool | null) {
+async function buildRegion(
+  id: string,
+  dem: MultiDem,
+  marcher: HorizonMarcher | null,
+  pool: HorizonPool | null,
+  writeTerrain: boolean,
+) {
   const def = REGIONS[id];
   if (!def) throw new Error(`unknown region ${id}`);
   const t0 = performance.now();
@@ -226,11 +234,13 @@ async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | 
     if (v < minH) minH = v;
     if (v > maxH) maxH = v;
   }
-  await Bun.write(`${dir}/heights.bin.gz`, gz(heights));
-  await Bun.write(`${dir}/normal.webp`, await buildNormals(s));
-  await Bun.write(`${dir}/slope.bin`, buildSlope(s));
-  // outputs of earlier contract versions
-  for (const stale of ["heights.bin", "normal.png", "horizon.bin"]) await rm(`${dir}/${stale}`, { force: true });
+  if (writeTerrain) {
+    await Bun.write(`${dir}/heights.bin.gz`, gz(heights));
+    await Bun.write(`${dir}/normal.webp`, await buildNormals(s));
+    await Bun.write(`${dir}/slope.bin`, buildSlope(s));
+    // outputs of earlier contract versions
+    for (const stale of ["heights.bin", "normal.png", "horizon.bin"]) await rm(`${dir}/${stale}`, { force: true });
+  }
   const tTerrain = performance.now();
 
   let siteDefs = def.sites;
@@ -311,8 +321,16 @@ async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | 
         url: DATA_BOOK_URL,
       },
       {
-        label: "Glaser et al. 2018, illumination near Shackleton (site coordinates)",
+        label: "Gläser et al. 2018, illumination near Shackleton (site coordinates)",
         url: GLASER_2018_URL,
+      },
+      {
+        label: "NASA: update on Artemis III Moon landing regions (Oct 2024)",
+        url: ARTEMIS_REGIONS_URL,
+      },
+      {
+        label: "NASA CLPS deliveries (Blue Moon MK1 target)",
+        url: CLPS_URL,
       },
       {
         label: "JPL Horizons (ephemeris validation)",
@@ -332,12 +350,15 @@ async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | 
 
 if (import.meta.main) {
   const arg = process.argv[2] ?? "all";
+  // --terrain-only: terrain files + meta without horizons; --meta-only: meta.json only (site
+  // horizons recomputed, binary files untouched)
   const terrainOnly = process.argv.includes("--terrain-only");
+  const metaOnly = process.argv.includes("--meta-only");
   const ids = arg === "all" ? Object.keys(REGIONS) : [arg];
   const dem = await MultiDem.load();
   const maxHeight = dem.maxHeight();
   const marcher = terrainOnly ? null : new HorizonMarcher(dem.rasters, maxHeight);
-  const pool = terrainOnly ? null : await HorizonPool.create(dem, maxHeight);
-  for (const id of ids) await buildRegion(id, dem, marcher, pool);
+  const pool = terrainOnly || metaOnly ? null : await HorizonPool.create(dem, maxHeight);
+  for (const id of ids) await buildRegion(id, dem, marcher, pool, !metaOnly);
   pool?.terminate();
 }

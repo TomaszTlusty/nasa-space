@@ -15,14 +15,14 @@ const REGIONS: {
   {
     value: "shackleton",
     label: "Shackleton & Connecting Ridge",
-    short: "Shackleton Ridge",
-    subtitle: "Most sunlit ridge on the Moon",
+    short: "Shackleton",
+    subtitle: "Among the best-lit spots at the south pole",
   },
   {
     value: "malapert",
     label: "Malapert Massif",
     short: "Malapert Massif",
-    subtitle: "5 km high candidate mountain",
+    subtitle: "Artemis candidate massif, summit ~5 km above lunar datum",
   },
 ];
 
@@ -42,13 +42,14 @@ export function RegionSelect({ className }: { className?: string }) {
       <Select.Trigger
         aria-label={`Region: ${current.label}`}
         className={cn(
-          "flex h-10 min-w-0 select-none items-center gap-2 rounded-full py-1 pr-2.5 pl-3.5 text-left",
+          // fixed width: switching region must not shift the date readout and countdown chips
+          "flex h-10 w-[9.5rem] shrink-0 select-none items-center gap-2 rounded-full py-1 pr-2.5 pl-3.5 text-left 2xl:w-80",
           "transition-[background-color,transform] duration-150 ease-(--ease-out) hover:bg-white/5 active:scale-[0.97]",
           "data-popup-open:bg-white/5",
           className,
         )}
       >
-        <span className="flex min-w-0 flex-col leading-none">
+        <span className="flex min-w-0 flex-1 flex-col leading-none">
           <Select.Value className="truncate font-medium text-fg text-xs">
             {() => (
               <>
@@ -57,7 +58,7 @@ export function RegionSelect({ className }: { className?: string }) {
               </>
             )}
           </Select.Value>
-          <span className="mt-1 truncate text-2xs text-fg-faint max-xl:hidden">{current.subtitle}</span>
+          <span className="mt-1 truncate text-2xs text-fg-faint max-2xl:hidden">{current.subtitle}</span>
         </span>
         <Select.Icon className="shrink-0 text-fg-faint">
           <CaretUpDown size={14} weight="regular" />

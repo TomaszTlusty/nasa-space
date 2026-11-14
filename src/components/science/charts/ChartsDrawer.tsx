@@ -291,7 +291,7 @@ export function ChartsDrawer() {
         <motion.section
           key="charts"
           aria-label="Mission window charts"
-          className="glass fixed bottom-[148px] left-3 z-20 flex h-[240px] w-[min(760px,60vw)] flex-col rounded-xl max-md:w-[calc(100vw-1.5rem)]"
+          className="glass fixed bottom-[148px] left-3 z-20 flex h-[240px] w-[min(760px,60vw)] flex-col rounded-xl bg-surface/95! max-md:w-[calc(100vw-1.5rem)]"
           initial={{
             opacity: 0,
             transform: reduce ? "none" : "translateY(8px)",

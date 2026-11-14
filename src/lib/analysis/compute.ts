@@ -51,11 +51,21 @@ function resolvedXY(region: LoadedRegion, q: PointQuery): { x: number; y: number
   return { x: q.x, y: q.y, ...fromLocal(q.x, q.y, region.meta) };
 }
 
-/** Longest run of consecutive samples with value <= 0, in hours (each sample stands for one step). */
+/**
+ * Number of samples that stand for a step of the window: a timeline over [start, start + hours] has
+ * hours/step + 1 samples, and sample i represents [t_i, t_i + step); the final sample is the closing
+ * endpoint and is excluded from durations and shares (so results never exceed the window length).
+ */
+export function intervalCount(n: number): number {
+  return n > 1 ? n - 1 : n;
+}
+
+/** Longest run of consecutive step intervals with value <= 0, in hours (endpoint sample excluded). */
 export function longestZeroRunHours(values: ArrayLike<number>, stepMinutes: number): number {
+  const n = intervalCount(values.length);
   let best = 0;
   let run = 0;
-  for (let i = 0; i < values.length; i++) {
+  for (let i = 0; i < n; i++) {
     if (values[i] <= 0) {
       run++;
       if (run > best) best = run;
@@ -96,10 +106,13 @@ export function analyzeTimeline(
   const n = tl.times.length;
   const start = n > 0 ? tl.times[0] : 0;
   const stepMinutes = n > 1 ? Math.round((tl.times[1] - tl.times[0]) / 60_000) : 60;
+  const m = intervalCount(n);
   let sunSum = 0;
+  let sunSteps = 0;
   let earthSteps = 0;
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < m; i++) {
     sunSum += tl.sunFraction[i];
+    if (tl.sunFraction[i] > 0) sunSteps++;
     if (tl.earthFraction[i] > 0) earthSteps++;
   }
   return {
@@ -121,8 +134,9 @@ export function analyzeTimeline(
       earthHorizon: tl.earthHorizon,
       earthFraction: tl.earthFraction,
     },
-    sunMean: n > 0 ? sunSum / n : 0,
-    earthMean: n > 0 ? earthSteps / n : 0,
+    sunMean: m > 0 ? sunSum / m : 0,
+    sunAny: m > 0 ? sunSteps / m : 0,
+    earthMean: m > 0 ? earthSteps / m : 0,
     longestDarkHours: longestZeroRunHours(tl.sunFraction, stepMinutes),
     longestBlackoutHours: longestZeroRunHours(tl.earthFraction, stepMinutes),
     sunWindows: windows(tl.times, tl.sunFraction).map((w) => ({
@@ -184,6 +198,21 @@ export function toTransitions(sun: BodyTransitions, earth: BodyTransitions, from
     earthset: earth.up ? earth.first : earth.second,
     earthrise: earth.up ? earth.second : earth.first,
   };
+}
+
+/**
+ * Re-bases transitions computed at `t.from` onto the playhead `time`, given the live Sun / Earth state
+ * there. Returns null when they may be stale: the playhead is before `from`, a body's next event has
+ * already passed, or the live state disagrees with the computed one (all of which mean "computing").
+ */
+export function transitionsAt(t: Transitions, time: number, sunUp: boolean, earthUp: boolean): Transitions | null {
+  if (time < t.from || sunUp !== t.sunUp || earthUp !== t.earthUp) return null;
+  const sunNext = t.sunUp ? t.sunset : t.sunrise;
+  const earthNext = t.earthUp ? t.earthset : t.earthrise;
+  if ((sunNext !== null && time >= sunNext) || (earthNext !== null && time >= earthNext)) return null;
+  // "nothing within the 30-day span" is only trusted for one day of playhead motion
+  if ((sunNext === null || earthNext === null) && time - t.from >= 86_400_000) return null;
+  return { ...t, from: time };
 }
 
 export interface WindowAverage {

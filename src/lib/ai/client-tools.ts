@@ -2,6 +2,7 @@
 
 import { analyzePoint, runDiscovery } from "@/lib/analysis";
 import type { PointAnalysis } from "@/lib/analysis/types";
+import { fromLocal, toLocal } from "@/lib/moon/frames";
 import type { RegionMeta } from "@/lib/moon/types";
 import { DATE_MAX, DATE_MIN, DAY, type LanderPlacement, useApp, type WindowDays } from "@/lib/store";
 import { fetchRegion } from "@/lib/use-region";
@@ -56,10 +57,11 @@ async function regionMeta(): Promise<RegionMeta> {
 
 function placeRef(meta: RegionMeta, p: { x: number; y: number; siteId?: string }): PlaceRef {
   const site = p.siteId ? meta.sites.find((s) => s.id === p.siteId) : undefined;
+  const { lat, lon } = fromLocal(p.x, p.y, meta);
   return {
     ...(site ? { siteId: site.id, siteName: site.name } : {}),
-    xM: round(p.x, -1),
-    yM: round(p.y, -1),
+    lat: round(lat, 3),
+    lon: round(lon, 3),
   };
 }
 
@@ -71,21 +73,20 @@ function summarize(a: PointAnalysis, meta: RegionMeta, start: number, days: numb
   };
   const firstStart = (ws: PointAnalysis["sunWindows"]) => isoOrNull(ws.find((w) => w.start > start)?.start);
   const upAt = (ws: PointAnalysis["sunWindows"]) => ws.some((w) => w.start <= start && w.end > start);
-  const sunPct = round(a.sunMean * 100);
-  const earthPct = round(a.earthMean * 100);
+  const avgSunlightPct = round(a.sunMean * 100);
+  const earthVisibleTimePct = round(a.earthMean * 100);
   const depleted = a.power.depletedAt;
 
   return {
     where: {
       ...placeRef(meta, a),
-      lat: round(a.lat, 3),
-      lon: round(a.lon, 3),
       elevationM: round(a.elevationM),
       slopeDeg: round(a.slopeDeg, 1),
     },
     window: windowInfo(start, days),
-    sunPct,
-    earthPct,
+    avgSunlightPct,
+    sunVisibleTimePct: round(a.sunAny * 100),
+    earthVisibleTimePct,
     longestDarkHours: round(a.longestDarkHours, 1),
     longestNoEarthHours: round(a.longestBlackoutHours, 1),
     sunUpAtLanding: upAt(a.sunWindows),
@@ -102,8 +103,8 @@ function summarize(a: PointAnalysis, meta: RegionMeta, start: number, days: numb
     },
     screening: {
       slopeOk: a.slopeDeg < SCREENING.maxSlopeDeg,
-      earthOk: earthPct >= SCREENING.minEarthPct,
-      sunOk: sunPct >= SCREENING.minSunPct,
+      earthOk: earthVisibleTimePct >= SCREENING.minEarthPct,
+      sunOk: avgSunlightPct >= SCREENING.minSunPct,
     },
   };
 }
@@ -114,10 +115,10 @@ async function analyze(p: { x: number; y: number; siteId?: string }, meta: Regio
   return summarize(a, meta, s.windowStart, s.windowDays);
 }
 
-/** Resolves siteId | resultRank | x,y to a placement inside the region. */
+/** Resolves siteId | resultRank | lat,lon to a placement inside the region. */
 function resolvePlace(
   meta: RegionMeta,
-  input: { siteId?: string; resultRank?: number; x?: number; y?: number },
+  input: { siteId?: string; resultRank?: number; lat?: number; lon?: number },
 ): { placement: LanderPlacement; label: string } {
   if (input.siteId) {
     const site = meta.sites.find((s) => s.id === input.siteId);
@@ -134,16 +135,15 @@ function resolvePlace(
       throw new Error(`No discovery result with rank ${input.resultRank}. Run set_discovery_criteria_and_run first.`);
     return { placement: { x: r.x, y: r.y }, label: `Site #${r.rank}` };
   }
-  if (input.x != null && input.y != null) {
+  if (input.lat != null && input.lon != null) {
+    const { x, y } = toLocal(input.lat, input.lon, meta);
     const half = meta.extent / 2;
-    if (Math.abs(input.x) > half || Math.abs(input.y) > half)
-      throw new Error(`x and y must be within ±${round(half)} m of the region centre.`);
-    return {
-      placement: { x: input.x, y: input.y },
-      label: `x ${round(input.x / 1000, 1)} km, y ${round(input.y / 1000, 1)} km`,
-    };
+    if (Math.abs(x) > half || Math.abs(y) > half)
+      throw new Error(`${input.lat}°, ${input.lon}° is outside the ${meta.name} region. Use a site from get_context.`);
+    const ref = placeRef(meta, { x, y });
+    return { placement: { x, y }, label: `${ref.lat.toFixed(3)}°, ${ref.lon.toFixed(3)}°` };
   }
-  throw new Error("Give siteId, resultRank, or both x and y.");
+  throw new Error("Give siteId, resultRank, or both lat and lon.");
 }
 
 async function getContext(): Promise<ContextOutput> {
@@ -169,13 +169,7 @@ async function getContext(): Promise<ContextOutput> {
       A: s.landers.A ? placeRef(meta, s.landers.A) : null,
       B: s.landers.B ? placeRef(meta, s.landers.B) : null,
     },
-    sites: meta.sites.map((site) => ({
-      id: site.id,
-      name: site.name,
-      kind: site.kind,
-      xM: round(site.x, -1),
-      yM: round(site.y, -1),
-    })),
+    sites: meta.sites.map((site) => ({ ...placeRef(meta, site), kind: site.kind })),
     discovery: {
       criteria: {
         maxSlopeDeg: c.maxSlopeDeg,
@@ -248,12 +242,10 @@ async function runSearch(input: MissionUITools["set_discovery_criteria_and_run"]
     resultCount: results.length,
     top: results.slice(0, 5).map((r) => ({
       rank: r.rank,
-      xM: round(r.x, -1),
-      yM: round(r.y, -1),
       lat: round(r.lat, 3),
       lon: round(r.lon, 3),
-      sunPct: round(r.sun * 100),
-      earthPct: round(r.earth * 100),
+      avgSunlightPct: round(r.sun * 100),
+      earthVisibleTimePct: round(r.earth * 100),
       slopeDeg: round(r.slopeDeg, 1),
       longestDarkHours: round(r.longestDarkHours, 1),
     })),
@@ -297,8 +289,9 @@ async function compareLanders(): Promise<CompareOutput> {
     A: a,
     B: b,
     better: {
-      sun: pick(a.sunPct, b.sunPct, true),
-      earth: pick(a.earthPct, b.earthPct, true),
+      avgSunlight: pick(a.avgSunlightPct, b.avgSunlightPct, true),
+      sunVisibleTime: pick(a.sunVisibleTimePct, b.sunVisibleTimePct, true),
+      earthVisibleTime: pick(a.earthVisibleTimePct, b.earthVisibleTimePct, true),
       shorterLongestDark: pick(a.longestDarkHours, b.longestDarkHours, false),
       battery:
         lasts(a) === lasts(b)

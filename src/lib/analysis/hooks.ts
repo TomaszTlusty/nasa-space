@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { AnalysisCancelled, memoRequest, request } from "@/lib/analysis/client";
-import { liveAt } from "@/lib/analysis/compute";
+import { liveAt, transitionsAt } from "@/lib/analysis/compute";
 import type { LiveVisibility, PointAnalysis, Transitions, WindowAverageStats } from "@/lib/analysis/types";
 import { type DiscoveryCriteria, type DiscoveryResult, type LanderId, type RegionId, useApp } from "@/lib/store";
 import { useRegion } from "@/lib/use-region";
@@ -55,7 +55,11 @@ export function usePointAnalysis(id: LanderId): PointAnalysis | null {
   return lander && result?.regionId === regionId ? result.analysis : null;
 }
 
-/** Next sunset / sunrise / Earthset / Earthrise after the playhead (searched 30 days ahead, ≤ 10 searches/s). */
+/**
+ * Next sunset / sunrise / Earthset / Earthrise after the playhead (searched 30 days ahead in the worker,
+ * ≤ 10 searches/s). `from` is the current playhead and `sunUp` / `earthUp` match the live main-thread
+ * state; while a fresh search is running after a jump past an event, returns null (show "computing").
+ */
 export function useTransitions(id: LanderId): Transitions | null {
   const { regionId, lander, time, mastHeight } = useApp(
     useShallow((s) => ({
@@ -105,7 +109,9 @@ export function useTransitions(id: LanderId): Transitions | null {
     return () => clearTimeout(timer);
   }, [id, regionId, lander, time, mastHeight, pointKey]);
 
-  return result && result.point === pointKey ? result.transitions : null;
+  const live = useLiveVisibility(id);
+  if (!result || result.point !== pointKey || !live) return null;
+  return transitionsAt(result.transitions, time, live.sunVis > 0, live.earthVis > 0);
 }
 
 /** Sun / Earth state at the playhead for a lander, on the main thread (≈ 0.1 ms). */

@@ -12,7 +12,8 @@ import { cn } from "@/lib/cn";
 import { useApp } from "@/lib/store";
 import { useRegion } from "@/lib/use-region";
 import { buildHourlyCsv } from "./csv";
-import { downloadReportPdf, type ReportSnapshot, reportFilename } from "./pdf";
+import { freshDiscoveryStamp } from "./discovery-stamp";
+import { downloadReportPdf, type ReportDiscovery, type ReportSnapshot, reportFilename } from "./pdf";
 
 /** JPEG of the live 3D view (the renderer keeps its drawing buffer, so this reads the last frame). */
 function snapshotScene(): ReportSnapshot | null {
@@ -23,6 +24,14 @@ function snapshotScene(): ReportSnapshot | null {
     width: canvas.width,
     height: canvas.height,
   };
+}
+
+/** Discovery results only when they belong to the current region, window and criteria. */
+function reportDiscovery(): ReportDiscovery {
+  const s = useApp.getState();
+  if (s.discovery.results.length === 0) return { status: "none" };
+  const stamp = freshDiscoveryStamp(s);
+  return stamp ? { status: "fresh", results: s.discovery.results, stamp } : { status: "stale" };
 }
 
 const itemClass =
@@ -37,7 +46,6 @@ export function ReportButton({ className }: { className?: string }) {
   const landers = useApp((s) => s.landers);
   const windowStart = useApp((s) => s.windowStart);
   const windowDays = useApp((s) => s.windowDays);
-  const discovery = useApp((s) => s.discovery.results);
   const power = useApp((s) => s.power);
   const analysisA = usePointAnalysis("A");
   const analysisB = usePointAnalysis("B");
@@ -84,7 +92,7 @@ export function ReportButton({ className }: { className?: string }) {
               analysis,
               siteName: meta.sites.find((s) => s.id === analysis.siteId)?.name ?? null,
             })),
-            discovery,
+            discovery: reportDiscovery(),
             snapshot: snapshotScene(),
             power,
             gridMastHeight: meta.horizon.mastHeight,

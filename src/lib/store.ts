@@ -87,6 +87,10 @@ interface AppState {
    * G = fraction of hours with any Earth visible; 255 = 1). Produced by the analysis worker.
    */
   averageData: Uint8Array | null;
+  /** one-shot camera request: the orbit camera flies to look at (x, y); `nonce` re-triggers the same target */
+  focus: { x: number; y: number; distanceKm: number; nonce: number } | null;
+  /** hide curated site pins (e.g. while the landing game asks the player to find a spot on their own) */
+  sitePinsHidden: boolean;
 
   setMode: (mode: Mode) => void;
   setRegion: (id: RegionId) => void;
@@ -108,6 +112,9 @@ interface AppState {
   setDiscoveryResults: (results: DiscoveryResult[]) => void;
   setDiscoveryRunning: (running: boolean) => void;
   setAverageData: (data: Uint8Array | null) => void;
+  /** fly the orbit camera to a local point; distanceKm = camera distance from it */
+  focusOn: (x: number, y: number, distanceKm?: number) => void;
+  setSitePinsHidden: (hidden: boolean) => void;
 }
 
 const clampTime = (t: number) => Math.min(DATE_MAX, Math.max(DATE_MIN, t));
@@ -131,6 +138,8 @@ export const useApp = create<AppState>((set) => ({
   power: DEFAULT_POWER,
   discovery: { criteria: { maxSlopeDeg: 10, minSun: 0.6, minEarth: 0.5 }, results: [], running: false },
   averageData: null,
+  focus: null,
+  sitePinsHidden: false,
 
   setMode: (mode) => set({ mode }),
   setRegion: (regionId) =>
@@ -138,9 +147,11 @@ export const useApp = create<AppState>((set) => ({
       regionId,
       landers: {},
       placing: "A",
+      activeLander: "A",
       camera: "orbit",
       discovery: { ...s.discovery, results: [] },
       averageData: null,
+      focus: null,
     })),
   setTime: (t) => set({ time: clampTime(t) }),
   setWindow: (start, days) =>
@@ -165,7 +176,14 @@ export const useApp = create<AppState>((set) => ({
     set((s) => {
       const landers = { ...s.landers };
       delete landers[id];
-      return { landers, activeLander: id === "B" ? "A" : s.activeLander, camera: "orbit" };
+      const remaining = (Object.keys(landers) as LanderId[])[0];
+      return {
+        landers,
+        // keep pointing at a lander that exists; with none left, the next terrain click places A again
+        activeLander: remaining ?? "A",
+        placing: remaining ? s.placing : "A",
+        camera: "orbit",
+      };
     }),
   setActiveLander: (activeLander) => set({ activeLander }),
   setPlacing: (placing) => set({ placing }),
@@ -178,6 +196,9 @@ export const useApp = create<AppState>((set) => ({
   setDiscoveryResults: (results) => set((s) => ({ discovery: { ...s.discovery, results } })),
   setDiscoveryRunning: (running) => set((s) => ({ discovery: { ...s.discovery, running } })),
   setAverageData: (averageData) => set({ averageData }),
+  focusOn: (x, y, distanceKm = 6) =>
+    set((s) => ({ focus: { x, y, distanceKm, nonce: (s.focus?.nonce ?? 0) + 1 }, camera: "orbit" })),
+  setSitePinsHidden: (sitePinsHidden) => set({ sitePinsHidden }),
 }));
 
 // Dev/QA handle: lets browser automation drive the app state (window.__app.getState()).

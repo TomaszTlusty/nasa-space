@@ -138,7 +138,9 @@ export function LanderPanel() {
             ) : (
               <>
                 <p className="border-line border-t px-4 py-3 text-fg-muted text-sm leading-5">
-                  Click anywhere on the terrain to land lander {activeLander}, or start from a known site below.
+                  {placing === activeLander
+                    ? `Click anywhere on the terrain to land lander ${activeLander}, or start from a known site below.`
+                    : `Turn on "Click terrain to place ${activeLander}" above, or start from a known site below.`}
                 </p>
                 <SitePicks id={activeLander} sites={sites} />
               </>

@@ -88,16 +88,16 @@ export function Welcome() {
   return (
     <BaseDialog.Root open={open} onOpenChange={(next) => !next && dismiss()}>
       <BaseDialog.Portal>
-        {/* Scrim darkest behind the text, lighter on the right so the Moon reads through. */}
-        <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-linear-to-r from-canvas/92 via-canvas/75 to-canvas/45 transition-opacity duration-300 ease-(--ease-out) data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:duration-200" />
+        {/* Covers the whole HUD; the blurred Moon stays faintly visible behind it. */}
+        <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-canvas/80 backdrop-blur-md transition-opacity duration-300 ease-(--ease-out) data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:duration-200" />
         <BaseDialog.Popup
           ref={popupRef}
           initialFocus={popupRef}
           className="fixed inset-0 z-50 overflow-y-auto outline-none transition-opacity duration-200 ease-(--ease-out) data-ending-style:opacity-0"
         >
-          <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-6 py-6 md:px-12 md:py-10">
-            <Reveal step={0} className="flex items-center justify-between">
-              <span className="font-medium text-fg text-sm tracking-[-0.01em]">Malapert</span>
+          {/* bottom padding keeps the footer clear of the timeline slot (bottom 148 px) */}
+          <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-6 pt-6 pb-8 md:px-12 md:pt-10 md:pb-[152px]">
+            <Reveal step={0} className="flex items-center justify-end">
               <BaseDialog.Close
                 aria-label="Close welcome screen"
                 className="inline-flex size-9 items-center justify-center rounded-md text-fg-muted transition-[transform,background-color,color] duration-150 ease-(--ease-out) hover:bg-white/5 hover:text-fg active:scale-[0.97]"
@@ -143,8 +143,8 @@ export function Welcome() {
               step={5}
               className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-line border-t pt-4 text-fg-faint text-xs"
             >
-              <span>Built on NASA LOLA terrain and JPL-validated ephemerides</span>
-              <span>Team — NASA Space Apps 2026</span>
+              <span>Built on NASA LOLA terrain · Sun and Earth positions checked against JPL Horizons</span>
+              <span>NASA Space Apps Challenge 2026</span>
             </Reveal>
           </div>
         </BaseDialog.Popup>

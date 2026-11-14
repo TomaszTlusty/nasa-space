@@ -58,7 +58,7 @@ export function ValidationCard({ className }: { className?: string }) {
   return (
     <section className={cn("rounded-lg bg-white/3 p-4 ring-1 ring-line", className)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-medium text-fg text-sm">Validated against NASA/JPL</h3>
+        <h3 className="font-medium text-fg text-sm">Checked against NASA/JPL data</h3>
         <span className="tabular text-2xs text-fg-faint">run {formatDate(Date.parse(report.generatedAt))}</span>
       </div>
 
@@ -77,9 +77,9 @@ export function ValidationCard({ className }: { className?: string }) {
             . Largest elevation difference <span className="tabular text-fg">{fmtDelta(maxEl)}</span> over{" "}
             <span className="tabular text-fg">{rows.length}</span> checks.
           </p>
-          <div className="mt-3 max-h-52 overflow-y-auto rounded-sm ring-1 ring-line">
+          <div className="mt-3 rounded-sm ring-1 ring-line">
             <table className="w-full border-collapse text-left text-2xs">
-              <thead className="sticky top-0 bg-surface-2 text-fg-faint">
+              <thead className="bg-surface-2 text-fg-faint">
                 <tr>
                   <th className="px-2 py-1.5 font-medium">Body</th>
                   <th className="px-2 py-1.5 font-medium">Place</th>
@@ -109,28 +109,42 @@ export function ValidationCard({ className }: { className?: string }) {
       )}
 
       {mazarico.length > 0 && (
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-4 space-y-1.5 border-line border-t pt-3">
           <p className="text-fg-muted text-xs">
-            Window-average visibility compared with the{" "}
+            Long-run (18.6-year) visibility compared with NASA's{" "}
             <a href={PGDA_URL} target="_blank" rel="noreferrer" className="text-fg underline-offset-2 hover:underline">
-              Mazarico et al. maps (NASA PGDA)
+              Mazarico et al. maps
             </a>
             :
           </p>
-          {mazarico.map((m) => (
-            <div key={m.region} className="text-xs">
-              <span className="text-fg capitalize">{m.region}</span>
-              <span className="text-fg-muted">
-                {" "}
-                Sun MAE <span className="tabular text-sun">{m.sunMaePp.toFixed(1)} pp</span>, Earth MAE{" "}
-                <span className="tabular text-earth">{m.earthMaePp.toFixed(1)} pp</span> over{" "}
+          <ul className="space-y-1">
+            {mazarico.map((m) => (
+              <li key={m.region} className="text-fg-muted text-xs">
+                <span className="text-fg capitalize">{m.region}</span>: average error{" "}
+                <span className="tabular text-sun">{m.sunMaePp.toFixed(1)}</span> percentage points (Sun),{" "}
+                <span className="tabular text-earth">{m.earthMaePp.toFixed(1)}</span> (Earth) over{" "}
                 <span className="tabular text-fg">{m.samples.toLocaleString("en-US")}</span> points
-              </span>
-              <p className="line-clamp-2 text-2xs text-fg-faint" title={m.method}>
+              </li>
+            ))}
+          </ul>
+          <p className="pt-1 text-2xs text-fg-muted">
+            Checked with full-resolution skylines (720 directions, ground level); the heatmap and site search use a
+            180-direction grid at 2 m.
+          </p>
+          {mazarico
+            .filter((m, i) => mazarico.findIndex((o) => o.method === m.method) === i)
+            .map((m) => (
+              <p key={m.region} className="text-2xs text-fg-faint">
+                {new Set(mazarico.map((o) => o.method)).size > 1 ? (
+                  <>
+                    <span className="capitalize">{m.region}</span> method:
+                  </>
+                ) : (
+                  "Method:"
+                )}{" "}
                 {m.method}
               </p>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </section>

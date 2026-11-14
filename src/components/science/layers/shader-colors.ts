@@ -11,8 +11,8 @@ export type RGB = readonly [number, number, number];
 export const INSTANT_SHADOW: RGB = [0.16, 0.17, 0.24];
 export const INSTANT_SUN: RGB = [0.98, 0.72, 0.3];
 export const INSTANT_EARTH: RGB = [0.45, 0.72, 1.0];
-/** Earth hatching strength in the shader: stripe * 0.7 * uOverlayOpacity (0.85). */
-export const EARTH_HATCH_MIX = 0.7 * 0.85;
+/** Earth hatching strength in the shader: stripe * 0.9 (screen-space stripes, no overlay opacity factor). */
+export const EARTH_HATCH_MIX = 0.9;
 
 /** Shader relief shade 0.6 + 0.4 * dot(n, normalize(-0.4, 0.5, 0.75)) evaluated for flat ground (n = up). */
 export const FLAT_SHADE = 0.6 + (0.4 * 0.75) / Math.hypot(-0.4, 0.5, 0.75);

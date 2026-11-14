@@ -68,15 +68,23 @@ function Chip({
   tone: "sun" | "earth";
   icon: ReactNode;
   label: string;
-  /** undefined = still computing; null = no crossing within the analysis search span */
+  /** undefined = still computing / stale; null = no crossing within the analysis search span */
   event: number | null | undefined;
   time: number;
   stuck: string;
 }) {
   let text: ReactNode;
   let hint: string;
-  if (event === undefined) {
-    text = <span className="text-fg-faint">computing</span>;
+  // an event at or before the playhead means the result predates the latest scrub: wait for fresh data
+  if (event === undefined || (event !== null && event <= time)) {
+    text = (
+      <>
+        <span aria-hidden className="text-fg-faint">
+          …
+        </span>
+        <span className="sr-only">{tone === "sun" ? "Sun" : "Earth"} countdown computing</span>
+      </>
+    );
     hint = "Computing horizon crossings for this spot";
   } else if (event === null) {
     text = stuck;

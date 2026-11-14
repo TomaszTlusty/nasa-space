@@ -33,6 +33,8 @@ export function App() {
       }
       left={science ? <ScienceLeft /> : <GamePanel />}
       right={science ? <LanderPanel /> : <LessonsPanel />}
+      leftLabel={science ? "Layers & search" : "Landing game"}
+      rightLabel={science ? "Lander" : "Lessons"}
       bottom={
         <div className="mx-auto flex max-w-[1180px] items-end gap-2">
           <div className="min-w-0 flex-1">

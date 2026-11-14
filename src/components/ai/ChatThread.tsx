@@ -10,6 +10,7 @@ import {
   ListMagnifyingGlass,
   MagnifyingGlass,
   MapPin,
+  Stop,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { isStaticToolUIPart, type ToolUIPart } from "ai";
@@ -118,12 +119,13 @@ function describe(part: ToolPart): ChipInfo {
   }
 }
 
-function ToolChip({ part }: { part: ToolPart }) {
+function ToolChip({ part, stopped }: { part: ToolPart; stopped: boolean }) {
   const info = describe(part);
   const failed = part.state === "output-error" || part.state === "output-denied";
   const done = part.state === "output-available" ? info.done : null;
-  const Glyph = failed ? WarningCircle : done ? info.icon : CircleNotch;
-  const label = failed ? `${info.running} failed` : (done ?? `${info.running}…`);
+  const halted = stopped && !failed && !done;
+  const Glyph = failed || halted ? WarningCircle : done ? info.icon : CircleNotch;
+  const label = failed ? `${info.running} failed` : halted ? `${info.running} — stopped` : (done ?? `${info.running}…`);
 
   return (
     <span
@@ -134,7 +136,12 @@ function ToolChip({ part }: { part: ToolPart }) {
         failed ? "bg-danger-soft text-danger ring-danger/25" : "bg-white/5 text-fg-muted ring-line",
       )}
     >
-      <Glyph size={13} weight="regular" className={cn("shrink-0", !failed && !done && "animate-spin")} aria-hidden />
+      <Glyph
+        size={13}
+        weight="regular"
+        className={cn("shrink-0", !failed && !done && !halted && "animate-spin")}
+        aria-hidden
+      />
       <span className="truncate">
         <Digits text={label} />
       </span>
@@ -213,11 +220,14 @@ function toBlocks(parts: Part[]): Block[] {
 
 export function ChatThread({
   messages,
+  stoppedIds,
   busy,
   assistantName,
   className,
 }: {
   messages: MissionUIMessage[];
+  /** messages whose turn the user stopped */
+  stoppedIds: ReadonlySet<string>;
   busy: boolean;
   assistantName: string;
   className?: string;
@@ -234,10 +244,11 @@ export function ChatThread({
       !currentStep.some((p) => (p.type === "text" && p.text.trim() !== "") || isStaticToolUIPart(p)));
 
   // keep the newest content in view while streaming, unless the user scrolled up to read
+  const stoppedCount = stoppedIds.size;
   useEffect(() => {
     const el = scroller.current;
-    if (el && stick.current && messages.length > 0) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+    if (el && stick.current && (messages.length > 0 || stoppedCount > 0)) el.scrollTop = el.scrollHeight;
+  }, [messages, stoppedCount]);
 
   return (
     <div
@@ -250,35 +261,40 @@ export function ChatThread({
       aria-busy={busy}
       className={cn("flex flex-col gap-4 overflow-y-auto overscroll-contain", className)}
     >
-      {messages.map((m) =>
-        m.role === "user" ? (
-          <div
-            key={m.id}
-            className="ml-auto max-w-[88%] whitespace-pre-wrap rounded-lg rounded-br-xs bg-white/7 px-3 py-2 text-fg text-sm"
-          >
-            {m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}
-          </div>
-        ) : (
-          <div key={m.id} className="flex flex-col gap-2">
-            <div className="eyebrow">{assistantName}</div>
-            {toBlocks(m.parts).map((b, i) =>
-              b.kind === "tools" ? (
-                // biome-ignore lint/suspicious/noArrayIndexKey: blocks only append while streaming
-                <div key={i} className="flex flex-wrap gap-1.5">
-                  {b.parts.map((p) => (
-                    <ToolChip key={p.toolCallId} part={p} />
-                  ))}
-                </div>
-              ) : (
-                // biome-ignore lint/suspicious/noArrayIndexKey: blocks only append while streaming
-                <div key={i} className="text-fg/90 text-sm leading-relaxed">
-                  <RichText text={b.text} />
-                </div>
-              ),
-            )}
-          </div>
-        ),
-      )}
+      {messages.map((m) => (
+        <Fragment key={m.id}>
+          {m.role === "user" ? (
+            <div className="ml-auto max-w-[88%] whitespace-pre-wrap rounded-lg rounded-br-xs bg-white/7 px-3 py-2 text-fg text-sm">
+              {m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="eyebrow">{assistantName}</div>
+              {toBlocks(m.parts).map((b, i) =>
+                b.kind === "tools" ? (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: blocks only append while streaming
+                  <div key={i} className="flex flex-wrap gap-1.5">
+                    {b.parts.map((p) => (
+                      <ToolChip key={p.toolCallId} part={p} stopped={stoppedIds.has(m.id)} />
+                    ))}
+                  </div>
+                ) : (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: blocks only append while streaming
+                  <div key={i} className="text-fg/90 text-sm leading-relaxed">
+                    <RichText text={b.text} />
+                  </div>
+                ),
+              )}
+            </div>
+          )}
+          {stoppedIds.has(m.id) && (
+            <div className="-mt-2 flex items-center gap-1.5 text-2xs text-fg-faint">
+              <Stop size={11} weight="fill" aria-hidden />
+              Stopped — the answer was cut short. Ask again to continue.
+            </div>
+          )}
+        </Fragment>
+      ))}
       {thinking && <div className="animate-pulse text-fg-faint text-xs">Thinking…</div>}
     </div>
   );

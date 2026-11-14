@@ -63,6 +63,8 @@ export interface PointAnalysis {
   series: PointSeries;
   /** mean visible Sun disc fraction over the window, 0..1 */
   sunMean: number;
+  /** fraction of steps with any part of the Sun's disc visible, 0..1 (NASA screening "Sun ≥ 5 %") */
+  sunAny: number;
   /** fraction of steps with any part of Earth visible, 0..1 */
   earthMean: number;
   longestDarkHours: number;

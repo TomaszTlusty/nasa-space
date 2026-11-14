@@ -16,6 +16,9 @@ const DOT_RADIUS = 0.035;
 const RING_INNER = 0.1;
 const RING_OUTER = 0.122;
 const RING_LIFT = 0.02;
+/** Screen-space label lift (px) above the dot for rank 1, plus one label height per further rank. */
+const LABEL_LIFT_PX = 14;
+const LABEL_STEP_PX = 19;
 /** --color-beacon (oklch(0.98 0 0)) */
 const BEACON = new THREE.Color("#f9f9f9");
 
@@ -199,16 +202,27 @@ export function Beacons({ region, centerHeight, results, hoveredRank }: BeaconsP
             />
             <mesh geometry={assets.dot} material={assets.dotMat} raycast={() => null} />
             <Html zIndexRange={[8, 0]} style={{ pointerEvents: "none" }}>
-              <div
-                className={`tabular -translate-y-1/2 translate-x-2.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs ring-1 backdrop-blur-md transition-[opacity,background-color,color] duration-150 ${
-                  emphasis === "hover"
-                    ? "bg-black/80 text-fg ring-white/30"
-                    : emphasis === "dim"
-                      ? "bg-black/45 text-fg-faint opacity-60 ring-white/8"
-                      : "bg-black/55 text-fg-muted ring-white/12"
-                }`}
-              >
-                Site #{r.rank} · {Math.round(r.score * 100)}%
+              {/* Labels are lifted by rank on hairline leaders, so neighbouring sites never stack. */}
+              <div className="relative size-0">
+                <div
+                  aria-hidden
+                  className={`absolute bottom-0 left-0 w-px transition-colors duration-150 ${
+                    emphasis === "hover" ? "bg-white/60" : emphasis === "dim" ? "bg-white/10" : "bg-white/30"
+                  }`}
+                  style={{ height: LABEL_LIFT_PX + (r.rank - 1) * LABEL_STEP_PX }}
+                />
+                <div
+                  className={`tabular absolute left-0 whitespace-nowrap rounded-[3px] px-1.5 py-px text-2xs ring-1 backdrop-blur-md transition-[opacity,background-color,color] duration-150 ${
+                    emphasis === "hover"
+                      ? "bg-black/80 text-fg ring-white/30"
+                      : emphasis === "dim"
+                        ? "bg-black/45 text-fg-faint opacity-60 ring-white/8"
+                        : "bg-black/55 text-fg-muted ring-white/12"
+                  }`}
+                  style={{ bottom: LABEL_LIFT_PX + (r.rank - 1) * LABEL_STEP_PX }}
+                >
+                  Site #{r.rank} · {Math.round(r.score * 100)}%
+                </div>
               </div>
             </Html>
           </group>

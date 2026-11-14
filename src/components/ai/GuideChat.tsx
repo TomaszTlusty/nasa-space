@@ -20,7 +20,7 @@ const EXAMPLES = [
  * container — place it inside the guide panel. `compact` shortens the thread and examples.
  */
 export function GuideChat({ compact = false }: { compact?: boolean }) {
-  const { messages, busy, error, send, retry, stop, clear } = useAssistant("student");
+  const { messages, stoppedIds, busy, error, send, retry, stop, clear } = useAssistant("student");
   const [draft, setDraft] = useState("");
 
   const submit = (text: string) => {
@@ -48,6 +48,7 @@ export function GuideChat({ compact = false }: { compact?: boolean }) {
       ) : (
         <ChatThread
           messages={messages}
+          stoppedIds={stoppedIds}
           busy={busy}
           assistantName="LUNA-Bot"
           className={cn(compact ? "max-h-48" : "max-h-72", "pr-1")}

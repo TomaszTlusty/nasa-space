@@ -18,14 +18,19 @@ export const SOURCES = {
     label: "NASA SVS 4944, Earth and Sun from the Moon's South Pole",
     url: "https://svs.gsfc.nasa.gov/4944/",
   },
-  /** Permanently shadowed floors ~35 K (−238 °C), water ice stable there. */
-  moonWater: {
-    label: "NASA Science, Moon water and ices",
-    url: "https://science.nasa.gov/moon/moon-water-and-ices/",
+  /** Permanently shadowed crater floors ~35 K (−238 °C), cold traps where water ice is stable (LRO Diviner). */
+  paige2010: {
+    label: "Paige et al. 2010, Diviner observations of lunar south-polar cold traps (Science)",
+    url: "https://www.science.org/doi/10.1126/science.1187726",
   },
-  /** Earth disc 1.8–2.0°, libration ±6.7° / ±7.9°, Earth ~2 weeks visible / ~2 weeks hidden at the pole. */
+  /** Earth's disc 1.8–2.0° wide; libration ~6.7° in latitude / ~7.9° in longitude. */
+  amt2023: {
+    label: "Earth observations from the Moon's surface: dependence on lunar libration (AMT 2023)",
+    url: "https://amt.copernicus.org/articles/16/1527/2023/",
+  },
+  /** At the pole Earth follows a ~2-week up / ~2-week down cycle, ~2–7° above the horizon. */
   hls2024: {
-    label: "NASA HLS lunar south pole environment, 2024 (NTRS 20240009596)",
+    label: "NASA Artemis HLS update 2024 (NTRS 20240009596)",
     url: "https://ntrs.nasa.gov/citations/20240009596",
   },
   /** No air on the Moon: nothing scatters sunlight into shadows, so they are pitch black. */

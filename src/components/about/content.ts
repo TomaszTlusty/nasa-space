@@ -36,13 +36,39 @@ export const CORE_SOURCES: SourceLink[] = [
   },
 ];
 
+/** Same document, different link: NTRS citation pages and their PDF downloads share one key. */
+function urlKey(url: string): string {
+  const ntrs = url.match(/ntrs\.nasa\.gov\/(?:api\/)?citations\/(\d+)/);
+  return ntrs
+    ? `ntrs:${ntrs[1]}`
+    : url
+        .replace(/^https?:\/\//, "")
+        .replace(/\/+$/, "")
+        .toLowerCase();
+}
+
+/** Normalised title: "Gläser et al. 2018, …" and "Glaser et al. 2018 …" are the same paper. */
+function titleKey(label: string): string {
+  const plain = label
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const paper = plain.match(/^(\S+) et al\.? ((?:19|20)\d{2})\b/);
+  if (paper) return `paper:${paper[1]}|${paper[2]}`;
+  return plain
+    .split(/[(,]/)[0]
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 /** Region sources first (their labels are the most specific), then core sources not already listed. */
 export function mergeSources(meta: RegionMeta | null): SourceLink[] {
   const out: SourceLink[] = [];
   const seen = new Set<string>();
   for (const s of [...(meta?.sources ?? []), ...CORE_SOURCES]) {
-    if (seen.has(s.url)) continue;
-    seen.add(s.url);
+    const keys = [urlKey(s.url), titleKey(s.label)];
+    if (keys.some((k) => seen.has(k))) continue;
+    for (const k of keys) seen.add(k);
     out.push(s);
   }
   return out;

@@ -1,7 +1,7 @@
 {
  "id": "malapert",
  "name": "Malapert Massif",
- "description": "41 x 41 km around the Malapert Massif (Artemis candidate region): a ~5 km high mountain whose summit faces the Earth and sees far more sunlight than the surrounding lowlands, while slopes behind it lose the Earth entirely.",
+ "description": "41 x 41 km around the Malapert Massif (Artemis candidate region): its summit, ~5 km above the lunar datum, faces the Earth and sees far more sunlight than the surrounding lowlands, while slopes behind it lose the Earth entirely.",
  "center": {
   "lat": -85.99478468356075,
   "lon": -0.23578376987660477,
@@ -11711,8 +11711,16 @@
    "url": "https://ntrs.nasa.gov/api/citations/20230007818/downloads/ACD-50044%20Lunar%20Surface%20Data%20Book%20Rev%20A.pdf"
   },
   {
-   "label": "Glaser et al. 2018, illumination near Shackleton (site coordinates)",
-   "url": "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf"
+   "label": "Gläser et al. 2018, illumination near Shackleton (site coordinates)",
+   "url": "https://ntrs.nasa.gov/citations/20170007365"
+  },
+  {
+   "label": "NASA: update on Artemis III Moon landing regions (Oct 2024)",
+   "url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  },
+  {
+   "label": "NASA CLPS deliveries (Blue Moon MK1 target)",
+   "url": "https://science.nasa.gov/lunar-science/clps-deliveries/"
   },
   {
    "label": "JPL Horizons (ephemeris validation)",

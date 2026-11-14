@@ -73,7 +73,7 @@ describe("region runtime", () => {
     expect(Math.max(...tl.sunFraction)).toBe(0);
   });
 
-  test("Connecting Ridge C1 at 2 m: long-run illumination near Glaser 2018 (88 %)", () => {
+  test("Connecting Ridge C1 at 2 m: long-run illumination near Gläser 2018 (88 %)", () => {
     const tl = timeline(
       shackleton,
       { siteId: "c1", mastHeight: 2 },

@@ -30,13 +30,15 @@ function VisRow({
   vis: number | undefined;
 }) {
   const up = vis !== undefined && vis > 0;
+  // Near the horizon one decimal makes "Sun 1.5° · terrain 1.5° · 50% visible" look contradictory.
+  const digits = elev !== undefined && horizon !== undefined && Math.abs(elev - horizon) < 0.3 ? 2 : 1;
   return (
     <div className="flex items-center gap-3">
       <span className={cn("w-11 shrink-0 text-xs", tone === "sun" ? "text-sun" : "text-earth")}>{label}</span>
       <span className="tabular min-w-0 flex-1 truncate text-fg-muted text-xs">
-        <span className="text-fg">{deg(elev)}</span>
+        <span className="text-fg">{deg(elev, digits)}</span>
         <span className="text-fg-faint"> · terrain </span>
-        {deg(horizon)}
+        {deg(horizon, digits)}
       </span>
       <Badge tone={vis === undefined ? "neutral" : up ? tone : "night"} className="tabular">
         {vis === undefined ? DASH : up ? `${pct(vis)}% visible` : "hidden"}
@@ -126,7 +128,22 @@ export function LanderDetails({ id, siteName }: { id: LanderId; siteName?: strin
         aside={<span className="tabular text-2xs text-fg-faint">{`${windowDays} d from ${start}`}</span>}
       >
         <div className={cn("grid grid-cols-2 gap-x-4 gap-y-2.5 transition-opacity duration-200", !a && "opacity-60")}>
-          <Stat size="sm" label="Sunlight" value={pct(a?.sunMean)} unit="%" tone="sun" hint="mean visible Sun disc" />
+          <Stat
+            size="sm"
+            label="Average sunlight"
+            value={pct(a?.sunMean)}
+            unit="%"
+            tone="sun"
+            hint="mean visible share of the Sun's disc"
+          />
+          <Stat
+            size="sm"
+            label="Sun visible"
+            value={pct(a?.sunAny)}
+            unit="% of time"
+            tone="sun"
+            hint="any part of the Sun in view"
+          />
           <Stat
             size="sm"
             label="Earth contact"
@@ -153,7 +170,6 @@ export function LanderDetails({ id, siteName }: { id: LanderId; siteName?: strin
           />
           <Stat
             size="sm"
-            className="col-span-2"
             label="Survives the window"
             value={!a ? DASH : a.power.depletedAt === null ? "Yes" : "No"}
             tone={!a ? "neutral" : a.power.depletedAt === null ? "ok" : "danger"}
@@ -192,11 +208,11 @@ export function LanderDetails({ id, siteName }: { id: LanderId; siteName?: strin
             Earth {pct(a?.earthMean)}% ≥ {CRITERIA.minEarth * 100}%
           </Chip>
           <Chip pass={s?.sun}>
-            Sun {pct(a?.sunMean)}% ≥ {CRITERIA.minSun * 100}%
+            Sun {pct(a?.sunAny)}% ≥ {CRITERIA.minSun * 100}%
           </Chip>
         </div>
-        <div className="mt-2 flex items-center justify-between gap-2 text-2xs text-fg-faint">
-          <span>NASA landing-site screening criteria</span>
+        <div className="mt-2 flex items-start justify-between gap-2 text-2xs text-fg-faint leading-4">
+          <span>Thresholds from NASA Artemis III site screening (applied to this window)</span>
           <SourceLink href={CRITERIA_SOURCE} />
         </div>
       </Section>

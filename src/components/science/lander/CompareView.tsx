@@ -16,11 +16,18 @@ interface Metric {
 
 const METRICS: Metric[] = [
   {
-    label: "Sunlight",
+    label: "Average sunlight",
     unit: "%",
     digits: 0,
     better: "high",
     get: (p) => p.sunMean * 100,
+  },
+  {
+    label: "Sun visible",
+    unit: "% time",
+    digits: 0,
+    better: "high",
+    get: (p) => p.sunAny * 100,
   },
   {
     label: "Earth contact",

@@ -53,23 +53,43 @@ export function Timeline() {
   const hasLander = useApp((s) => s.landers[s.activeLander] !== undefined);
   const analysis = usePointAnalysis(activeLander);
 
-  // Space toggles playback anywhere except where Space types or activates something itself.
+  // Space toggles playback. Text fields and open popups keep Space; keyboard-focused controls keep
+  // their native activation; a control that merely holds focus from a mouse click does not.
   useEffect(() => {
+    let pointerFocus = false;
+    const onPointerDown = () => {
+      pointerFocus = true;
+    };
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = e.target instanceof Element ? e.target : null;
+      if (e.code !== "Space") {
+        // any navigation key (Tab, arrows…) means the user is on the keyboard now
+        if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) pointerFocus = false;
+        return;
+      }
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target instanceof HTMLElement ? e.target : null;
       if (
         el?.closest(
-          'input, textarea, select, button, a[href], [contenteditable=""], [contenteditable="true"], [role="button"], [role="option"], [role="menuitem"], [role="switch"], [role="checkbox"], [role="textbox"], [role="combobox"]',
+          'input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="textbox"], [role="combobox"], [role="option"], [role="menuitem"], [role="listbox"], [role="menu"]',
         )
       ) {
         return;
       }
+      const control = el?.closest<HTMLElement>(
+        'button, a[href], [role="button"], [role="switch"], [role="checkbox"], [role="radio"], [role="tab"]',
+      );
+      if (control && !pointerFocus && control.matches(":focus-visible")) return;
       e.preventDefault();
+      // drop pointer focus so the keyup does not activate the clicked control
+      control?.blur();
       togglePlay();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("keydown", onKey, true);
+    };
   }, []);
 
   const changeWindow = (v: string) => {
@@ -87,6 +107,10 @@ export function Timeline() {
     <Panel
       aria-label="Timeline"
       className="mx-auto flex w-full max-w-[1100px] flex-col gap-2 rounded-2xl px-4 pt-2.5 pb-3"
+      onClick={(e) => {
+        // mouse/touch clicks (detail > 0) should not leave a button holding focus for Space
+        if (e.detail > 0 && e.target instanceof Element) e.target.closest("button")?.blur();
+      }}
     >
       <div className="flex items-center gap-3">
         <IconButton

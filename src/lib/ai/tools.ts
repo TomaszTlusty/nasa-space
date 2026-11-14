@@ -23,27 +23,28 @@ export interface WindowInfo {
   days: number;
 }
 
+/**
+ * A place, described the way users know it: curated site name and/or selenographic lat/lon.
+ * Local region-frame metres are deliberately never exposed to the model.
+ */
 export interface PlaceRef {
   siteId?: string;
   siteName?: string;
-  /** region local frame, metres (rounded to 10 m) */
-  xM: number;
-  yM: number;
+  /** degrees, 3 dp (south negative, lon east) */
+  lat: number;
+  lon: number;
 }
 
 /** Compact, rounded summary of one `PointAnalysis` (no time series). */
 export interface PointSummary {
-  where: PlaceRef & {
-    lat: number;
-    lon: number;
-    elevationM: number;
-    slopeDeg: number;
-  };
+  where: PlaceRef & { elevationM: number; slopeDeg: number };
   window: WindowInfo;
-  /** mean visible Sun disc over the window, % */
-  sunPct: number;
+  /** average share of the Sun's disc above the horizon over the window, % (solar energy proxy) */
+  avgSunlightPct: number;
+  /** share of the window with any part of the Sun above the horizon, % */
+  sunVisibleTimePct: number;
   /** share of the window with any part of Earth visible, % */
-  earthPct: number;
+  earthVisibleTimePct: number;
   longestDarkHours: number;
   longestNoEarthHours: number;
   sunUpAtLanding: boolean;
@@ -85,7 +86,7 @@ export interface ContextOutput {
     source: string;
   };
   landers: { A: PlaceRef | null; B: PlaceRef | null };
-  sites: { id: string; name: string; kind: string; xM: number; yM: number }[];
+  sites: (PlaceRef & { kind: string })[];
   discovery: {
     criteria: { maxSlopeDeg: number; minSunPct: number; minEarthPct: number };
     resultCount: number;
@@ -109,12 +110,11 @@ export interface DiscoveryOutput {
   resultCount: number;
   top: {
     rank: number;
-    xM: number;
-    yM: number;
     lat: number;
     lon: number;
-    sunPct: number;
-    earthPct: number;
+    /** average share of the Sun's disc visible over the window, % */
+    avgSunlightPct: number;
+    earthVisibleTimePct: number;
     slopeDeg: number;
     longestDarkHours: number;
   }[];
@@ -123,7 +123,7 @@ export interface DiscoveryOutput {
 
 export interface PlaceOutput {
   lander: "A" | "B";
-  /** short human label, e.g. "Site #1" or "Connecting Ridge CR1" */
+  /** short human label, e.g. "Site #1", "Connecting Ridge CR1" or "−89.450°, −137.300°" */
   label: string;
   placedAt: PlaceRef;
   analysis: PointSummary;
@@ -141,8 +141,9 @@ export interface CompareOutput {
   A: PointSummary;
   B: PointSummary;
   better: {
-    sun: Winner;
-    earth: Winner;
+    avgSunlight: Winner;
+    sunVisibleTime: Winner;
+    earthVisibleTime: Winner;
     shorterLongestDark: Winner;
     battery: Winner;
   };
@@ -177,30 +178,34 @@ export const missionTools = {
       "Search every terrain grid point of the region over the current window for spots meeting all criteria. Returns the best results (rank 1 = best).",
     inputSchema: z.object({
       maxSlopeDeg: z.number().min(0).max(45).describe("Maximum ground slope, degrees"),
-      minSunPct: z.number().min(0).max(100).describe("Minimum mean sunlight over the window, %"),
+      minSunPct: z
+        .number()
+        .min(0)
+        .max(100)
+        .describe("Minimum average sunlight (share of the Sun's disc visible, averaged over the window), %"),
       minEarthPct: z.number().min(0).max(100).describe("Minimum share of the window with Earth in view, %"),
     }),
     outputSchema: z.custom<DiscoveryOutput>(),
   }),
   analyze_point: tool({
     description:
-      "Analyse one spot over the current window without placing a lander: sunlight, Earth visibility, longest darkness, battery. Give either siteId (from get_context) or x and y (metres, region frame).",
+      "Analyse one spot over the current window without placing a lander: sunlight, Earth visibility, longest darkness, battery. Give either siteId (from get_context) or lat and lon (degrees).",
     inputSchema: z.object({
       siteId: z.string().optional(),
-      x: z.number().optional(),
-      y: z.number().optional(),
+      lat: z.number().min(-90).max(-80).optional(),
+      lon: z.number().min(-180).max(360).optional(),
     }),
     outputSchema: z.custom<AnalyzeOutput>(),
   }),
   place_lander: tool({
     description:
-      "Place lander A or B in the 3D scene and analyse it. Give exactly one of: siteId (curated site), resultRank (rank from the last discovery search), or x and y (metres, region frame).",
+      "Place lander A or B in the 3D scene and analyse it. Give exactly one of: siteId (curated site), resultRank (rank from the last discovery search), or lat and lon (degrees).",
     inputSchema: z.object({
       lander: z.enum(["A", "B"]),
       siteId: z.string().optional(),
       resultRank: z.number().int().min(1).optional(),
-      x: z.number().optional(),
-      y: z.number().optional(),
+      lat: z.number().min(-90).max(-80).optional(),
+      lon: z.number().min(-180).max(360).optional(),
     }),
     outputSchema: z.custom<PlaceOutput>(),
   }),

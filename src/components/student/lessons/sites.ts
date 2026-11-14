@@ -30,7 +30,7 @@ export function findCraterFloor(meta: RegionMeta): RegionSite | null {
 }
 
 export function findCraterRim(meta: RegionMeta): RegionSite | null {
-  return findSite(meta, ["site04", "rim-s"], (s) => /rim/i.test(s.name));
+  return findSite(meta, ["rim-s", "site04"], (s) => /rim/i.test(s.name));
 }
 
 export function placeAtSite(id: LanderId, site: RegionSite): void {

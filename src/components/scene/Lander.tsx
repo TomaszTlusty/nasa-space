@@ -127,8 +127,8 @@ export function Lander({ id, position, earthDir, sunVis, earthVis, scale, showLa
           >
             <span className="size-1.5 rounded-full" style={{ background: color }} />
             {id}
-            <span className={sunVis > 0.001 ? "text-sun" : "text-fg-faint"}>☀ {Math.round(sunVis * 100)}%</span>
-            <span className={linked ? "text-earth" : "text-danger"}>{linked ? "◉ link" : "◌ no link"}</span>
+            <span className={sunVis > 0.001 ? "text-sun" : "text-fg-faint"}>Sun {Math.round(sunVis * 100)}%</span>
+            <span className={linked ? "text-earth" : "text-danger"}>{linked ? "Earth link" : "No link"}</span>
           </div>
         </Html>
       )}

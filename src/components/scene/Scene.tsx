@@ -1,12 +1,13 @@
 "use client";
 
 import { OrbitControls } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { altAzAtLocalPoint, bodyVectorRegionFromEphemeris, moonEphemeris } from "@/lib/moon/ephemeris";
-import { discVisibleFraction, horizonAt, type LoadedRegion } from "@/lib/moon/horizon";
+import { liveAt } from "@/lib/analysis";
+import { bodyVectorRegionFromEphemeris, moonEphemeris } from "@/lib/moon/ephemeris";
+import type { LoadedRegion } from "@/lib/moon/horizon";
 import { type LanderId, type LanderPlacement, useApp } from "@/lib/store";
 import { heightAt, sceneY } from "@/lib/terrain";
 import { useRegion } from "@/lib/use-region";
@@ -19,26 +20,7 @@ import { type SkyState, Terrain } from "./Terrain";
 
 const ORBIT_LANDER_SCALE = 0.06; // km per model metre: ~60x so the lander reads at regional zoom
 const FP_EYE_M = 2; // first-person camera height above terrain (mast height in the spec)
-
-export interface LanderLive {
-  sunVis: number;
-  earthVis: number;
-  sunElev: number;
-  earthElev: number;
-}
-
-/** Instantaneous Sun/Earth visibility at a local point, from the same horizon data the shader uses. */
-export function liveVisibility(region: LoadedRegion, sky: SkyState, x: number, y: number): LanderLive {
-  const { meta } = region;
-  const s = altAzAtLocalPoint([sky.sun.x, sky.sun.y, sky.sun.z], x, y, meta);
-  const e = altAzAtLocalPoint([sky.earth.x, sky.earth.y, sky.earth.z], x, y, meta);
-  return {
-    sunVis: discVisibleFraction(s.elevationDeg, horizonAt(region, x, y, s.gridAzimuthDeg), sky.sunRadiusDeg),
-    earthVis: discVisibleFraction(e.elevationDeg, horizonAt(region, x, y, e.gridAzimuthDeg), sky.earthRadiusDeg),
-    sunElev: s.elevationDeg,
-    earthElev: e.elevationDeg,
-  };
-}
+const FLY_SECONDS = 0.9;
 
 export function useSky(region: LoadedRegion | null, time: number): SkyState | null {
   return useMemo(() => {
@@ -95,6 +77,36 @@ function CameraRig({
     c.update();
   }, [firstPerson, lander, region, centerHeight, camera]);
 
+  // Fly-to requests (lessons, discovery results): keep the current viewing direction, move to `distanceKm`.
+  const focus = useApp((s) => s.focus);
+  const fly = useRef<{
+    fromPos: THREE.Vector3;
+    fromTarget: THREE.Vector3;
+    toPos: THREE.Vector3;
+    toTarget: THREE.Vector3;
+    t: number;
+  } | null>(null);
+  useEffect(() => {
+    const c = controls.current;
+    if (!focus || firstPerson || !c) return;
+    const h = heightAt(region.meta, region.heights, focus.x, focus.y);
+    const toTarget = new THREE.Vector3(focus.x / 1000, sceneY(h, focus.x, focus.y, centerHeight), -focus.y / 1000);
+    const dir = camera.position.clone().sub(c.target).normalize();
+    const toPos = toTarget.clone().addScaledVector(dir, focus.distanceKm);
+    fly.current = { fromPos: camera.position.clone(), fromTarget: c.target.clone(), toPos, toTarget, t: 0 };
+  }, [focus, firstPerson, region, centerHeight, camera]);
+  useFrame((_, dt) => {
+    const f = fly.current;
+    const c = controls.current;
+    if (!f || !c) return;
+    f.t = Math.min(1, f.t + dt / FLY_SECONDS);
+    const k = 1 - (1 - f.t) ** 3; // ease-out cubic
+    camera.position.lerpVectors(f.fromPos, f.toPos, k);
+    c.target.lerpVectors(f.fromTarget, f.toTarget, k);
+    c.update();
+    if (f.t >= 1) fly.current = null;
+  });
+
   const ext = region.meta.extent / 1000;
   // Distinct keys: R3F would otherwise reuse one OrbitControls instance and reset removed props to 0
   // (e.g. maxDistance/rotateSpeed), freezing the camera after switching views.
@@ -136,6 +148,7 @@ function World({ region }: { region: LoadedRegion }) {
   const averageData = useApp((s) => s.averageData);
   const mastHeight = useApp((s) => s.mastHeight);
   const discoveryResults = useApp((s) => s.discovery.results);
+  const sitePinsHidden = useApp((s) => s.sitePinsHidden);
 
   const sky = useSky(region, time) as SkyState;
   const centerHeight = useMemo(() => heightAt(region.meta, region.heights, 0, 0), [region]);
@@ -150,7 +163,8 @@ function World({ region }: { region: LoadedRegion }) {
 
   const landerEntries = (Object.entries(landers) as [LanderId, LanderPlacement][]).map(([id, p]) => {
     const h = heightAt(region.meta, region.heights, p.x, p.y);
-    const live = liveVisibility(region, sky, p.x, p.y);
+    // same function the panels use (exact per-site horizon when placed on a curated site)
+    const live = liveAt(region, time, p.x, p.y, { siteId: p.siteId, mastHeight });
     return { id, p, live, pos: new THREE.Vector3(p.x / 1000, sceneY(h, p.x, p.y, centerHeight), -p.y / 1000) };
   });
 
@@ -172,12 +186,15 @@ function World({ region }: { region: LoadedRegion }) {
           if (placing) placeLander(placing, { x, y });
         }}
       />
-      <SiteMarkers
-        region={region}
-        centerHeight={centerHeight}
-        dimmed={fpLander !== null}
-        onSelect={(s) => placeLander(placing ?? activeLander, { x: s.x, y: s.y, siteId: s.id })}
-      />
+      {!sitePinsHidden && (
+        <SiteMarkers
+          region={region}
+          centerHeight={centerHeight}
+          dimmed={fpLander !== null}
+          occupied={landerEntries.map((l) => l.p)}
+          onSelect={(s) => placeLander(placing ?? activeLander, { x: s.x, y: s.y, siteId: s.id })}
+        />
+      )}
       {profile && <Skyline profile={profile} />}
       {!fpLander && <Beacons region={region} centerHeight={centerHeight} results={discoveryResults} />}
       {landerEntries

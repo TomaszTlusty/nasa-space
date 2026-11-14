@@ -77,21 +77,17 @@ export function Scrubber({
   const [isDragging, setIsDragging] = useState(false);
   const pending = useRef<number | null>(null);
   const raf = useRef(0);
-  const [hover, setHover] = useState<{
-    x: number;
-    width: number;
-    t: number;
-  } | null>(null);
+  /** hover position as a fraction of the track, so it stays correct when the window changes */
+  const [hover, setHover] = useState<{ f: number; width: number } | null>(null);
 
   const span = windowDays * DAY;
   const end = windowStart + span;
   const frac = Math.min(1, Math.max(0, (time - windowStart) / span));
   const ticks = buildTicks(windowStart, windowDays);
 
-  const timeAt = (clientX: number) => {
+  const fracAt = (clientX: number) => {
     const rect = (ref.current as HTMLDivElement).getBoundingClientRect();
-    const f = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    return { t: windowStart + f * span, x: f * rect.width, width: rect.width };
+    return { f: Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)), width: rect.width };
   };
 
   const scheduleTime = (t: number) => {
@@ -121,12 +117,12 @@ export function Scrubber({
     dragging.current = true;
     setIsDragging(true);
     setPlaying(false);
-    scheduleTime(timeAt(e.clientX).t);
+    scheduleTime(windowStart + fracAt(e.clientX).f * span);
   };
 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    const at = timeAt(e.clientX);
-    if (dragging.current) scheduleTime(at.t);
+    const at = fracAt(e.clientX);
+    if (dragging.current) scheduleTime(windowStart + at.f * span);
     if (e.pointerType === "mouse") setHover(at);
   };
 
@@ -162,7 +158,9 @@ export function Scrubber({
     setTime(Math.min(end, Math.max(windowStart, next)));
   };
 
-  const hoverInfo = hover && describe(series, hover.t);
+  const hoverT = hover ? windowStart + hover.f * span : 0;
+  const hoverX = hover ? hover.f * hover.width : 0;
+  const hoverInfo = hover && describe(series, hoverT);
   const hourOffset = Math.round((time - windowStart) / HOUR);
 
   return (
@@ -224,15 +222,15 @@ export function Scrubber({
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-0 w-px bg-fg/30"
-          style={{ transform: `translateX(${hover.x}px)` }}
+          style={{ transform: `translateX(${hoverX}px)` }}
         >
           <div
             className="absolute bottom-full mb-2 whitespace-nowrap rounded-sm bg-surface-3 px-2.5 py-1.5 text-xs shadow-(--shadow-pop) ring-1 ring-line-strong"
             style={{
-              transform: `translateX(calc(-50% + ${Math.min(Math.max(hover.x, TOOLTIP_EDGE), hover.width - TOOLTIP_EDGE) - hover.x}px))`,
+              transform: `translateX(calc(-50% + ${hover ? Math.min(Math.max(hoverX, TOOLTIP_EDGE), hover.width - TOOLTIP_EDGE) - hoverX : 0}px))`,
             }}
           >
-            <div className="tabular text-fg">{formatUtc(hover.t)}</div>
+            <div className="tabular text-fg">{formatUtc(hoverT)}</div>
             {hoverInfo ? (
               <div className="mt-0.5 flex gap-2.5">
                 <span className="text-sun">{hoverInfo.sun}</span>
