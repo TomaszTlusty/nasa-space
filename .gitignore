@@ -21,3 +21,7 @@ data/raw/
 # misc
 .DS_Store
 *.log
+
+# presentation build output
+deck/out/
+deck/node_modules/

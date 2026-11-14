@@ -1,0 +1,38 @@
+/* Pitch slides, rendered to 1920x1080 PNG. Type and one clip per slide; no kickers, bullets, badges or page numbers. */
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1920px; height: 1080px; }
+body {
+  background: #0d0e12;
+  color: #f1f2f5;
+  font-family: "Sora", sans-serif;
+  position: relative;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1 {
+  position: absolute;
+  left: 96px;
+  top: 78px;
+  width: 1560px;
+  font-size: 64px;
+  line-height: 1.12;
+  letter-spacing: -0.022em;
+  font-weight: 500;
+  text-wrap: balance;
+}
+p {
+  position: absolute;
+  bottom: 50px;
+  width: 470px;
+  font-size: 28px;
+  line-height: 1.42;
+  color: #a4a8b4;
+  text-wrap: pretty;
+}
+p b { color: #f1f2f5; font-weight: 400; }
+/* the clip itself is placed by the PPTX builder at exactly this rectangle */
+.clip { position: absolute; top: 270px; width: 1216px; height: 760px; }
+.clip-right .clip { left: 644px; }
+.clip-right p { left: 96px; }
+.clip-left .clip { left: 60px; }
+.clip-left p { left: 1340px; width: 484px; }
