@@ -10,7 +10,7 @@
  },
  "extent": 40960,
  "terrain": {
-  "file": "heights.bin",
+  "file": "heights.bin.gz",
   "width": 513,
   "height": 513,
   "x0": -20480,
@@ -20,11 +20,11 @@
   "maxHeight": 1957.1875
  },
  "normalMap": {
-  "file": "normal.png",
+  "file": "normal.webp",
   "size": 2048
  },
  "horizon": {
-  "file": "horizon.bin",
+  "file": "horizon.bin.gz",
   "width": 257,
   "height": 257,
   "x0": -20480,

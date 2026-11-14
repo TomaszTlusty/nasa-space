@@ -9,6 +9,8 @@ import { LanderPanel } from "@/components/science/lander/LanderPanel";
 import { ScienceLeft } from "@/components/science/ScienceLeft";
 import { AppShell } from "@/components/shell/AppShell";
 import { GameOverlay, GamePanel } from "@/components/student/game";
+import { Guide } from "@/components/student/guide/Guide";
+import { LessonsPanel } from "@/components/student/lessons/LessonsPanel";
 import { Welcome } from "@/components/welcome/Welcome";
 import { useApp } from "@/lib/store";
 
@@ -30,7 +32,7 @@ export function App() {
         />
       }
       left={science ? <ScienceLeft /> : <GamePanel />}
-      right={science ? <LanderPanel /> : undefined}
+      right={science ? <LanderPanel /> : <LessonsPanel />}
       bottom={
         <div className="mx-auto flex max-w-[1180px] items-end gap-2">
           <div className="min-w-0 flex-1">
@@ -43,6 +45,7 @@ export function App() {
         <>
           {science && <ChartsDrawer />}
           <GameOverlay />
+          <Guide />
           <Welcome />
         </>
       }
