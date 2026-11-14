@@ -1,71 +1,109 @@
 "use client";
 
 import { create } from "zustand";
-import { type Overlay, useApp } from "@/lib/store";
+import { type AppSnapshot, useLessons } from "@/components/student/lessons/lesson-store";
+import { useApp } from "@/lib/store";
 import { MISSIONS, type MissionId, type MissionResult, RANKS, type Rank } from "./missions";
 
 /**
  * Game flow shared by `GamePanel` (left column) and `GameOverlay` (full-screen layer).
  *   select -> brief -> choose (45 s) -> landing (time-lapse) -> result
  *                         \-> missed (no spot picked in time)
- * Every exit from choose/landing restores the shared scene state the game borrowed:
- * camera back to orbit, playing false, placing off, site pins visible, overlay as it was before.
+ *
+ * The first mission start snapshots the player's scene (region, landers, time, window, overlay,
+ * camera, playback). Retry / next mission keep that snapshot. Leaving the game (All missions, close,
+ * cancel, leaving Student mode) puts it back exactly; "See it in Mission planning" (`keepMissionScene`)
+ * drops it so the mission lander stays for planning.
  */
 
 export type GamePhase = "select" | "brief" | "choose" | "missed" | "landing" | "result";
 
 export const CHOOSE_SECONDS = 45;
 
+/** Orbit distance (km) that frames the whole 41 km region when a mission starts. */
+const MISSION_VIEW_KM = 36;
+
 interface GameState {
   phase: GamePhase;
   missionIndex: number;
   /** `performance.now()` deadline of the choose phase */
   deadline: number;
-  /** overlay the player had before the game borrowed it for the helper map; null = nothing borrowed */
-  savedOverlay: Overlay | null;
+  /** the player's scene before the first mission start; null = nothing borrowed */
+  snapshot: AppSnapshot | null;
   /** last debrief; kept after leaving the result phase so the closing dialog keeps its content */
   result: MissionResult | null;
   /** best rank earned per mission in this session */
   best: Partial<Record<MissionId, Rank>>;
 
   openMission: (index: number) => void;
+  /** back to the mission list, restoring the player's scene */
   backToMissions: () => void;
   /** set up the mission window/region and start the 45 s countdown */
   start: () => void;
   land: () => void;
   timeUp: () => void;
   finish: (result: MissionResult) => void;
-  /** leave the game flow and give the scene back (camera orbit, playing false, overlay restored) */
+  /** cancel the running mission and restore the player's scene */
   abort: () => void;
+  /** leave the game keeping the mission scene (lander, window) instead of restoring the snapshot */
+  keepMissionScene: () => void;
 }
 
-function restoreScene(savedOverlay: Overlay | null) {
+/** Stop borrowing the scene for a live mission step: the mission lander and window stay. */
+function settleScene() {
   const app = useApp.getState();
   app.setPlaying(false);
   app.setCamera("orbit");
   app.setPlacing(null);
   app.setSitePinsHidden(false);
-  if (savedOverlay !== null) app.setOverlay(savedOverlay);
 }
 
-/** Orbit distance (km) that frames the whole 41 km region when a mission starts. */
-const MISSION_VIEW_KM = 36;
+function restoreSnapshot(snapshot: AppSnapshot | null) {
+  const app = useApp.getState();
+  app.setSitePinsHidden(false);
+  if (!snapshot) {
+    settleScene();
+    return;
+  }
+  if (app.regionId !== snapshot.regionId) app.setRegion(snapshot.regionId);
+  useApp.setState(snapshot);
+  if (snapshot.camera === "orbit") useApp.getState().resetView();
+}
 
 export const useGame = create<GameState>((set, get) => ({
   phase: "select",
   missionIndex: 0,
   deadline: 0,
-  savedOverlay: null,
+  snapshot: null,
   result: null,
   best: {},
 
   openMission: (missionIndex) => set({ missionIndex, phase: "brief" }),
-  backToMissions: () => set({ phase: "select" }),
+
+  backToMissions: () => {
+    restoreSnapshot(get().snapshot);
+    set({ phase: "select", snapshot: null });
+  },
 
   start: () => {
+    // A running lesson would restore its own snapshot over the mission later: end it first.
+    useLessons.getState().exit();
     const mission = MISSIONS[get().missionIndex];
     const app = useApp.getState();
-    const savedOverlay = get().savedOverlay ?? app.overlay;
+    const snapshot: AppSnapshot = get().snapshot ?? {
+      regionId: app.regionId,
+      time: app.time,
+      windowStart: app.windowStart,
+      windowDays: app.windowDays,
+      playing: app.playing,
+      speed: app.speed,
+      landers: app.landers,
+      activeLander: app.activeLander,
+      placing: app.placing,
+      camera: app.camera,
+      overlay: app.overlay,
+      mastHeight: app.mastHeight,
+    };
     if (app.regionId !== mission.regionId) app.setRegion(mission.regionId);
     else app.removeLander("A");
     app.setWindow(mission.start, mission.days);
@@ -75,11 +113,7 @@ export const useGame = create<GameState>((set, get) => ({
     app.setSitePinsHidden(true);
     app.focusOn(0, 0, MISSION_VIEW_KM);
     app.setPlacing("A");
-    set({
-      phase: "choose",
-      savedOverlay,
-      deadline: performance.now() + CHOOSE_SECONDS * 1000,
-    });
+    set({ phase: "choose", snapshot, deadline: performance.now() + CHOOSE_SECONDS * 1000 });
   },
 
   land: () => {
@@ -101,34 +135,37 @@ export const useGame = create<GameState>((set, get) => ({
       get().land();
       return;
     }
-    restoreScene(get().savedOverlay);
-    set({ phase: "missed", savedOverlay: null });
+    settleScene();
+    set({ phase: "missed" });
   },
 
   finish: (result) => {
     if (get().phase !== "landing") return;
-    restoreScene(get().savedOverlay);
+    settleScene();
+    const overlay = get().snapshot?.overlay;
+    if (overlay) useApp.getState().setOverlay(overlay);
     const { best } = get();
     const prev = best[result.missionId];
     const better = prev === undefined || RANKS.indexOf(result.rank) > RANKS.indexOf(prev);
-    set({
-      phase: "result",
-      result,
-      savedOverlay: null,
-      best: better ? { ...best, [result.missionId]: result.rank } : best,
-    });
+    set({ phase: "result", result, best: better ? { ...best, [result.missionId]: result.rank } : best });
   },
 
   abort: () => {
-    const { phase, savedOverlay } = get();
-    if (phase === "choose" || phase === "landing") restoreScene(savedOverlay);
-    set({ phase: phase === "select" ? "select" : "brief", savedOverlay: null });
+    restoreSnapshot(get().snapshot);
+    set({ phase: get().phase === "select" ? "select" : "brief", snapshot: null });
+  },
+
+  keepMissionScene: () => {
+    settleScene();
+    set({ phase: "select", snapshot: null });
   },
 }));
 
-// Leaving Student mode mid-game hands the scene back, whichever game component is mounted.
+// Leaving Student mode hands the player's scene back, whichever game component is mounted.
+// ("See it in Mission planning" calls keepMissionScene first, so there is no snapshot to restore.)
 useApp.subscribe((s, prev) => {
-  if (s.mode === prev.mode || s.mode === "student") return;
-  const { phase } = useGame.getState();
-  if (phase === "choose" || phase === "landing") useGame.getState().abort();
+  if (prev.mode !== "student" || s.mode === "student") return;
+  const { phase, snapshot } = useGame.getState();
+  if (snapshot) useGame.getState().abort();
+  else if (phase === "choose" || phase === "landing") settleScene();
 });

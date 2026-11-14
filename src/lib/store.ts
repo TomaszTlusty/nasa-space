@@ -89,6 +89,8 @@ interface AppState {
   averageData: Uint8Array | null;
   /** one-shot camera request: the orbit camera flies to look at (x, y); `nonce` re-triggers the same target */
   focus: { x: number; y: number; distanceKm: number; nonce: number } | null;
+  /** increments to request the default overview camera (lesson/game exit) */
+  viewHome: number;
   /** hide curated site pins (e.g. while the landing game asks the player to find a spot on their own) */
   sitePinsHidden: boolean;
 
@@ -114,6 +116,8 @@ interface AppState {
   setAverageData: (data: Uint8Array | null) => void;
   /** fly the orbit camera to a local point; distanceKm = camera distance from it */
   focusOn: (x: number, y: number, distanceKm?: number) => void;
+  /** fly the orbit camera back to the default overview of the region */
+  resetView: () => void;
   setSitePinsHidden: (hidden: boolean) => void;
 }
 
@@ -139,6 +143,7 @@ export const useApp = create<AppState>((set) => ({
   discovery: { criteria: { maxSlopeDeg: 10, minSun: 0.6, minEarth: 0.5 }, results: [], running: false },
   averageData: null,
   focus: null,
+  viewHome: 0,
   sitePinsHidden: false,
 
   setMode: (mode) => set({ mode }),
@@ -187,7 +192,8 @@ export const useApp = create<AppState>((set) => ({
     }),
   setActiveLander: (activeLander) => set({ activeLander }),
   setPlacing: (placing) => set({ placing }),
-  setCamera: (camera) => set({ camera }),
+  // a pending fly-to must not replay when returning from first-person
+  setCamera: (camera) => set({ camera, focus: null }),
   setOverlay: (overlay) => set({ overlay }),
   setMastHeight: (mastHeight) => set({ mastHeight }),
   setPower: (p) => set((s) => ({ power: { ...s.power, ...p } })),
@@ -196,6 +202,7 @@ export const useApp = create<AppState>((set) => ({
   setDiscoveryResults: (results) => set((s) => ({ discovery: { ...s.discovery, results } })),
   setDiscoveryRunning: (running) => set((s) => ({ discovery: { ...s.discovery, running } })),
   setAverageData: (averageData) => set({ averageData }),
+  resetView: () => set((s) => ({ viewHome: s.viewHome + 1, focus: null, camera: "orbit" })),
   focusOn: (x, y, distanceKm = 6) =>
     set((s) => ({ focus: { x, y, distanceKm, nonce: (s.focus?.nonce ?? 0) + 1 }, camera: "orbit" })),
   setSitePinsHidden: (sitePinsHidden) => set({ sitePinsHidden }),

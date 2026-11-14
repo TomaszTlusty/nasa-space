@@ -117,6 +117,9 @@ export const useLessons = create<LessonState>((set, get) => {
       const app = useApp.getState();
       if (app.regionId !== active.snapshot.regionId) app.setRegion(active.snapshot.regionId);
       useApp.setState(active.snapshot);
+      // The camera position itself is not in the snapshot: fly back to the region overview, unless the student
+      // was in first-person before the lesson (the snapshot already put them back there).
+      if (active.snapshot.camera === "orbit") useApp.getState().resetView();
     },
   };
 });

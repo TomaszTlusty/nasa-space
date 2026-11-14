@@ -3,15 +3,17 @@
 import {
   ArrowCounterClockwise,
   ArrowRight,
+  BatteryWarning,
   CellSignalFull,
   CellSignalSlash,
   MapTrifold,
   Medal,
   Moon,
+  RocketLaunch,
   Sun,
 } from "@phosphor-icons/react";
-import { useReducedMotion } from "motion/react";
-import { type ReactNode, useCallback, useEffect } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/overlay";
 import { Badge, Kbd, Stat } from "@/components/ui/panel";
@@ -35,6 +37,8 @@ import {
 const TIMELAPSE_MS = 10_000;
 /** With reduced motion the Sun and Earth jump in 6-hour steps instead of sweeping smoothly. */
 const REDUCED_STEP_MS = 6 * HOUR;
+/** How long the tip-over notice stays before the debrief opens. */
+const TIP_NOTICE_MS = 2_500;
 /** Analysis may sit on a nearby grid node; accept it within this distance of the lander (m). */
 const MATCH_TOLERANCE_M = 100;
 
@@ -48,16 +52,51 @@ const dateFmt = new Intl.DateTimeFormat("en-GB", {
 
 /**
  * Full-screen game layer: the landing time-lapse (first-person, ~10 s) and the debrief dialog.
- * Mount in the AppShell `overlay` slot. Renders nothing while the player picks a spot, so the
- * terrain stays clickable.
+ * Mount in the AppShell `overlay` slot. While the player picks a spot it only adds a small
+ * countdown + LAND HERE pill below lg (where the game panel is a closable sheet), so the terrain
+ * stays clickable.
  */
 export function GameOverlay() {
   const phase = useGame((s) => s.phase);
   return (
     <>
+      {phase === "choose" && <ChoosePill />}
       {phase === "landing" && <LandingSequence />}
       <Debrief />
     </>
+  );
+}
+
+/** Compact countdown and LAND HERE button for screens where the game panel can be hidden. */
+function ChoosePill() {
+  const deadline = useGame((s) => s.deadline);
+  const land = useGame((s) => s.land);
+  const placed = useApp((s) => s.landers.A !== undefined);
+  const [seconds, setSeconds] = useState(() => Math.max(0, Math.ceil((deadline - performance.now()) / 1000)));
+
+  // The time-up action itself is owned by the panel's countdown ring, which stays mounted.
+  useEffect(() => {
+    const tick = () => setSeconds(Math.max(0, Math.ceil((deadline - performance.now()) / 1000)));
+    const timer = setInterval(tick, 250);
+    return () => clearInterval(timer);
+  }, [deadline]);
+
+  return (
+    <div className="glass pointer-events-auto absolute bottom-[156px] left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 lg:hidden max-md:bottom-[224px]">
+      <span
+        role="timer"
+        aria-label={`${seconds} seconds left to pick a landing spot`}
+        className={cn("tabular text-sm", seconds <= 10 ? "text-danger" : "text-fg")}
+      >
+        {seconds}
+        <span className="text-fg-faint text-xs"> s</span>
+      </span>
+      <span className="whitespace-nowrap text-fg-muted text-xs">{placed ? "Spot picked" : "Tap the ground"}</span>
+      <Button variant="primary" size="sm" disabled={!placed} onClick={land} className="rounded-full">
+        <RocketLaunch size={14} weight="regular" />
+        LAND HERE
+      </Button>
+    </div>
   );
 }
 
@@ -79,6 +118,7 @@ function LandingSequence() {
     analysis.series.start === mission.start &&
     (analysis.series.sunFraction.length - 1) * analysis.series.stepMinutes * 60_000 >= end - mission.start;
   const current = ready ? analysis : null;
+  const tipped = current !== null && current.slopeDeg > MAX_SLOPE_DEG;
 
   // Lander removed (e.g. region switched) mid-sequence: nothing left to land.
   useEffect(() => {
@@ -87,6 +127,11 @@ function LandingSequence() {
 
   useEffect(() => {
     if (!current) return;
+    // A tipped lander never deploys: no time-lapse, just the notice, then the debrief.
+    if (current.slopeDeg > MAX_SLOPE_DEG) {
+      const timer = setTimeout(() => finish(scoreMission(mission, current)), TIP_NOTICE_MS);
+      return () => clearTimeout(timer);
+    }
     const { setTime } = useApp.getState();
     const span = end - mission.start;
     const t0 = performance.now();
@@ -108,7 +153,7 @@ function LandingSequence() {
 
   const skip = useCallback(() => {
     if (!current) return;
-    useApp.getState().setTime(end);
+    if (current.slopeDeg <= MAX_SLOPE_DEG) useApp.getState().setTime(end);
     finish(scoreMission(mission, current));
   }, [current, mission, end, finish]);
 
@@ -120,7 +165,101 @@ function LandingSequence() {
     return () => window.removeEventListener("keydown", onKey);
   }, [skip]);
 
-  return <LandingHud mission={mission} analysis={current} onSkip={skip} />;
+  // Below xl the side panels would sit under the readout: the landing layer owns the screen there.
+  return (
+    <div className="pointer-events-none absolute inset-0 z-30 max-xl:pointer-events-auto max-xl:bg-canvas/55">
+      {tipped && current ? (
+        <TippedNotice mission={mission} slopeDeg={current.slopeDeg} reducedMotion={reducedMotion} onSkip={skip} />
+      ) : (
+        <LandingHud mission={mission} analysis={current} onSkip={skip} />
+      )}
+    </div>
+  );
+}
+
+const hudCard =
+  "glass pointer-events-auto absolute top-[84px] left-1/2 w-[min(540px,calc(100vw-1.5rem))] -translate-x-1/2 rounded-2xl p-4 max-md:top-[120px]";
+
+function SkipButton({ onSkip, disabled }: { onSkip: () => void; disabled?: boolean }) {
+  return (
+    <Button variant="ghost" size="sm" onClick={onSkip} disabled={disabled} className="shrink-0">
+      <span className="max-sm:hidden">Skip to results</span>
+      <span className="sm:hidden">Skip</span>
+      <Kbd className="max-sm:hidden">Esc</Kbd>
+    </Button>
+  );
+}
+
+/** Side-on lander outline (body, mast, legs) for the tip-over notice. */
+function LanderGlyph() {
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      className="size-full"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden="true"
+    >
+      <rect x="12" y="12" width="16" height="14" rx="2" />
+      <path d="M20 12V5M17 5h6M12 26l-5 9M28 26l5 9M4 35h6M30 35h6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TippedNotice({
+  mission,
+  slopeDeg,
+  reducedMotion,
+  onSkip,
+}: {
+  mission: Mission;
+  slopeDeg: number;
+  reducedMotion: boolean;
+  onSkip: () => void;
+}) {
+  const tilted = { transform: "rotate(78deg)" };
+  return (
+    <section aria-label="Landing result" className={hudCard}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="eyebrow min-w-0 truncate">Mission · {mission.title}</div>
+        <SkipButton onSkip={onSkip} />
+      </div>
+      <div className="mt-3 flex items-center gap-4" role="alert">
+        <div className="flex size-16 shrink-0 items-end justify-center border-line-strong border-b pb-px text-danger">
+          <motion.div
+            className="size-12 origin-[85%_100%]"
+            initial={reducedMotion ? tilted : { transform: "rotate(0deg)" }}
+            animate={tilted}
+            transition={{ duration: 0.6, delay: 0.25, ease: [0.77, 0, 0.175, 1] }}
+          >
+            <LanderGlyph />
+          </motion.div>
+        </div>
+        <div className="min-w-0">
+          <div className="font-medium text-danger text-lg">Tipped over!</div>
+          <p className="text-fg-muted text-sm">
+            The ground here tilts <span className="tabular">{Math.round(slopeDeg)}°</span>, steeper than the{" "}
+            <span className="tabular">{MAX_SLOPE_DEG}°</span> safe limit. The lander fell on its side as it touched
+            down.
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+        <Cell
+          label="Battery"
+          icon={<BatteryWarning size={18} weight="regular" className="text-danger" />}
+          value="Not deployed"
+        />
+        <Cell
+          label="Solar panels"
+          icon={<Sun size={18} weight="regular" className="text-fg-faint" />}
+          value="Facing the ground"
+        />
+      </div>
+      <p className="mt-3 text-fg-faint text-xs">Mission report coming up…</p>
+    </section>
+  );
 }
 
 function LandingHud({
@@ -155,7 +294,7 @@ function LandingHud({
   const day = Math.min(mission.days, Math.floor(progress * mission.days) + 1);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-30">
+    <>
       {/* Edges dim while the lander sits in shadow. */}
       <div
         aria-hidden="true"
@@ -164,21 +303,16 @@ function LandingHud({
           sunUp === false ? "opacity-100" : "opacity-0",
         )}
       />
-      <section
-        aria-label="Landing time-lapse"
-        className="glass pointer-events-auto absolute top-[84px] left-1/2 w-[min(540px,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl p-4"
-      >
+      <section aria-label="Landing time-lapse" className={hudCard}>
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="eyebrow">Mission · {mission.title}</div>
+            <div className="eyebrow truncate">Mission · {mission.title}</div>
             <div className="tabular mt-0.5 text-fg text-sm">
               Day {day} of {mission.days}
               <span className="ml-2 text-fg-faint">{dateFmt.format(time)} UTC</span>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onSkip} disabled={!analysis}>
-            Skip to results <Kbd>Esc</Kbd>
-          </Button>
+          <SkipButton onSkip={onSkip} disabled={!analysis} />
         </div>
 
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/6" aria-hidden="true">
@@ -187,12 +321,6 @@ function LandingHud({
 
         {analysis ? (
           <>
-            {analysis.slopeDeg > MAX_SLOPE_DEG && (
-              <p className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-danger text-xs ring-1 ring-danger/30">
-                Touchdown on a <span className="tabular">{Math.round(analysis.slopeDeg)}°</span> slope: the lander
-                tipped over. Watch what it would have seen standing upright.
-              </p>
-            )}
             <div className="mt-4">
               <div className="flex items-baseline justify-between">
                 <span className="eyebrow">Battery</span>
@@ -227,7 +355,7 @@ function LandingHud({
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
               <Cell
                 label="Sunlight"
                 icon={
@@ -268,21 +396,25 @@ function LandingHud({
           </p>
         )}
       </section>
-    </div>
+    </>
   );
 }
 
+/** Readout tile: stacked on wide screens, one compact row (label left, value right) on phones. */
 function Cell({ label, icon, value, hint }: { label: string; icon: ReactNode; value: string; hint?: string }) {
   return (
-    <div className="min-w-0 rounded-lg bg-white/3 px-3 py-2.5 ring-1 ring-line">
-      <div className="eyebrow truncate">{label}</div>
-      <div className="mt-1 flex items-center gap-2 text-fg text-sm">
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-lg bg-white/3 px-3 py-2 ring-1 ring-line sm:block sm:py-2.5">
+      <div className="min-w-0">
+        <div className="eyebrow">{label}</div>
+        {hint && <div className="text-2xs text-fg-faint sm:hidden">{hint}</div>}
+      </div>
+      <div className="flex shrink-0 items-center gap-2 text-fg text-sm sm:mt-1">
         <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
           {icon}
         </span>
-        <span className="truncate">{value}</span>
+        <span>{value}</span>
       </div>
-      {hint && <div className="mt-0.5 truncate text-2xs text-fg-faint">{hint}</div>}
+      {hint && <div className="mt-0.5 text-2xs text-fg-faint max-sm:hidden">{hint}</div>}
     </div>
   );
 }
@@ -307,6 +439,7 @@ function Debrief() {
   const start = useGame((s) => s.start);
   const openMission = useGame((s) => s.openMission);
   const back = useGame((s) => s.backToMissions);
+  const keepMissionScene = useGame((s) => s.keepMissionScene);
   const setMode = useApp((s) => s.setMode);
   if (!result) return null;
 
@@ -431,7 +564,8 @@ function Debrief() {
           )}
         </p>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Actions stay pinned to the dialog's bottom edge while the report scrolls on small screens. */}
+        <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap gap-2 border-line border-t bg-surface px-5 py-3">
           <Button variant={passed ? "secondary" : "primary"} onClick={start}>
             <ArrowCounterClockwise size={16} weight="regular" />
             Retry
@@ -446,7 +580,7 @@ function Debrief() {
           <Button
             variant="ghost"
             onClick={() => {
-              back();
+              keepMissionScene();
               setMode("science");
             }}
           >

@@ -194,13 +194,13 @@ function AverageMapBody() {
       <Readout
         items={[
           {
-            label: "Map lit > half the time",
+            label: "Mostly sunny ground",
             value: shares ? pct(shares.sunny) : null,
             unit: "%",
             tone: "sun",
           },
           {
-            label: "Map lit < 2% of the time",
+            label: "Almost always dark",
             value: shares ? pct(shares.dark) : null,
             unit: "%",
             tone: "night",
@@ -505,8 +505,8 @@ function SurviveBody() {
 const NO_RIDGE = "This map has no ridge site in its data, so LUNA-Bot skipped placing lander A.";
 const NO_FLOOR = "This map has no crater-floor site in its data, so LUNA-Bot skipped placing lander B.";
 
-/** Common start of a lesson step: paused, seen from orbit, 30-day window. */
-function resetView(overlay: "none" | "instant" | "average") {
+/** Common start of a lesson: paused, no landers, seen from orbit, 30-day window. */
+function clearScene(overlay: "none" | "instant" | "average") {
   const app = useApp.getState();
   app.setPlaying(false);
   app.setWindow(app.windowStart, MONTH);
@@ -528,7 +528,7 @@ export const LESSONS: Lesson[] = [
         Body: RimBody,
         source: SOURCES.svs4944,
         apply: async ({ region, isCurrent }) => {
-          resetView("instant");
+          clearScene("instant");
           const rim = findCraterRim(region.meta);
           if (!rim) return "This map has no crater-rim site in its data, so LUNA-Bot kept the current time.";
           placeAtSite("A", rim);
@@ -588,7 +588,9 @@ export const LESSONS: Lesson[] = [
         Body: AverageMapBody,
         source: SOURCES.glaser2018,
         apply: () => {
-          resetView("average");
+          clearScene("average");
+          // The whole region at once: the heatmap only makes sense with the big picture to orient by.
+          useApp.getState().resetView();
           return null;
         },
       },
@@ -629,7 +631,7 @@ export const LESSONS: Lesson[] = [
         Body: FindEarthBody,
         source: SOURCES.amt2023,
         apply: async ({ region, isCurrent }) => {
-          resetView("none");
+          clearScene("none");
           const site = findRidge(region.meta) ?? region.meta.sites[0];
           if (!site) return "This map has no landing sites in its data, so the first-person view was skipped.";
           placeAtSite("A", site);
@@ -684,7 +686,7 @@ export const LESSONS: Lesson[] = [
         Body: NeighboursBody,
         source: SOURCES.lola,
         apply: ({ region }) => {
-          resetView("none");
+          clearScene("none");
           const ridge = findRidge(region.meta);
           if (!ridge) return NO_RIDGE;
           placeAtSite("A", ridge);

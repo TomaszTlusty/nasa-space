@@ -18,9 +18,10 @@ const GAP_MS = 900;
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 /**
- * LUNA-Bot, the Student-mode guide: a small avatar floating above the bottom-right of the scene with a
- * speech bubble that reacts to what happens on the Moon, plus an "Ask a question" chat expander.
- * Mount once in the AppShell `overlay` slot; it positions itself and renders nothing outside Student mode.
+ * LUNA-Bot, the Student-mode guide: a small avatar floating above the timeline (bottom-left on phones, beside the
+ * right column from md up) with a speech bubble that reacts to what happens on the Moon, plus an "Ask a question"
+ * chat expander. Mount once in the AppShell `overlay` slot; it sits at z-10, below the mobile sheets (z-20), and
+ * renders nothing outside Student mode.
  */
 export function Guide() {
   const mode = useApp((s) => s.mode);
@@ -68,7 +69,7 @@ function GuideDock() {
   }
 
   return (
-    <div className="pointer-events-none absolute right-3 bottom-[156px] z-20 flex flex-col items-end gap-2 md:right-[384px]">
+    <div className="pointer-events-none absolute bottom-[156px] left-3 z-10 flex flex-col items-start gap-2 md:right-[384px] md:left-auto md:items-end">
       <AnimatePresence>
         {showBubble && (
           <motion.section
@@ -88,7 +89,7 @@ function GuideDock() {
             transition={{ duration: 0.2, ease: EASE_OUT }}
             onPointerMove={() => setHovered(true)}
             onPointerLeave={() => setHovered(false)}
-            className="glass pointer-events-auto flex max-h-[calc(100dvh-240px)] w-[320px] max-w-[calc(100vw-24px)] origin-bottom-right flex-col overflow-hidden rounded-xl"
+            className="glass pointer-events-auto flex max-h-[calc(100dvh-240px)] w-[320px] max-w-[calc(100vw-1.5rem)] origin-bottom-left flex-col overflow-hidden rounded-xl md:origin-bottom-right"
           >
             <header className="flex items-center justify-between gap-2 py-1.5 pr-1.5 pl-3.5">
               <span className="eyebrow">LUNA-Bot</span>

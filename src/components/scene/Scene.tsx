@@ -91,10 +91,27 @@ function CameraRig({
     if (!focus || firstPerson || !c) return;
     const h = heightAt(region.meta, region.heights, focus.x, focus.y);
     const toTarget = new THREE.Vector3(focus.x / 1000, sceneY(h, focus.x, focus.y, centerHeight), -focus.y / 1000);
+    // keep the current heading but look down at least ~35°, so a fly-to after first-person never ends at ground level
     const dir = camera.position.clone().sub(c.target).normalize();
+    const horiz = Math.hypot(dir.x, dir.z) || 1;
+    if (dir.y < 0.57) dir.set((dir.x / horiz) * 0.82, 0.57, (dir.z / horiz) * 0.82).normalize();
     const toPos = toTarget.clone().addScaledVector(dir, focus.distanceKm);
     fly.current = { fromPos: camera.position.clone(), fromTarget: c.target.clone(), toPos, toTarget, t: 0 };
   }, [focus, firstPerson, region, centerHeight, camera]);
+
+  const viewHome = useApp((s) => s.viewHome);
+  useEffect(() => {
+    const c = controls.current;
+    if (viewHome === 0 || firstPerson || !c) return;
+    const ext = region.meta.extent / 1000;
+    fly.current = {
+      fromPos: camera.position.clone(),
+      fromTarget: c.target.clone(),
+      toPos: new THREE.Vector3(-ext * 0.55, ext * 0.42, ext * 0.62),
+      toTarget: new THREE.Vector3(0, -ext * 0.03, 0),
+      t: 0,
+    };
+  }, [viewHome, firstPerson, region, camera]);
   useFrame((_, dt) => {
     const f = fly.current;
     const c = controls.current;
