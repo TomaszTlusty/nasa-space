@@ -179,3 +179,13 @@ export const useApp = create<AppState>((set) => ({
   setDiscoveryRunning: (running) => set((s) => ({ discovery: { ...s.discovery, running } })),
   setAverageData: (averageData) => set({ averageData }),
 }));
+
+// Dev/QA handle: lets browser automation drive the app state (window.__app.getState()).
+declare global {
+  interface Window {
+    __app?: typeof useApp;
+  }
+}
+if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+  window.__app = useApp;
+}

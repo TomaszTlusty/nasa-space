@@ -11,7 +11,9 @@ import { type LanderId, type LanderPlacement, useApp } from "@/lib/store";
 import { heightAt, sceneY } from "@/lib/terrain";
 import { useRegion } from "@/lib/use-region";
 import { Lander } from "./Lander";
+import { SiteMarkers } from "./SiteMarkers";
 import { Sky } from "./Sky";
+import { landerHorizonProfile, Skyline } from "./Skyline";
 import { type SkyState, Terrain } from "./Terrain";
 
 const ORBIT_LANDER_SCALE = 0.06; // km per model metre: ~60x so the lander reads at regional zoom
@@ -127,6 +129,7 @@ function World({ region }: { region: LoadedRegion }) {
   const placeLander = useApp((s) => s.placeLander);
   const setActiveLander = useApp((s) => s.setActiveLander);
   const averageData = useApp((s) => s.averageData);
+  const mastHeight = useApp((s) => s.mastHeight);
 
   const sky = useSky(region, time) as SkyState;
   const centerHeight = useMemo(() => heightAt(region.meta, region.heights, 0, 0), [region]);
@@ -134,6 +137,10 @@ function World({ region }: { region: LoadedRegion }) {
   const sunThree = useMemo(() => new THREE.Vector3(sky.sun.x, sky.sun.z, -sky.sun.y), [sky]);
 
   const fpLander = camera === "lander" ? (landers[activeLander] ?? null) : null;
+  const profile = useMemo(
+    () => (fpLander ? landerHorizonProfile(region, fpLander, mastHeight) : null),
+    [region, fpLander, mastHeight],
+  );
 
   const landerEntries = (Object.entries(landers) as [LanderId, LanderPlacement][]).map(([id, p]) => {
     const h = heightAt(region.meta, region.heights, p.x, p.y);
@@ -159,7 +166,16 @@ function World({ region }: { region: LoadedRegion }) {
           if (placing) placeLander(placing, { x, y });
         }}
       />
-      {landerEntries.map((l) => (
+      <SiteMarkers
+        region={region}
+        centerHeight={centerHeight}
+        dimmed={fpLander !== null}
+        onSelect={(s) => placeLander(placing ?? activeLander, { x: s.x, y: s.y, siteId: s.id })}
+      />
+      {profile && <Skyline profile={profile} />}
+      {landerEntries
+        .filter((l) => !(fpLander && l.id === activeLander))
+        .map((l) => (
         <Lander
           key={l.id}
           id={l.id}
@@ -172,7 +188,7 @@ function World({ region }: { region: LoadedRegion }) {
           active={l.id === activeLander}
           onSelect={() => setActiveLander(l.id)}
         />
-      ))}
+        ))}
       <CameraRig region={region} centerHeight={centerHeight} lander={fpLander} />
     </>
   );

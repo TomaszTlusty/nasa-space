@@ -78,11 +78,10 @@ export function Lander({ id, position, earthDir, sunVis, earthVis, scale, showLa
   const color = id === "A" ? "#f5c26b" : "#9fd0ff";
   const linked = earthVis > 0.001;
 
-  const beam = useMemo(() => {
-    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), earthDir.clone().multiplyScalar(BEAM_LENGTH)]);
-    g.computeLineDistances();
-    return g;
-  }, [earthDir]);
+  const beam = useMemo(
+    () => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), earthDir.clone().multiplyScalar(BEAM_LENGTH)]),
+    [earthDir],
+  );
 
   const beamMaterial = useMemo(
     () =>
@@ -113,7 +112,7 @@ export function Lander({ id, position, earthDir, sunVis, earthVis, scale, showLa
         <LanderModel color={color} sunVis={sunVis} />
       </group>
       <group position={[0, antennaTop, 0]}>
-        <lineSegments geometry={beam} material={beamMaterial} />
+        <lineSegments geometry={beam} material={beamMaterial} onUpdate={(l) => l.computeLineDistances()} />
       </group>
       {showLabel && (
         <Html position={[0, antennaTop * 1.35, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>

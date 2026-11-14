@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "test": "bun test src/lib/moon",
+    "data:build": "bun scripts/data/build.ts",
+    "data:validate": "bun scripts/data/validate.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.105",
