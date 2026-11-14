@@ -43,7 +43,7 @@ export function SiteMarkers({
 
   return (
     <>
-      {groups.map((sites) => {
+      {groups.map((sites, i) => {
         const s = sites[0];
         if (occupied.some((o) => Math.hypot(o.x - s.x, o.y - s.y) < MERGE_DISTANCE_M)) return null;
         return (
@@ -56,7 +56,7 @@ export function SiteMarkers({
                 tabIndex={-1}
                 onClick={() => onSelect(s)}
                 title={sites.map((x) => x.note ?? x.name).join("\n")}
-                className={`flex -translate-y-3 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-black/55 py-0.5 pr-2 pl-1.5 text-2xs text-fg-muted ring-1 ring-white/10 backdrop-blur-md transition-[opacity,background-color,color] duration-150 hover:bg-black/80 hover:text-fg ${
+                className={`flex ${i % 2 ? "translate-y-3" : "-translate-y-3"} cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-black/55 py-0.5 pr-2 pl-1.5 text-2xs text-fg-muted ring-1 ring-white/10 backdrop-blur-md transition-[opacity,background-color,color] duration-150 hover:bg-black/80 hover:text-fg ${
                   dimmed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
                 }`}
               >

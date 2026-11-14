@@ -18,7 +18,7 @@
   --color-surface: oklch(0.17 0.007 260);
   --color-surface-2: oklch(0.21 0.008 260);
   --color-surface-3: oklch(0.26 0.009 260);
-  --color-glass: oklch(0.16 0.007 260 / 0.72);
+  --color-glass: oklch(0.15 0.007 260 / 0.8);
   --color-glass-strong: oklch(0.15 0.007 260 / 0.88);
 
   /* lines */
@@ -132,7 +132,7 @@
 @utility glass {
   background: var(--color-glass);
   /* via Tailwind's backdrop utilities: a raw backdrop-filter declaration gets collapsed to the -webkit- form only */
-  @apply backdrop-blur-[20px] backdrop-saturate-[1.4];
+  @apply backdrop-blur-[20px] backdrop-saturate-[1.2] backdrop-brightness-[0.55];
   box-shadow: var(--shadow-panel);
   border: 1px solid var(--color-line);
 }
