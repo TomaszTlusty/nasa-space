@@ -36,7 +36,7 @@ export function App() {
       leftLabel={science ? "Layers & search" : "Landing game"}
       rightLabel={science ? "Lander" : "Lessons"}
       bottom={
-        <div className="mx-auto flex max-w-[1180px] items-end gap-2">
+        <div className="mx-auto flex max-w-[1180px] items-end gap-2 max-md:flex-col-reverse max-md:items-stretch">
           <div className="min-w-0 flex-1">
             <Timeline />
           </div>

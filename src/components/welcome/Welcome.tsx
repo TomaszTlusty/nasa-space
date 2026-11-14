@@ -3,7 +3,7 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { ArrowRight, Crosshair, GraduationCap, type Icon, X } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, type Ref, useEffect, useRef } from "react";
 import { type Mode, useApp } from "@/lib/store";
 import { useWelcome } from "./welcome-store";
 
@@ -36,14 +36,17 @@ function ModeTile({
   title,
   body,
   onClick,
+  ref,
 }: {
   icon: Icon;
   title: string;
   body: string;
   onClick: () => void;
+  ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
       className="group glass flex h-full w-full flex-col items-start gap-8 rounded-xl p-5 text-left transition-[transform,background-color] duration-150 ease-(--ease-out) hover:bg-surface-2/85 active:scale-[0.98]"
@@ -74,7 +77,7 @@ export function Welcome() {
   const open = useWelcome((s) => s.open);
   const dismiss = useWelcome((s) => s.dismiss);
   const setMode = useApp((s) => s.setMode);
-  const popupRef = useRef<HTMLDivElement>(null);
+  const firstTileRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     useWelcome.getState().showIfFirstVisit();
@@ -91,8 +94,7 @@ export function Welcome() {
         {/* Covers the whole HUD; the blurred Moon stays faintly visible behind it. */}
         <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-canvas/80 backdrop-blur-md transition-opacity duration-300 ease-(--ease-out) data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:duration-200" />
         <BaseDialog.Popup
-          ref={popupRef}
-          initialFocus={popupRef}
+          initialFocus={firstTileRef}
           className="fixed inset-0 z-50 overflow-y-auto outline-none transition-opacity duration-200 ease-(--ease-out) data-ending-style:opacity-0"
         >
           {/* bottom padding keeps the footer clear of the timeline slot (bottom 148 px) */}
@@ -122,6 +124,7 @@ export function Welcome() {
               <div className="mt-10 grid max-w-3xl gap-3 md:grid-cols-2">
                 <Reveal step={3}>
                   <ModeTile
+                    ref={firstTileRef}
                     icon={Crosshair}
                     title="Mission planning"
                     body="Compare landing sites and dates, solar power and contact with Earth."

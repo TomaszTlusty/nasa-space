@@ -119,10 +119,15 @@ export function DiscoveryPanel({ className }: { className?: string }) {
   };
 
   return (
-    <Panel className={cn("flex min-h-0 flex-col", className)} aria-label="Site discovery">
+    // Tall column: controls stay put and only the results list scrolls. Short column (e.g. 1024×768):
+    // the results block keeps a minimum height, so the whole panel scrolls instead of overflowing.
+    <Panel
+      className={cn("flex min-h-0 flex-col overflow-y-auto overscroll-contain", className)}
+      aria-label="Site discovery"
+    >
       <div className="shrink-0">
         <PanelHeader eyebrow="Site discovery" title="Where can a lander live?" />
-        <div className="flex flex-col gap-3.5 px-4 pb-3.5">
+        <div className="flex flex-col gap-3 px-4 pb-3">
           <Slider
             label="Max ground slope"
             value={criteria.maxSlopeDeg}
@@ -186,7 +191,7 @@ export function DiscoveryPanel({ className }: { className?: string }) {
         </div>
       </div>
       {shown.length > 0 && (
-        <div className={cn("flex min-h-0 flex-1 flex-col transition-opacity duration-150", running && "opacity-50")}>
+        <div className={cn("flex min-h-36 flex-1 flex-col transition-opacity duration-150", running && "opacity-50")}>
           <Divider />
           <div aria-hidden className={cn(COLS, "eyebrow shrink-0 px-4 pt-2.5 pb-1")}>
             <span>#</span>
@@ -205,7 +210,10 @@ export function DiscoveryPanel({ className }: { className?: string }) {
                   target={target}
                   hovered={hoveredRank === r.rank}
                   onHover={setHoveredRank}
-                  onPlace={(p) => placeLander(target, { x: p.x, y: p.y })}
+                  onPlace={(p) => {
+                    placeLander(target, { x: p.x, y: p.y });
+                    useApp.getState().focusOn(p.x, p.y, 5);
+                  }}
                 />
               ))}
             </ol>

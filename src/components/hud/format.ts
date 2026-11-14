@@ -6,20 +6,22 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
  * Human-first duration: "12 m", "41 h 12 m", "3 d 6 h". Under two days hours stay the unit people
- * plan with; from two days on, days + hours. Zero units are dropped.
+ * plan with; from two days on, days + hours. Zero units are dropped. `compact` joins number and
+ * unit ("41h 12m") for narrow chips.
  */
-export function formatDuration(ms: number): string {
+export function formatDuration(ms: number, compact = false): string {
+  const u = compact ? "" : " ";
   const totalMin = Math.max(0, Math.round(ms / 60_000));
-  if (totalMin < 60) return `${totalMin} m`;
+  if (totalMin < 60) return `${totalMin}${u}m`;
   if (ms < 2 * DAY) {
     const h = Math.floor(totalMin / 60);
     const m = totalMin % 60;
-    return m === 0 ? `${h} h` : `${h} h ${m} m`;
+    return m === 0 ? `${h}${u}h` : `${h}${u}h ${m}${u}m`;
   }
   const totalH = Math.round(ms / HOUR);
   const d = Math.floor(totalH / 24);
   const h = totalH % 24;
-  return h === 0 ? `${d} d` : `${d} d ${h} h`;
+  return h === 0 ? `${d}${u}d` : `${d}${u}d ${h}${u}h`;
 }
 
 /** "15 Jan 2027" (UTC) */

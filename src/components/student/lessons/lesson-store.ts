@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { useGuide } from "@/components/student/guide/guide-store";
 import {
   type CameraMode,
   type LanderId,
@@ -99,6 +100,8 @@ export const useLessons = create<LessonState>((set, get) => {
         mastHeight: s.mastHeight,
       };
       set({ active: { lessonId, step: 0, busy: true, note: null, snapshot } });
+      // LUNA-Bot stays quiet during lessons: the lesson already explains what is on screen.
+      useGuide.getState().setMuted(true);
       void run(lessonId, 0);
     },
     goTo: (step) => {
@@ -110,9 +113,16 @@ export const useLessons = create<LessonState>((set, get) => {
       if (!active) return;
       runId++;
       set({ active: null });
+      useGuide.getState().setMuted(false);
       const app = useApp.getState();
       if (app.regionId !== active.snapshot.regionId) app.setRegion(active.snapshot.regionId);
       useApp.setState(active.snapshot);
     },
   };
+});
+
+// Lessons live in Student mode only: leaving it ends the lesson and restores the pre-lesson scene, so
+// Mission planning never inherits lesson landers, camera or overlay.
+useApp.subscribe((s, prev) => {
+  if (prev.mode === "student" && s.mode !== "student") useLessons.getState().exit();
 });

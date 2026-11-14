@@ -14,7 +14,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/regions/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+        // filenames are not content-hashed, so no `immutable`: cache an hour, revalidate in the background
+        headers: [{ key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" }],
       },
     ];
   },

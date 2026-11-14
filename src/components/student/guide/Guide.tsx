@@ -58,6 +58,15 @@ function GuideDock() {
 
   const showBubble = current !== null || chatOpen;
 
+  // The bubble can vanish or change under a resting pointer without a pointerleave; forget the hover then so the
+  // auto-hide timer is never stuck. Any pointer movement over the new bubble marks it hovered again.
+  const bubbleKey = showBubble ? (current?.key ?? "chat") : null;
+  const [hoveredKey, setHoveredKey] = useState(bubbleKey);
+  if (hoveredKey !== bubbleKey) {
+    setHoveredKey(bubbleKey);
+    setHovered(false);
+  }
+
   return (
     <div className="pointer-events-none absolute right-3 bottom-[156px] z-20 flex flex-col items-end gap-2 md:right-[384px]">
       <AnimatePresence>
@@ -77,7 +86,7 @@ function GuideDock() {
                   }
             }
             transition={{ duration: 0.2, ease: EASE_OUT }}
-            onPointerEnter={() => setHovered(true)}
+            onPointerMove={() => setHovered(true)}
             onPointerLeave={() => setHovered(false)}
             className="glass pointer-events-auto flex max-h-[calc(100dvh-240px)] w-[320px] max-w-[calc(100vw-24px)] origin-bottom-right flex-col overflow-hidden rounded-xl"
           >

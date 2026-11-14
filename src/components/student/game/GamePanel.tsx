@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Angle,
   ArrowCounterClockwise,
   BatteryHigh,
   CaretLeft,
@@ -14,12 +15,15 @@ import { useEffect } from "react";
 import { Button, IconButton } from "@/components/ui/button";
 import { Switch } from "@/components/ui/overlay";
 import { Badge, Divider, Panel, PanelHeader } from "@/components/ui/panel";
-import { useWindowAverage } from "@/lib/analysis";
+import { usePointAnalysis, useWindowAverage } from "@/lib/analysis";
 import { cn } from "@/lib/cn";
 import { useApp } from "@/lib/store";
 import { CountdownRing } from "./CountdownRing";
 import { CHOOSE_SECONDS, useGame } from "./game-store";
-import { EARTH_GOAL_SOURCE, MISSIONS, type Mission } from "./missions";
+import { EARTH_GOAL_SOURCE, MAX_SLOPE_DEG, MISSIONS, type Mission, TIP_OVER_SOURCE } from "./missions";
+
+/** The analysis may sit on the nearest grid node; accept it within this distance of the lander (m). */
+const MATCH_TOLERANCE_M = 100;
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -81,18 +85,22 @@ function MissionList() {
                 className="w-full rounded-lg bg-white/3 px-3 py-2.5 text-left ring-1 ring-line transition-[transform,background-color] duration-150 ease-(--ease-out) hover:bg-white/6 active:scale-[0.98]"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-fg text-sm">
+                  <span className="min-w-0 truncate font-medium text-fg text-sm">
                     <span className="tabular mr-2 text-fg-faint">{i + 1}</span>
                     {m.title}
                   </span>
-                  <Difficulty level={m.difficulty} />
-                </div>
-                <div className="mt-1 flex items-center justify-between gap-2">
-                  <span className="truncate text-fg-muted text-xs">
-                    {m.regionName} · <span className="tabular">{dateFmt.format(m.start)}</span> ·{" "}
-                    <span className="tabular">{m.days}</span> days
+                  <span className="flex shrink-0 items-center gap-2">
+                    {rank && (
+                      <Badge tone="sun" className="whitespace-nowrap">
+                        {rank}
+                      </Badge>
+                    )}
+                    <Difficulty level={m.difficulty} />
                   </span>
-                  {rank && <Badge tone="sun">{rank}</Badge>}
+                </div>
+                <div className="mt-1 whitespace-nowrap text-fg-muted text-xs">
+                  {m.regionShort} · <span className="tabular">{dateFmt.format(m.start)}</span> ·{" "}
+                  <span className="tabular">{m.days}</span> days
                 </div>
               </button>
             </li>
@@ -106,6 +114,20 @@ function MissionList() {
 function Goals({ mission }: { mission: Mission }) {
   return (
     <ul className="flex flex-col gap-2 text-fg text-sm">
+      <li className="flex items-start gap-2.5">
+        <Angle size={16} weight="light" className="mt-0.5 shrink-0 text-fg-muted" aria-hidden="true" />
+        <span>
+          Land on ground flatter than <span className="tabular">{MAX_SLOPE_DEG}°</span>, or the lander tips over{" "}
+          <a
+            href={TIP_OVER_SOURCE}
+            target="_blank"
+            rel="noreferrer"
+            className="text-fg-faint text-xs underline decoration-line-strong underline-offset-2 hover:text-fg-muted"
+          >
+            Source
+          </a>
+        </span>
+      </li>
       <li className="flex items-start gap-2.5">
         <BatteryHigh size={16} weight="light" className="mt-0.5 shrink-0 text-sun" aria-hidden="true" />
         <span>
@@ -193,12 +215,17 @@ function Choose() {
   const timeUp = useGame((s) => s.timeUp);
   const abort = useGame((s) => s.abort);
   const lander = useApp((s) => s.landers.A);
+  const analysis = usePointAnalysis("A");
   const placing = useApp((s) => s.placing);
   const overlay = useApp((s) => s.overlay);
   const setOverlay = useApp((s) => s.setOverlay);
   const setPlacing = useApp((s) => s.setPlacing);
   const reducedMotion = useReducedMotion() ?? false;
   const mission = MISSIONS[index];
+  const slopeDeg =
+    lander && analysis && Math.hypot(analysis.x - lander.x, analysis.y - lander.y) < MATCH_TOLERANCE_M
+      ? analysis.slopeDeg
+      : null;
   const helperOn = overlay === "average";
 
   // The heatmap needs the window average for this mission window.
@@ -239,9 +266,21 @@ function Choose() {
             Shows how much sunlight each spot gets during this mission. Brighter ground means more power.
           </p>
         </div>
-        <div className="flex items-center justify-between text-xs" aria-live="polite">
+        <div className="flex items-center justify-between gap-2 text-xs" aria-live="polite">
           <span className="text-fg-faint">Landing spot</span>
-          {lander ? <Badge tone="ok">Picked</Badge> : <Badge>Not picked yet</Badge>}
+          {!lander ? (
+            <Badge>Not picked yet</Badge>
+          ) : slopeDeg === null ? (
+            <Badge>Checking the ground…</Badge>
+          ) : slopeDeg > MAX_SLOPE_DEG ? (
+            <Badge tone="danger" className="tabular">
+              Too steep: {Math.round(slopeDeg)}°
+            </Badge>
+          ) : (
+            <Badge tone="ok" className="tabular">
+              Flat enough: {Math.round(slopeDeg)}°
+            </Badge>
+          )}
         </div>
         <Button variant="primary" size="lg" disabled={!lander} onClick={land} className="w-full">
           <RocketLaunch size={18} weight="regular" />

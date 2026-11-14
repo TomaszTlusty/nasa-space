@@ -34,15 +34,15 @@ export function DateJump() {
           type="button"
           aria-label={`Date and time ${formatDate(time)} ${formatClock(time)} UTC. Change landing date`}
           className={cn(
-            "flex h-10 select-none items-center gap-2 rounded-full px-3 text-fg",
+            "flex h-10 shrink-0 select-none items-center gap-2 rounded-full px-1.5 text-fg md:px-2 xl:px-3",
             "transition-[background-color,transform] duration-150 ease-(--ease-out) hover:bg-white/5 active:scale-[0.97]",
             "data-popup-open:bg-white/5",
           )}
         >
-          <CalendarBlank size={15} weight="light" className="shrink-0 text-fg-faint max-xl:hidden" />
-          <span className="tabular whitespace-nowrap text-xs">
+          <CalendarBlank size={15} weight="light" className="shrink-0 text-fg-faint max-2xl:hidden" />
+          <span className="tabular whitespace-nowrap text-2xs md:text-xs">
             {formatDayMonth(time)}
-            <span className="max-xl:hidden"> {new Date(time).getUTCFullYear()}</span>{" "}
+            <span className="max-lg:hidden"> {new Date(time).getUTCFullYear()}</span>{" "}
             <span className="text-fg-muted">{formatClock(time)}</span>
             <span className="ml-1 text-fg-faint">UTC</span>
           </span>

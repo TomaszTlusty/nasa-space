@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
+import { type KeyboardEvent, type PointerEvent, useLayoutEffect, useRef, useState } from "react";
 import type { PointSeries } from "@/lib/analysis/types";
 import { cn } from "@/lib/cn";
 import { DAY, HOUR, useApp } from "@/lib/store";
@@ -12,20 +12,28 @@ interface Tick {
   label: string | null;
 }
 
-function buildTicks(windowStart: number, windowDays: number): Tick[] {
+/** minimum px between tick labels ("15 Jan" is ~36 px in the 2xs mono face) */
+const LABEL_GAP = 52;
+/** px a label needs to the right of its tick before it would run past the track end */
+const LABEL_W = 40;
+
+/**
+ * Ticks for the window: every 3 h on a 1-day window, else daily. Label density follows the track
+ * width so labels never overlap (every day on desktop, every 2nd / 5th day on phones).
+ */
+function buildTicks(windowStart: number, windowDays: number, widthPx: number): Tick[] {
   const end = windowStart + windowDays * DAY;
+  const ticks: Tick[] = [];
   if (windowDays === 1) {
-    const ticks: Tick[] = [];
+    const pxPerHour = widthPx / 24;
+    const labelHours = [3, 6, 12].find((h) => h * pxPerHour >= LABEL_GAP) ?? 24;
     for (let t = Math.ceil(windowStart / (3 * HOUR)) * 3 * HOUR; t <= end; t += 3 * HOUR) {
-      ticks.push({
-        t,
-        label: new Date(t).getUTCHours() % 6 === 0 ? formatClock(t) : null,
-      });
+      ticks.push({ t, label: new Date(t).getUTCHours() % labelHours === 0 ? formatClock(t) : null });
     }
     return ticks;
   }
-  const labelEvery = windowDays <= 15 ? 1 : 3;
-  const ticks: Tick[] = [];
+  const pxPerDay = widthPx / windowDays;
+  const labelEvery = [1, 2, 3, 5, 7, 10, 15].find((d) => d * pxPerDay >= LABEL_GAP) ?? 30;
   let n = 0;
   for (let t = Math.ceil(windowStart / DAY) * DAY; t <= end; t += DAY, n++) {
     ticks.push({ t, label: n % labelEvery === 0 ? formatDayMonth(t) : null });
@@ -46,8 +54,8 @@ function describe(series: PointSeries | null, t: number): { sun: string; earth: 
   };
 }
 
-/** px the hover tooltip keeps from the track ends so it never clips */
-const TOOLTIP_EDGE = 84;
+/** px the hover tooltip keeps from the track ends so it never clips (half its stacked width) */
+const TOOLTIP_EDGE = 90;
 /** px from the top of the scrubber to the centre line of the track */
 const LABELS_H = 16;
 const TRACK_Y = LABELS_H + 6;
@@ -78,16 +86,25 @@ export function Scrubber({
   const pending = useRef<number | null>(null);
   const raf = useRef(0);
   /** hover position as a fraction of the track, so it stays correct when the window changes */
-  const [hover, setHover] = useState<{ f: number; width: number } | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  /** track width in px; drives tick-label density and hover placement */
+  const [width, setWidth] = useState(1000);
+
+  useLayoutEffect(() => {
+    const el = ref.current as HTMLDivElement;
+    const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const span = windowDays * DAY;
   const end = windowStart + span;
   const frac = Math.min(1, Math.max(0, (time - windowStart) / span));
-  const ticks = buildTicks(windowStart, windowDays);
+  const ticks = buildTicks(windowStart, windowDays, width);
 
   const fracAt = (clientX: number) => {
     const rect = (ref.current as HTMLDivElement).getBoundingClientRect();
-    return { f: Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)), width: rect.width };
+    return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
   };
 
   const scheduleTime = (t: number) => {
@@ -117,13 +134,13 @@ export function Scrubber({
     dragging.current = true;
     setIsDragging(true);
     setPlaying(false);
-    scheduleTime(windowStart + fracAt(e.clientX).f * span);
+    scheduleTime(windowStart + fracAt(e.clientX) * span);
   };
 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    const at = fracAt(e.clientX);
-    if (dragging.current) scheduleTime(windowStart + at.f * span);
-    if (e.pointerType === "mouse") setHover(at);
+    const f = fracAt(e.clientX);
+    if (dragging.current) scheduleTime(windowStart + f * span);
+    if (e.pointerType === "mouse") setHover(f);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -158,9 +175,9 @@ export function Scrubber({
     setTime(Math.min(end, Math.max(windowStart, next)));
   };
 
-  const hoverT = hover ? windowStart + hover.f * span : 0;
-  const hoverX = hover ? hover.f * hover.width : 0;
-  const hoverInfo = hover && describe(series, hoverT);
+  const hoverT = windowStart + (hover ?? 0) * span;
+  const hoverX = (hover ?? 0) * width;
+  const hoverInfo = hover !== null && describe(series, hoverT);
   const hourOffset = Math.round((time - windowStart) / HOUR);
 
   return (
@@ -189,7 +206,7 @@ export function Scrubber({
         const f = (t - windowStart) / span;
         return (
           <div key={t} aria-hidden className="pointer-events-none absolute top-0" style={{ left: `${f * 100}%` }}>
-            {label && f < 0.96 && (
+            {label && f * width + LABEL_W <= width && (
               <span className="tabular absolute top-0 left-1 whitespace-nowrap text-2xs text-fg-faint leading-none">
                 {label}
               </span>
@@ -218,38 +235,38 @@ export function Scrubber({
       </div>
 
       {/* hover cursor + tooltip */}
-      {hover && !isDragging && (
+      {hover !== null && !isDragging && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-0 w-px bg-fg/30"
           style={{ transform: `translateX(${hoverX}px)` }}
         >
           <div
-            className="absolute bottom-full mb-2 whitespace-nowrap rounded-sm bg-surface-3 px-2.5 py-1.5 text-xs shadow-(--shadow-pop) ring-1 ring-line-strong"
+            className="absolute bottom-full mb-2 flex w-max max-w-44 flex-col gap-0.5 rounded-sm bg-surface-3 px-2.5 py-1.5 text-xs shadow-(--shadow-pop) ring-1 ring-line-strong"
             style={{
-              transform: `translateX(calc(-50% + ${hover ? Math.min(Math.max(hoverX, TOOLTIP_EDGE), hover.width - TOOLTIP_EDGE) - hoverX : 0}px))`,
+              transform: `translateX(calc(-50% + ${Math.min(Math.max(hoverX, TOOLTIP_EDGE), width - TOOLTIP_EDGE) - hoverX}px))`,
             }}
           >
-            <div className="tabular text-fg">{formatUtc(hoverT)}</div>
+            <span className="tabular whitespace-nowrap text-fg">{formatUtc(hoverT)}</span>
             {hoverInfo ? (
-              <div className="mt-0.5 flex gap-2.5">
+              <>
                 <span className="text-sun">{hoverInfo.sun}</span>
                 <span className="text-earth">{hoverInfo.earth}</span>
-              </div>
+              </>
             ) : (
-              <div className="mt-0.5 text-fg-faint">
+              <span className="text-fg-faint">
                 {hasLander ? "Computing Sun and Earth" : "Place a lander to see Sun and Earth"}
-              </div>
+              </span>
             )}
           </div>
         </div>
       )}
 
-      {/* playhead: translated, never laid out, so it moves without reflow */}
+      {/* playhead: a zero-width layer moved by transform, so it never reflows or widens the page */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ transform: `translateX(${frac * 100}%)` }}
+        className="pointer-events-none absolute inset-y-0 left-0 w-0"
+        style={{ transform: `translateX(${frac * width}px)` }}
       >
         <div
           className="absolute left-0 w-px -translate-x-1/2 bg-fg"

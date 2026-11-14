@@ -20,7 +20,16 @@ import type { PointAnalysis } from "@/lib/analysis/types";
 import { cn } from "@/lib/cn";
 import { DAY, HOUR, useApp } from "@/lib/store";
 import { useGame } from "./game-store";
-import { EARTH_GOAL_SOURCE, MISSIONS, type Mission, RANKS, sampleAt, scoreMission } from "./missions";
+import {
+  EARTH_GOAL_SOURCE,
+  MAX_SLOPE_DEG,
+  MISSIONS,
+  type Mission,
+  RANKS,
+  sampleAt,
+  scoreMission,
+  TIP_OVER_SOURCE,
+} from "./missions";
 
 /** Real-time length of the mission time-lapse. */
 const TIMELAPSE_MS = 10_000;
@@ -131,14 +140,15 @@ function LandingHud({
   let soc = 100;
   let sunUp: boolean | null = null;
   let earthUp: boolean | null = null;
-  let charging = false;
+  let charge: "full" | "charging" | "draining" = "full";
   if (analysis) {
     const { series, power } = analysis;
     const { i, j, f } = sampleAt(series, time);
     soc = Math.max(0, power.socPct[i] + (power.socPct[j] - power.socPct[i]) * f);
     sunUp = series.sunFraction[i] > 0;
     earthUp = series.earthFraction[i] > 0;
-    charging = power.watts[i] > loadW && soc < 100;
+    const watts = power.watts[i];
+    charge = soc >= 99.5 && watts >= loadW ? "full" : watts > loadW ? "charging" : "draining";
   }
   const empty = analysis !== null && soc <= 0;
   const low = soc <= 20;
@@ -177,11 +187,23 @@ function LandingHud({
 
         {analysis ? (
           <>
+            {analysis.slopeDeg > MAX_SLOPE_DEG && (
+              <p className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-danger text-xs ring-1 ring-danger/30">
+                Touchdown on a <span className="tabular">{Math.round(analysis.slopeDeg)}°</span> slope: the lander
+                tipped over. Watch what it would have seen standing upright.
+              </p>
+            )}
             <div className="mt-4">
               <div className="flex items-baseline justify-between">
                 <span className="eyebrow">Battery</span>
                 <span className={cn("text-xs", empty ? "text-danger" : "text-fg-muted")}>
-                  {empty ? "Empty: lander asleep" : charging ? "Charging in sunlight" : "Draining"}
+                  {empty
+                    ? "Empty: lander asleep"
+                    : charge === "full"
+                      ? "Full"
+                      : charge === "charging"
+                        ? "Charging in sunlight"
+                        : "Draining"}
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-3">
@@ -290,7 +312,7 @@ function Debrief() {
 
   const index = MISSIONS.findIndex((m) => m.id === result.missionId);
   const mission = MISSIONS[index];
-  const passed = result.goalSurvive && result.goalEarth;
+  const passed = !result.tipped && result.goalSurvive && result.goalEarth;
   const earned = RANKS.indexOf(result.rank);
   const hasNext = index < MISSIONS.length - 1;
   const days = result.aliveDays.toFixed(1).replace(/\.0$/, "");
@@ -325,14 +347,24 @@ function Debrief() {
         <ol className="flex flex-wrap gap-1.5" aria-label="Badge ranks">
           {RANKS.map((r, i) => (
             <li key={r}>
-              <Badge tone={i === earned ? "sun" : "neutral"} className={cn(i > earned && "opacity-50")}>
+              <Badge
+                tone={i === earned ? "sun" : "neutral"}
+                className={cn("whitespace-nowrap", i > earned && "opacity-50")}
+              >
                 {r}
               </Badge>
             </li>
           ))}
         </ol>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+          <Stat
+            label="Ground tilt"
+            value={Math.round(result.slopeDeg)}
+            unit="°"
+            tone={result.tipped ? "danger" : "ok"}
+            hint={`Safe below ${MAX_SLOPE_DEG}°`}
+          />
           <Stat
             label="Powered"
             value={days}
@@ -341,19 +373,31 @@ function Debrief() {
             hint={`Goal ${mission.minDays} days`}
           />
           <Stat
-            label="Lowest battery"
+            label="Min battery"
             value={Math.round(result.minSocPct)}
             unit="%"
             tone={result.minSocPct <= 20 ? "danger" : "sun"}
+            hint="lowest point"
           />
           <Stat
-            label="Earth in view"
+            label="Earth view"
             value={Math.round(result.earthUp * 100)}
             unit="%"
             tone="earth"
             hint={`Goal ${Math.round(mission.minEarth * 100)}%`}
           />
           <Stat label="Sunlight" value={Math.round(result.sunUp * 100)} unit="%" tone="sun" hint="of the time" />
+          <Stat
+            label="Longest dark"
+            value={
+              result.longestDarkHours >= 48
+                ? (result.longestDarkHours / 24).toFixed(1)
+                : Math.round(result.longestDarkHours)
+            }
+            unit={result.longestDarkHours >= 48 ? "days" : "h"}
+            tone="night"
+            hint="in a row"
+          />
         </div>
 
         <div className="flex flex-col gap-2 text-fg text-sm">
@@ -363,7 +407,7 @@ function Debrief() {
 
         <p className="text-2xs text-fg-faint">
           Numbers come from the same horizon analysis as Mission planning. Power assumes upright Sun-tracking panels;
-          the Earth goal follows NASA landing-site screening.{" "}
+          the slope and Earth goals follow NASA landing-site screening.{" "}
           <a
             href={EARTH_GOAL_SOURCE}
             target="_blank"
@@ -372,6 +416,19 @@ function Debrief() {
           >
             Source
           </a>
+          {result.tipped && (
+            <>
+              {" · "}
+              <a
+                href={TIP_OVER_SOURCE}
+                target="_blank"
+                rel="noreferrer"
+                className="underline decoration-line-strong underline-offset-2 hover:text-fg-muted"
+              >
+                IM-1 tip-over
+              </a>
+            </>
+          )}
         </p>
 
         <div className="flex flex-wrap gap-2">

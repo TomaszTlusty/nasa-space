@@ -5,13 +5,18 @@ import { DAY, type RegionId, type WindowDays } from "@/lib/store";
  * "Mission: Survive" definitions and scoring. Scoring reads only the real analysis result of
  * lander A (`usePointAnalysis('A')`): there is no separate game simulation.
  *
- * Goal thresholds follow NASA's landing-site screening: Earth visible >= 25% of the time
- * (NASA HLS 2024 slides, https://ntrs.nasa.gov/citations/20240009596).
+ * Goal thresholds follow NASA's landing-site screening: slope < 10 deg, Earth visible >= 25% of the
+ * time (NASA HLS 2024 slides, https://ntrs.nasa.gov/citations/20240009596).
  * Mission windows were picked by scanning the precomputed horizon grid: each has spots that pass,
  * and the helper map shows where they are.
  */
 
 export const EARTH_GOAL_SOURCE = "https://ntrs.nasa.gov/citations/20240009596";
+/** Steepest ground the lander may stand on (NASA landing-site screening, EARTH_GOAL_SOURCE). */
+export const MAX_SLOPE_DEG = 10;
+/** IM-1 touched down on a ~12 deg slope and tipped over (Feb 2024). */
+export const TIP_OVER_SOURCE =
+  "https://arstechnica.com/science/2024/02/that-moment-when-you-land-on-the-moon-break-a-leg-and-are-about-to-topple-over/";
 
 export type MissionId = "first-light" | "long-shadow" | "deep-survey";
 
@@ -20,6 +25,8 @@ export interface Mission {
   title: string;
   regionId: RegionId;
   regionName: string;
+  /** short region label for compact rows */
+  regionShort: string;
   /** mission window start (landing), ms UTC */
   start: number;
   days: WindowDays;
@@ -39,6 +46,7 @@ export const MISSIONS: Mission[] = [
     title: "First light",
     regionId: "shackleton",
     regionName: "Shackleton & Connecting Ridge",
+    regionShort: "Shackleton",
     start: Date.UTC(2027, 0, 13),
     days: 7,
     minDays: 7,
@@ -52,6 +60,7 @@ export const MISSIONS: Mission[] = [
     title: "Long shadow",
     regionId: "malapert",
     regionName: "Malapert Massif",
+    regionShort: "Malapert",
     start: Date.UTC(2027, 3, 15),
     days: 7,
     minDays: 7,
@@ -65,6 +74,7 @@ export const MISSIONS: Mission[] = [
     title: "Deep survey",
     regionId: "shackleton",
     regionName: "Shackleton & Connecting Ridge",
+    regionShort: "Shackleton",
     start: Date.UTC(2027, 10, 1),
     days: 15,
     minDays: 10,
@@ -91,6 +101,9 @@ export interface MissionResult {
   earthUp: number;
   longestDarkHours: number;
   longestEarthGapHours: number;
+  slopeDeg: number;
+  /** ground steeper than MAX_SLOPE_DEG: the lander tipped over on touchdown */
+  tipped: boolean;
   goalSurvive: boolean;
   goalEarth: boolean;
   /** 0..100 */
@@ -127,14 +140,18 @@ export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult 
   const minSocPct = Math.max(0, power.minSocPct);
   const goalSurvive = aliveDays >= mission.minDays;
   const goalEarth = earthUp >= mission.minEarth;
+  const slopeDeg = a.slopeDeg;
+  const tipped = slopeDeg > MAX_SLOPE_DEG;
 
-  const score = Math.round(
+  const raw =
     45 * Math.min(1, aliveDays / mission.minDays) +
-      25 * (minSocPct / 100) +
-      30 * Math.min(1, earthUp / mission.minEarth),
-  );
-  const rank: Rank =
-    goalSurvive && goalEarth
+    25 * (minSocPct / 100) +
+    30 * Math.min(1, earthUp / mission.minEarth);
+  // A tipped lander fails the mission whatever the light was; it keeps a token score for the numbers.
+  const score = Math.round(tipped ? raw * 0.25 : raw);
+  const rank: Rank = tipped
+    ? "Cadet"
+    : goalSurvive && goalEarth
       ? score >= 85
         ? "Flight Director"
         : "Mission Specialist"
@@ -142,30 +159,45 @@ export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult 
         ? "Navigator"
         : "Cadet";
 
-  let power1: string;
-  if (survivedWindow) {
-    power1 =
-      longestDarkHours > 0
-        ? `Your spot saw sunlight ${pct(sunUp)}% of the time, and the battery never fell below ${Math.round(minSocPct)}%, even through ${duration(longestDarkHours)} of darkness.`
-        : `Your spot saw sunlight the whole mission, so the battery never fell below ${Math.round(minSocPct)}%.`;
-  } else if (goalSurvive) {
-    power1 = `Your spot saw sunlight ${pct(sunUp)}% of the time; the battery lasted ${aliveDays.toFixed(1).replace(/\.0$/, "")} days before ${duration(longestDarkHours)} of darkness drained it, which still meets the ${mission.minDays}-day goal.`;
-  } else if (lit === 0) {
-    power1 = `Your spot never saw the Sun during this mission, so the battery ran empty after ${duration(aliveDays * 24)}.`;
+  const slope = Math.round(slopeDeg);
+  let sentences: [string, string];
+  if (tipped) {
+    sentences = [
+      `Your spot was tilted ${slope}°, steeper than the ${MAX_SLOPE_DEG}° safe limit, so the lander tipped over on touchdown, just like the IM-1 lander did on a 12° slope in 2024.`,
+      `Standing upright there, it would have seen sunlight ${pct(sunUp)}% of the time and Earth ${pct(earthUp)}% of the time: look for flatter ground next time.`,
+    ];
   } else {
-    power1 = `Your spot saw sunlight only ${pct(sunUp)}% of the time, and ${duration(longestDarkHours)} of darkness emptied the battery on day ${Math.max(1, Math.ceil(aliveDays))}.`;
-  }
+    let power1: string;
+    if (survivedWindow && minSocPct >= 99.5) {
+      power1 =
+        lit === n
+          ? "Your spot saw sunlight every hour, so the battery stayed full the whole mission."
+          : `Your spot saw sunlight ${pct(sunUp)}% of the time, and the battery stayed full the whole mission.`;
+    } else if (survivedWindow) {
+      power1 =
+        longestDarkHours > 0
+          ? `Your spot saw sunlight ${pct(sunUp)}% of the time, and the battery never fell below ${Math.round(minSocPct)}%, even through ${duration(longestDarkHours)} of darkness.`
+          : `Your spot saw at least part of the Sun the whole mission, and the battery never fell below ${Math.round(minSocPct)}%.`;
+    } else if (goalSurvive) {
+      power1 = `Your spot saw sunlight ${pct(sunUp)}% of the time; the battery lasted ${aliveDays.toFixed(1).replace(/\.0$/, "")} days before ${duration(longestDarkHours)} of darkness drained it, which still meets the ${mission.minDays}-day goal.`;
+    } else if (lit === 0) {
+      power1 = `Your spot never saw the Sun during this mission, so the battery ran empty after ${duration(aliveDays * 24)}.`;
+    } else {
+      power1 = `Your spot saw sunlight only ${pct(sunUp)}% of the time, and ${duration(longestDarkHours)} of darkness emptied the battery on day ${Math.max(1, Math.ceil(aliveDays))}.`;
+    }
 
-  const goal = pct(mission.minEarth);
-  let earth2: string;
-  if (longestEarthGapHours === 0) {
-    earth2 = "Earth stayed above your horizon the whole time, so mission control could hear you every hour.";
-  } else if (earthUp === 0) {
-    earth2 = `Earth never rose above the hills around you, so you could not radio home (goal: ${goal}% of the time).`;
-  } else if (goalEarth) {
-    earth2 = `Earth was in view ${pct(earthUp)}% of the time (goal: ${goal}%), but it was hidden for ${duration(longestEarthGapHours)} in a row.`;
-  } else {
-    earth2 = `Earth was in view only ${pct(earthUp)}% of the time (goal: ${goal}%) and was hidden for ${duration(longestEarthGapHours)} in a row.`;
+    const goal = pct(mission.minEarth);
+    let earth2: string;
+    if (longestEarthGapHours === 0) {
+      earth2 = "Earth stayed above your horizon the whole time, so mission control could hear you every hour.";
+    } else if (earthUp === 0) {
+      earth2 = `Earth never rose above the hills around you, so you could not radio home (goal: ${goal}% of the time).`;
+    } else if (goalEarth) {
+      earth2 = `Earth was in view ${pct(earthUp)}% of the time (goal: ${goal}%), but it was hidden for ${duration(longestEarthGapHours)} in a row.`;
+    } else {
+      earth2 = `Earth was in view only ${pct(earthUp)}% of the time (goal: ${goal}%) and was hidden for ${duration(longestEarthGapHours)} in a row.`;
+    }
+    sentences = [power1, earth2];
   }
 
   return {
@@ -177,11 +209,13 @@ export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult 
     earthUp,
     longestDarkHours,
     longestEarthGapHours,
+    slopeDeg,
+    tipped,
     goalSurvive,
     goalEarth,
     score,
     rank,
-    sentences: [power1, earth2],
+    sentences,
   };
 }
 

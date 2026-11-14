@@ -27,6 +27,16 @@ const WINDOWS = [
 
 const SLIPS = [-1, 3, 7];
 
+/** "1 h/s" on tablets and up, "1h/s" on phones so both segment groups fit one 342 px row */
+function UnitLabel({ text }: { text: string }) {
+  return (
+    <span className="tabular">
+      <span className="md:hidden">{text.replace(" ", "")}</span>
+      <span className="max-md:hidden">{text}</span>
+    </span>
+  );
+}
+
 /** Restart from the window start when play is pressed at (or within an hour of) the end. */
 function togglePlay() {
   const s = useApp.getState();
@@ -106,13 +116,13 @@ export function Timeline() {
   return (
     <Panel
       aria-label="Timeline"
-      className="mx-auto flex w-full max-w-[1100px] flex-col gap-2 rounded-2xl px-4 pt-2.5 pb-3"
+      className="mx-auto flex w-full max-w-[1100px] flex-col gap-2 rounded-2xl px-3 pt-2.5 pb-3 md:px-4"
       onClick={(e) => {
         // mouse/touch clicks (detail > 0) should not leave a button holding focus for Space
         if (e.detail > 0 && e.target instanceof Element) e.target.closest("button")?.blur();
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:flex-nowrap">
         <IconButton
           label={playing ? "Pause (Space)" : "Play (Space)"}
           variant="secondary"
@@ -123,41 +133,38 @@ export function Timeline() {
           {playing ? <Pause size={16} weight="regular" /> : <Play size={16} weight="regular" />}
         </IconButton>
 
-        <div className="flex w-[8.5rem] shrink-0 flex-col leading-none">
+        <div className="flex w-[8.5rem] shrink-0 flex-col leading-none max-xl:hidden">
           <span className="eyebrow">Since landing</span>
           <span className="tabular mt-1 text-fg text-sm">{elapsed < HOUR / 2 ? "0 h" : formatDuration(elapsed)}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="eyebrow max-lg:hidden">Speed</span>
-          <Segmented
-            ariaLabel="Playback speed"
-            size="sm"
-            value={String(speed)}
-            onChange={(v) => setSpeed(Number(v))}
-            options={SPEEDS.map((o) => ({
-              ...o,
-              label: <span className="tabular">{o.label}</span>,
-            }))}
-          />
+        {/* phones: speed + window take their own first row; play and launch slip share the second */}
+        <div className="flex flex-wrap items-center justify-between gap-2 max-md:order-first max-md:w-full md:contents">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="eyebrow max-xl:hidden">Speed</span>
+            <Segmented
+              ariaLabel="Playback speed"
+              size="sm"
+              value={String(speed)}
+              onChange={(v) => setSpeed(Number(v))}
+              options={SPEEDS.map((o) => ({ ...o, label: <UnitLabel text={o.label} /> }))}
+            />
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="eyebrow max-xl:hidden">Window</span>
+            <Segmented
+              ariaLabel="Mission window length"
+              size="sm"
+              value={String(windowDays)}
+              onChange={changeWindow}
+              options={WINDOWS.map((o) => ({ ...o, label: <UnitLabel text={o.label} /> }))}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="eyebrow max-lg:hidden">Window</span>
-          <Segmented
-            ariaLabel="Mission window length"
-            size="sm"
-            value={String(windowDays)}
-            onChange={changeWindow}
-            options={WINDOWS.map((o) => ({
-              ...o,
-              label: <span className="tabular">{o.label}</span>,
-            }))}
-          />
-        </div>
-
-        <div className="ml-auto flex items-center gap-1.5">
-          <span className="eyebrow mr-1">Launch slip</span>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <span className="eyebrow mr-1 whitespace-nowrap">Launch slip</span>
           {SLIPS.map((d) => {
             const target = windowStart + d * DAY;
             const label = `${d > 0 ? "+" : "\u2212"}${Math.abs(d)} d`;

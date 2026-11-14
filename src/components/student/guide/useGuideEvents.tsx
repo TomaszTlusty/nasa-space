@@ -4,14 +4,38 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { useLessons } from "@/components/student/lessons/lesson-store";
 import { pct, useLanderAnalysis } from "@/components/student/lessons/live";
 import { SOURCES } from "@/components/student/lessons/sources";
-import { useLiveVisibility } from "@/lib/analysis";
+import { analyzePoint, useLiveVisibility } from "@/lib/analysis";
+import type { PointAnalysis } from "@/lib/analysis/types";
 import { type LanderId, useApp } from "@/lib/store";
+import { heightAt } from "@/lib/terrain";
+import { fetchRegion } from "@/lib/use-region";
 import { useGuide } from "./guide-store";
 
 const INTRO_KEY = "malapert.luna-bot.intro";
+/** A dark spot only counts as a crater floor when it sits this far below the region centre (metres). */
+const CRATER_DEPTH_M = 1000;
+const CRATER_CHECK_DAYS = 30;
 
 function Num({ children }: { children: ReactNode }) {
-  return <span className="tabular text-fg">{children}</span>;
+  return <span className="tabular whitespace-nowrap text-fg">{children}</span>;
+}
+
+/**
+ * True only for a real cold trap: a named crater-floor site, or a spot that gets no sunlight at all over
+ * 30 days AND lies more than 1 km below the region centre. A flank in its dark season is not a crater.
+ */
+async function isCraterFloor(analysis: PointAnalysis, siteId: string | undefined): Promise<boolean> {
+  const s = useApp.getState();
+  const region = await fetchRegion(s.regionId);
+  const site = siteId ? region.meta.sites.find((x) => x.id === siteId) : undefined;
+  if (site && /floor/i.test(site.name)) return true;
+  const centreM = heightAt(region.meta, region.heights, 0, 0);
+  if (centreM - analysis.elevationM <= CRATER_DEPTH_M) return false;
+  const month =
+    s.windowDays === CRATER_CHECK_DAYS
+      ? analysis
+      : await analyzePoint({ x: analysis.x, y: analysis.y, siteId, id: analysis.id }, s.windowStart, CRATER_CHECK_DAYS);
+  return !month.series.sunFraction.some((v) => v > 0);
 }
 
 /**
@@ -50,6 +74,7 @@ export function useGuideEvents(): void {
   }, [say, hasLanderA]);
 
   // Landing verdicts: one per placement, from the window-average sunlight.
+  const darkChecked = useRef(new Set<string>());
   useEffect(() => {
     if (lessonActive) return;
     for (const [id, analysis] of [
@@ -59,19 +84,43 @@ export function useGuideEvents(): void {
       if (!analysis) continue;
       const spot = `${id}:${Math.round(analysis.x)}:${Math.round(analysis.y)}`;
       if (analysis.sunMean < 0.02) {
-        say({
-          key: `crater:${spot}`,
-          kind: "crater",
-          once: true,
-          text: (
-            <>
-              Lander {id} landed in a crater that gets almost no sunlight (<Num>{pct(analysis.sunMean)}%</Num> this
-              window). Floors like this can sit in the dark for ages and drop to about <Num>−238 °C</Num>. Let's find
-              higher ground!
-            </>
-          ),
-          source: SOURCES.paige2010,
-        });
+        if (darkChecked.current.has(spot)) continue;
+        darkChecked.current.add(spot);
+        const placement = useApp.getState().landers[id];
+        isCraterFloor(analysis, placement?.siteId).then(
+          (crater) => {
+            const now = useApp.getState().landers[id];
+            if (!now || Math.hypot(now.x - analysis.x, now.y - analysis.y) > 50) return;
+            say(
+              crater
+                ? {
+                    key: `crater:${spot}`,
+                    kind: "crater",
+                    once: true,
+                    text: (
+                      <>
+                        Lander {id} landed on a crater floor that gets no sunlight at all. Floors like this can sit in
+                        the dark for ages and drop to about <Num>−238 °C</Num>. Let's find higher ground!
+                      </>
+                    ),
+                    source: SOURCES.paige2010,
+                  }
+                : {
+                    key: `shadow:${spot}`,
+                    kind: "crater",
+                    once: true,
+                    text: (
+                      <>
+                        Lander {id}'s spot is in shadow for most of this window (<Num>{pct(analysis.sunMean)}%</Num>{" "}
+                        sunlight): the Sun is low and nearby terrain blocks it. Try higher ground or a later date.
+                      </>
+                    ),
+                    source: SOURCES.svs4944,
+                  },
+            );
+          },
+          () => darkChecked.current.delete(spot),
+        );
       } else if (analysis.sunMean > 0.7) {
         say({
           key: `good:${spot}`,
@@ -79,8 +128,8 @@ export function useGuideEvents(): void {
           once: true,
           text: (
             <>
-              Great spot! Lander {id} sees the Sun <Num>{pct(analysis.sunMean)}%</Num> of the time in this window. For
-              comparison, Connecting Ridge, one of the sunniest places at the pole, gets about <Num>76%</Num>.
+              Great spot! Lander {id} sees the Sun <Num>{pct(analysis.sunMean)}%</Num> of the time in this window. Over
+              many years, even the best ridge spots average under <Num>90%</Num>.
             </>
           ),
           source: SOURCES.glaser2018,

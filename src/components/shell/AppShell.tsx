@@ -41,7 +41,7 @@ export function AppShell({
       onClick={() => toggle(s)}
       aria-expanded={sheet === s}
       className={cn(
-        "glass pointer-events-auto absolute top-[76px] z-20 inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 font-medium text-fg text-xs transition-transform duration-150 active:scale-[0.97]",
+        "glass pointer-events-auto absolute top-[76px] z-20 inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 font-medium text-fg text-xs transition-transform duration-150 active:scale-[0.97] max-md:top-[120px]",
         className,
       )}
     >
@@ -62,7 +62,7 @@ export function AppShell({
               className={cn(
                 "pointer-events-none absolute left-3 z-10 flex w-[320px] max-w-[calc(100vw-1.5rem)] flex-col gap-3 *:pointer-events-auto",
                 "top-[76px] bottom-[148px]",
-                "max-lg:top-[124px] max-lg:z-20",
+                "max-lg:top-[124px] max-lg:z-20 max-md:top-[168px] max-md:bottom-[216px]",
                 sheet === "left" ? "max-lg:flex" : "max-lg:hidden",
               )}
             >
@@ -77,7 +77,7 @@ export function AppShell({
               className={cn(
                 "pointer-events-none absolute right-3 z-10 flex w-[360px] max-w-[calc(100vw-1.5rem)] flex-col gap-3 *:pointer-events-auto",
                 "top-[76px] bottom-[148px]",
-                "max-md:top-[124px] max-md:z-20",
+                "max-md:top-[168px] max-md:bottom-[216px] max-md:z-20",
                 sheet === "right" ? "max-md:flex" : "max-md:hidden",
               )}
             >

@@ -9,7 +9,7 @@ import { MISSIONS, type MissionId, type MissionResult, RANKS, type Rank } from "
  *   select -> brief -> choose (45 s) -> landing (time-lapse) -> result
  *                         \-> missed (no spot picked in time)
  * Every exit from choose/landing restores the shared scene state the game borrowed:
- * camera back to orbit, playing false, placing off, overlay as it was before the game.
+ * camera back to orbit, playing false, placing off, site pins visible, overlay as it was before.
  */
 
 export type GamePhase = "select" | "brief" | "choose" | "missed" | "landing" | "result";
@@ -44,8 +44,12 @@ function restoreScene(savedOverlay: Overlay | null) {
   app.setPlaying(false);
   app.setCamera("orbit");
   app.setPlacing(null);
+  app.setSitePinsHidden(false);
   if (savedOverlay !== null) app.setOverlay(savedOverlay);
 }
+
+/** Orbit distance (km) that frames the whole 41 km region when a mission starts. */
+const MISSION_VIEW_KM = 36;
 
 export const useGame = create<GameState>((set, get) => ({
   phase: "select",
@@ -66,8 +70,10 @@ export const useGame = create<GameState>((set, get) => ({
     else app.removeLander("A");
     app.setWindow(mission.start, mission.days);
     app.setPlaying(false);
-    app.setCamera("orbit");
     app.setActiveLander("A");
+    // Curated site labels would give the answer away: pick from the terrain (and helper map) only.
+    app.setSitePinsHidden(true);
+    app.focusOn(0, 0, MISSION_VIEW_KM);
     app.setPlacing("A");
     set({
       phase: "choose",

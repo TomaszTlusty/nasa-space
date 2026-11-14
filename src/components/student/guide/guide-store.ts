@@ -37,10 +37,14 @@ interface GuideState {
   queue: GuideMessage[];
   seen: string[];
   lastShownAt: Partial<Record<GuideKind, number>>;
+  /** true during lessons: new messages are dropped (not marked seen, so they can still appear later) */
+  muted: boolean;
   say: (message: GuideMessage) => void;
   dismiss: () => void;
   /** move the next queued message into the bubble */
   advance: () => void;
+  /** muting also clears the bubble and the queue */
+  setMuted: (muted: boolean) => void;
 }
 
 export const useGuide = create<GuideState>((set) => ({
@@ -48,8 +52,10 @@ export const useGuide = create<GuideState>((set) => ({
   queue: [],
   seen: [],
   lastShownAt: {},
+  muted: false,
   say: (m) =>
     set((s) => {
+      if (s.muted) return s;
       if (m.once && s.seen.includes(m.key)) return s;
       if (s.current?.key === m.key || s.queue.some((q) => q.key === m.key)) return s;
       const now = Date.now();
@@ -63,4 +69,5 @@ export const useGuide = create<GuideState>((set) => ({
     }),
   dismiss: () => set({ current: null }),
   advance: () => set((s) => (s.current || s.queue.length === 0 ? s : { current: s.queue[0], queue: s.queue.slice(1) })),
+  setMuted: (muted) => set(muted ? { muted, current: null, queue: [] } : { muted }),
 }));

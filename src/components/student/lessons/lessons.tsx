@@ -13,6 +13,7 @@ import {
   findCraterFloor,
   findCraterRim,
   findRidge,
+  frame,
   placeAtSite,
 } from "./sites";
 import { SOURCES, type Source } from "./sources";
@@ -85,7 +86,7 @@ function Text({ children }: { children: ReactNode }) {
 }
 
 function Num({ children }: { children: ReactNode }) {
-  return <span className="tabular text-fg">{children}</span>;
+  return <span className="tabular whitespace-nowrap text-fg">{children}</span>;
 }
 
 /* ───────────────────────── 1 · Why are Moon shadows pitch black? ───────────────────────── */
@@ -340,21 +341,22 @@ function LibrationBody() {
   return (
     <>
       <Text>
-        This wobble is called libration. Seen from the Moon, Earth sways up to <Num>6.7°</Num> up and down and{" "}
-        <Num>7.9°</Num> side to side.
+        This wobble is called libration. Earth sways up to <Num>6.7°</Num> up and down and <Num>7.9°</Num> side to side
+        around its average place in the sky. From the pole that average place sits right on the horizon, so the sway
+        carries Earth above it and then below it.
       </Text>
       <Readout
         items={[
           {
-            label: "Earth height",
-            value: live ? deg(live.earthElev) : null,
-            unit: "°",
+            label: "Earth right now",
+            value: live ? (live.earthElev > 0 ? "Above horizon" : "Below horizon") : null,
             tone: "earth",
           },
           {
-            label: "Skyline under Earth",
-            value: live ? deg(live.earthHorizon) : null,
-            unit: "°",
+            label: "Earth disc visible",
+            value: live ? pct(live.earthVis) : null,
+            unit: "%",
+            tone: "earth",
           },
         ]}
       />
@@ -530,6 +532,7 @@ export const LESSONS: Lesson[] = [
           const rim = findCraterRim(region.meta);
           if (!rim) return "This map has no crater-rim site in its data, so LUNA-Bot kept the current time.";
           placeAtSite("A", rim);
+          frame(rim);
           const analysis = await analyzePoint(
             { x: rim.x, y: rim.y, siteId: rim.id, id: "A" },
             useApp.getState().windowStart,
@@ -551,6 +554,7 @@ export const LESSONS: Lesson[] = [
           app.setPlaying(false);
           if (!app.landers.A) return "Lander A is not placed, so the first-person view was skipped.";
           app.setActiveLander("A");
+          app.setOverlay("none");
           app.setCamera("lander");
           return null;
         },
@@ -567,6 +571,7 @@ export const LESSONS: Lesson[] = [
           const floor = findCraterFloor(region.meta);
           if (!floor) return NO_FLOOR;
           placeAtSite("B", floor);
+          frame(floor, app.landers.A);
           return null;
         },
       },
@@ -601,6 +606,8 @@ export const LESSONS: Lesson[] = [
           if (floor) placeAtSite("B", floor);
           if (ridge) placeAtSite("A", ridge);
           if (ridge && floor) app.setActiveLander("A");
+          const first = ridge ?? floor;
+          if (first) frame(first, floor ?? undefined);
           return [ridge ? null : NO_RIDGE, floor ? null : NO_FLOOR].filter(Boolean).join(" ") || null;
         },
       },
@@ -686,6 +693,7 @@ export const LESSONS: Lesson[] = [
           const app = useApp.getState();
           app.placeLander("B", { x: down.x, y: down.y });
           app.setActiveLander("A");
+          frame(ridge, down, 2.5);
           return null;
         },
       },

@@ -37,6 +37,16 @@ export function placeAtSite(id: LanderId, site: RegionSite): void {
   useApp.getState().placeLander(id, { x: site.x, y: site.y, siteId: site.id });
 }
 
+/**
+ * Flies the orbit camera so one point, or two points together, fill the view. The camera distance grows with
+ * the gap between the points (0.75 × gap frames both comfortably) but never gets closer than `minKm`.
+ */
+export function frame(p: { x: number; y: number }, q?: { x: number; y: number }, minKm = 6): void {
+  const other = q ?? p;
+  const gapKm = Math.hypot(p.x - other.x, p.y - other.y) / 1000;
+  useApp.getState().focusOn((p.x + other.x) / 2, (p.y + other.y) / 2, Math.max(minKm, gapKm * 0.75));
+}
+
 /** Lowest terrain point `distanceM` away from (x, y), sampled every 15° of direction. */
 export function downslopePoint(
   region: LoadedRegion,
