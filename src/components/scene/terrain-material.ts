@@ -15,8 +15,10 @@ const vertex = /* glsl */ `
   #include <common>
   #include <logdepthbuf_pars_vertex>
   varying vec2 vLocal;   // region local metres (x, y)
+  varying vec3 vWorld;
   void main() {
     vLocal = vec2(position.x, -position.z) * 1000.0;
+    vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
     #include <logdepthbuf_vertex>
@@ -49,6 +51,7 @@ const fragment = /* glsl */ `
   uniform vec3 uCanvas;
 
   varying vec2 vLocal;
+  varying vec3 vWorld;
 
   const float DEG = 57.29577951308232;
 
@@ -107,12 +110,17 @@ const fragment = /* glsl */ `
     float sunVis = uSunDir.z > -0.2 ? visibility(uSunDir, p, uSunRadius) : 0.0;
     float earthVis = uEarthDir.z > -0.3 ? visibility(uEarthDir, p, uEarthRadius) : 0.0;
 
-    // Regolith albedo ~0.12; light: direct sun (gated by terrain horizon), Earthshine fill, tiny ambient for legibility.
+    // Lommel-Seeliger reflectance (mu0 / (mu0 + mu)): the standard first-order model for lunar regolith.
+    // Unlike Lambert it keeps grazing-lit ground bright when seen at a grazing angle, as in lander photos.
+    vec3 vt = normalize(cameraPosition - vWorld);
+    vec3 view = vec3(vt.x, -vt.z, vt.y);
+    float mu = max(dot(n, view), 0.05);
     float sunLambert = max(dot(n, uSunDir), 0.0);
     float earthLambert = max(dot(n, uEarthDir), 0.0);
+    float ls = sunLambert / (sunLambert + mu);
     vec3 albedo = vec3(0.62, 0.61, 0.6);
-    vec3 light = vec3(1.0, 0.97, 0.92) * sunLambert * sunVis * 4.2
-               + vec3(0.32, 0.42, 0.62) * earthLambert * earthVis * 0.05
+    vec3 light = vec3(1.0, 0.97, 0.92) * ls * sunVis * 3.4
+               + vec3(0.32, 0.42, 0.62) * (earthLambert / (earthLambert + mu)) * earthVis * 0.04
                + vec3(0.012, 0.014, 0.02);
     vec3 col = albedo * light;
 

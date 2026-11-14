@@ -316,6 +316,82 @@ const FRACTION_LUT = Float64Array.from({ length: FRACTION_LUT_N + 2 }, (_, i) =>
   return 1 - (Math.acos(d) - d * Math.sqrt(1 - d * d)) / Math.PI;
 });
 
+interface PassGrid {
+  W: number;
+  H: number;
+  plane: number;
+  nBins: number;
+  hz: Uint8Array;
+  min: Float32Array;
+  max: Float32Array;
+  qd: number;
+  off: number;
+}
+
+/**
+ * One body, one time step over every node. el / af (azimuth in bins) are linear in (col, row):
+ * value(c, r) = base + c * dC + r * dR. Adds the visible disc fraction to `out` and, when `anyOut`
+ * is given, 1 for every node where any part of the disc is above the horizon.
+ */
+function accumulatePass(
+  p: PassGrid,
+  el0: number,
+  dElC: number,
+  dElR: number,
+  af0: number,
+  dAfC: number,
+  dAfR: number,
+  rad: number,
+  out: Float64Array,
+  anyOut: Float64Array | null,
+): void {
+  const { W, H, plane, nBins, hz, min, max, qd, off } = p;
+  const invRad = 1 / rad;
+  const lutScale = FRACTION_LUT_N / 2;
+  const lut = FRACTION_LUT;
+  for (let r = 0; r < H; r++) {
+    const row = r * W;
+    const elRow = el0 + r * dElR;
+    const afRow = af0 + r * dAfR;
+    for (let c = 0; c < W; c++) {
+      const i = row + c;
+      const el = elRow + c * dElC;
+      if (el - rad >= max[i]) {
+        out[i] += 1;
+        if (anyOut !== null) anyOut[i] += 1;
+        continue;
+      }
+      if (el + rad <= min[i]) continue;
+      let a = afRow + c * dAfC;
+      if (a < 0) a += nBins;
+      else if (a >= nBins) a -= nBins;
+      const k0 = Math.floor(a);
+      const fa = a - k0;
+      const k1 = k0 + 1 === nBins ? 0 : k0 + 1;
+      const q = hz[k0 * plane + i] * (1 - fa) + hz[k1 * plane + i] * fa;
+      const d = (el - (q * qd + off)) * invRad;
+      if (d <= -1) continue;
+      if (anyOut !== null) anyOut[i] += 1;
+      if (d >= 1) out[i] += 1;
+      else {
+        const u = (d + 1) * lutScale;
+        const j = Math.floor(u);
+        out[i] += lut[j] + (lut[j + 1] - lut[j]) * (u - j);
+      }
+    }
+  }
+}
+
+export interface AverageGrid {
+  /** mean visible fraction of the solar disc per node (row * width + col) */
+  sun: Float32Array;
+  /** mean visible fraction of the Earth disc per node */
+  earth: Float32Array;
+  /** share of steps with any part of the Earth disc above the horizon (Mazarico's definition) */
+  earthAny: Float32Array;
+  steps: number;
+}
+
 /**
  * Mean visible disc fraction of the Sun and the Earth at every horizon-grid node (layout
  * row * width + col, row 0 = min y) over [startDate, startDate + hours), sampled every stepHours.
@@ -325,30 +401,23 @@ const FRACTION_LUT = Float64Array.from({ length: FRACTION_LUT_N + 2 }, (_, i) =>
  * over a 41 km region is < 0.001 deg), so the per-node work is two adds, a min/max accept/reject and,
  * only for nodes where the disc may straddle the horizon, one azimuth-interpolated horizon lookup.
  */
-export function averageGrid(
-  region: LoadedRegion,
-  startDate: Date,
-  hours: number,
-  stepHours: number,
-): { sun: Float32Array; earth: Float32Array; steps: number } {
+export function averageGrid(region: LoadedRegion, startDate: Date, hours: number, stepHours: number): AverageGrid {
   const g = region.meta.horizon;
   const W = g.width;
   const H = g.height;
   const plane = W * H;
   const { min, max } = getNodeBounds(region);
-  const nBins = g.azBins;
-  const binsPerDeg = nBins / 360;
-  const hz = region.horizon;
-  const qd = g.quantDeg;
-  const off = g.offsetDeg;
-  const lutScale = FRACTION_LUT_N / 2;
+  const pass: PassGrid = { W, H, plane, nBins: g.azBins, hz: region.horizon, min, max, qd: g.quantDeg, off: g.offsetDeg };
+  const binsPerDeg = g.azBins / 360;
   // centre node coordinates and the half-span used for the linear fits
   const cc = (W - 1) / 2;
   const rc = (H - 1) / 2;
   const xc = g.x0 + cc * g.step;
   const yc = g.y0 + rc * g.step;
   const span = cc * g.step;
-  const acc = { sun: new Float64Array(plane), earth: new Float64Array(plane) };
+  const sun = new Float64Array(plane);
+  const earth = new Float64Array(plane);
+  const earthAny = new Float64Array(plane);
   const steps = Math.max(1, Math.floor(hours / stepHours));
   const t0 = startDate.getTime();
   let globalMin = Infinity;
@@ -358,7 +427,6 @@ export function averageGrid(
     const eph = moonEphemeris(new Date(t0 + s * stepHours * 3_600_000));
     for (const body of ["sun", "earth"] as const) {
       const { v, angularRadiusDeg: rad } = bodyVectorRegionFromEphemeris(eph, body, region.meta);
-      const out = acc[body];
       const c0 = altAzAtLocalPoint(v, xc, yc, region.meta);
       // whole region below every horizon (tilt across the region < 0.7 deg)
       if (c0.elevationDeg + rad + 1 < globalMin) continue;
@@ -370,40 +438,24 @@ export function averageGrid(
       const dElR = (py.elevationDeg - my.elevationDeg) / (2 * rc);
       const dAzC = angDiff(px.gridAzimuthDeg, mx.gridAzimuthDeg) / (2 * cc);
       const dAzR = angDiff(py.gridAzimuthDeg, my.gridAzimuthDeg) / (2 * rc);
-      const invRad = 1 / rad;
-      for (let r = 0; r < H; r++) {
-        let el = c0.elevationDeg + (r - rc) * dElR - cc * dElC;
-        let af = (c0.gridAzimuthDeg + (r - rc) * dAzR - cc * dAzC) * binsPerDeg;
-        const dAf = dAzC * binsPerDeg;
-        const row = r * W;
-        for (let c = 0; c < W; c++, el += dElC, af += dAf) {
-          const i = row + c;
-          if (el - rad >= max[i]) {
-            out[i] += 1;
-            continue;
-          }
-          if (el + rad <= min[i]) continue;
-          let a = af;
-          if (a < 0) a += nBins;
-          else if (a >= nBins) a -= nBins;
-          const k0 = a | 0;
-          const fa = a - k0;
-          const k1 = k0 + 1 === nBins ? 0 : k0 + 1;
-          const q = hz[k0 * plane + i] * (1 - fa) + hz[k1 * plane + i] * fa;
-          const d = (el - (q * qd + off)) * invRad;
-          if (d >= 1) out[i] += 1;
-          else if (d > -1) {
-            const u = (d + 1) * lutScale;
-            const j = u | 0;
-            out[i] += FRACTION_LUT[j] + (FRACTION_LUT[j + 1] - FRACTION_LUT[j]) * (u - j);
-          }
-        }
-      }
+      accumulatePass(
+        pass,
+        c0.elevationDeg - cc * dElC - rc * dElR,
+        dElC,
+        dElR,
+        (c0.gridAzimuthDeg - cc * dAzC - rc * dAzR) * binsPerDeg,
+        dAzC * binsPerDeg,
+        dAzR * binsPerDeg,
+        rad,
+        body === "sun" ? sun : earth,
+        body === "sun" ? null : earthAny,
+      );
     }
   }
   return {
-    sun: Float32Array.from(acc.sun, (x) => x / steps),
-    earth: Float32Array.from(acc.earth, (x) => x / steps),
+    sun: Float32Array.from(sun, (x) => x / steps),
+    earth: Float32Array.from(earth, (x) => x / steps),
+    earthAny: Float32Array.from(earthAny, (x) => x / steps),
     steps,
   };
 }
