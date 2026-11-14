@@ -34,11 +34,14 @@ function VisRow({
   const digits = elev !== undefined && horizon !== undefined && Math.abs(elev - horizon) < 0.3 ? 2 : 1;
   return (
     <div className="flex items-center gap-3">
-      <span className={cn("w-11 shrink-0 text-xs", tone === "sun" ? "text-sun" : "text-earth")}>{label}</span>
-      <span className="tabular min-w-0 flex-1 truncate text-fg-muted text-xs">
-        <span className="text-fg">{deg(elev, digits)}</span>
-        <span className="text-fg-faint"> · terrain </span>
-        {deg(horizon, digits)}
+      <span className={cn("w-12 shrink-0 text-xs", tone === "sun" ? "text-sun" : "text-earth")}>{label}</span>
+      <span className="tabular min-w-0 flex-1 text-fg-muted text-xs leading-tight">
+        <span className="whitespace-nowrap text-fg">{deg(elev, digits)}</span>
+        <span className="text-fg-faint"> · </span>
+        <span className="whitespace-nowrap">
+          <span className="text-fg-faint">terrain </span>
+          {deg(horizon, digits)}
+        </span>
       </span>
       <Badge tone={vis === undefined ? "neutral" : up ? tone : "night"} className="tabular">
         {vis === undefined ? DASH : up ? `${pct(vis)}% visible` : "hidden"}
@@ -170,7 +173,7 @@ export function LanderDetails({ id, siteName }: { id: LanderId; siteName?: strin
           />
           <Stat
             size="sm"
-            label="Survives the window"
+            label="Survives window"
             value={!a ? DASH : a.power.depletedAt === null ? "Yes" : "No"}
             tone={!a ? "neutral" : a.power.depletedAt === null ? "ok" : "danger"}
             hint={

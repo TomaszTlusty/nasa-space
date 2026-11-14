@@ -83,7 +83,7 @@ export function Stat({
         <span>{value}</span>
         {unit && <span className="text-fg-faint text-xs">{unit}</span>}
       </div>
-      {hint && <div className="mt-0.5 truncate text-2xs text-fg-faint">{hint}</div>}
+      {hint && <div className="mt-0.5 line-clamp-2 text-2xs text-fg-faint leading-snug">{hint}</div>}
     </div>
   );
 }

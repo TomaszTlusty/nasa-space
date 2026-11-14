@@ -28,8 +28,8 @@
 
   /* text */
   --color-fg: oklch(0.95 0.005 260);
-  --color-fg-muted: oklch(0.72 0.012 260);
-  --color-fg-faint: oklch(0.55 0.012 260);
+  --color-fg-muted: oklch(0.76 0.012 260);
+  --color-fg-faint: oklch(0.61 0.012 260);
 
   /* data + accent */
   --color-sun: oklch(0.83 0.145 75);
@@ -53,17 +53,18 @@
   --radius-xl: 20px;
   --radius-2xl: 28px;
 
-  /* type scale (size / leading / tracking tuned per size) */
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
-  --text-xs: 0.75rem;
-  --text-xs--line-height: 1.1rem;
-  --text-sm: 0.8125rem;
-  --text-sm--line-height: 1.25rem;
-  --text-base: 0.9375rem;
-  --text-base--line-height: 1.45rem;
-  --text-lg: 1.125rem;
-  --text-lg--line-height: 1.6rem;
+  /* type scale (size / leading / tracking tuned per size). Small sizes are sized up for legibility in
+     screen recordings (demo videos are viewed scaled down inside slides). */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.05rem;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.15rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.3rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.65rem;
   --text-xl: 1.375rem;
   --text-xl--line-height: 1.8rem;
   --text-2xl: 1.875rem;
