@@ -131,8 +131,8 @@
 /* Translucent HUD material. Only used on fixed overlay surfaces above the 3D canvas. */
 @utility glass {
   background: var(--color-glass);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  /* via Tailwind's backdrop utilities: a raw backdrop-filter declaration gets collapsed to the -webkit- form only */
+  @apply backdrop-blur-[20px] backdrop-saturate-[1.4];
   box-shadow: var(--shadow-panel);
   border: 1px solid var(--color-line);
 }
