@@ -1,20 +1,33 @@
 /** Multi-resolution LOLA DEM sampler: finest product covering the point, bilinear. */
-import { loadPolarRaster, rasterBilinear, rasterContains, type PolarRaster } from "./pds";
+import {
+  loadPolarRaster,
+  type PolarRaster,
+  rasterBilinear,
+  rasterContains,
+} from "./pds";
 
 export const RAW_DIR = `${import.meta.dir}/../../data/raw`;
 /** finest -> coarsest */
-export const DEM_NAMES = ["LDEM_875S_20M", "LDEM_85S_40M", "LDEM_80S_80M", "LDEM_75S_240M"] as const;
+export const DEM_NAMES = [
+  "LDEM_875S_20M",
+  "LDEM_85S_40M",
+  "LDEM_80S_80M",
+  "LDEM_75S_240M",
+] as const;
 
 export class MultiDem {
   constructor(readonly rasters: PolarRaster[]) {}
 
   static async load(names: readonly string[] = DEM_NAMES): Promise<MultiDem> {
-    return new MultiDem(await Promise.all(names.map((n) => loadPolarRaster(RAW_DIR, n))));
+    return new MultiDem(
+      await Promise.all(names.map((n) => loadPolarRaster(RAW_DIR, n))),
+    );
   }
 
   /** index of the finest raster covering (X, Y), or -1 */
   pick(X: number, Y: number): number {
-    for (let i = 0; i < this.rasters.length; i++) if (rasterContains(this.rasters[i], X, Y)) return i;
+    for (let i = 0; i < this.rasters.length; i++)
+      if (rasterContains(this.rasters[i], X, Y)) return i;
     return -1;
   }
 

@@ -13,7 +13,8 @@ const CRC_TABLE = (() => {
 
 function crc32(bytes: Uint8Array): number {
   let c = 0xffffffff;
-  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  for (let i = 0; i < bytes.length; i++)
+    c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
 
@@ -28,7 +29,11 @@ function chunk(type: string, data: Uint8Array): Uint8Array {
 }
 
 /** rgb: width * height * 3 bytes, row 0 = top of the image. Per-row filter chosen by min sum |byte|. */
-export function encodePngRgb(width: number, height: number, rgb: Uint8Array): Uint8Array {
+export function encodePngRgb(
+  width: number,
+  height: number,
+  rgb: Uint8Array,
+): Uint8Array {
   const stride = width * 3;
   const raw = new Uint8Array(height * (stride + 1));
   const zero = new Uint8Array(stride);
@@ -74,7 +79,12 @@ export function encodePngRgb(width: number, height: number, rgb: Uint8Array): Ui
   dv.setUint32(4, height);
   ihdr.set([8, 2, 0, 0, 0], 8); // 8-bit, RGB, deflate, adaptive filter, no interlace
   const sig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-  const parts = [sig, chunk("IHDR", ihdr), chunk("IDAT", deflateSync(raw, { level: 9 })), chunk("IEND", new Uint8Array())];
+  const parts = [
+    sig,
+    chunk("IHDR", ihdr),
+    chunk("IDAT", deflateSync(raw, { level: 9 })),
+    chunk("IEND", new Uint8Array()),
+  ];
   const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
   let o = 0;
   for (const p of parts) {

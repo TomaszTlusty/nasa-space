@@ -34,7 +34,12 @@ function fill(rows: ChartRow[], p: PointAnalysis, prefix: Prefix) {
   const n = series.sunElev.length;
   for (let r = 0; r < rows.length; r++) {
     const lo = Math.max(0, Math.round((rows[r].t - series.start) / stepMs));
-    const hi = Math.min(n, r + 1 < rows.length ? Math.round((rows[r + 1].t - series.start) / stepMs) : n);
+    const hi = Math.min(
+      n,
+      r + 1 < rows.length
+        ? Math.round((rows[r + 1].t - series.start) / stepMs)
+        : n,
+    );
     if (lo >= n || hi <= lo) continue;
     // Elevation/horizon: point sample; power: bucket mean; battery: bucket minimum so the lowest
     // state of charge survives decimation.
@@ -54,14 +59,24 @@ function fill(rows: ChartRow[], p: PointAnalysis, prefix: Prefix) {
   }
 }
 
-const TICK_STEPS = [3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 5 * DAY, 10 * DAY];
+const TICK_STEPS = [
+  3 * HOUR,
+  6 * HOUR,
+  12 * HOUR,
+  DAY,
+  2 * DAY,
+  5 * DAY,
+  10 * DAY,
+];
 
 /** Ticks on whole UTC hours/days, at most 8 across the domain. */
 export function timeTicks([start, end]: [number, number]): number[] {
   const span = end - start;
-  const step = TICK_STEPS.find((s) => span / s <= 8) ?? TICK_STEPS[TICK_STEPS.length - 1];
+  const step =
+    TICK_STEPS.find((s) => span / s <= 8) ?? TICK_STEPS[TICK_STEPS.length - 1];
   const ticks: number[] = [];
-  for (let t = Math.ceil(start / step) * step; t <= end; t += step) ticks.push(t);
+  for (let t = Math.ceil(start / step) * step; t <= end; t += step)
+    ticks.push(t);
   return ticks;
 }
 
@@ -69,14 +84,21 @@ export function tickLabel(t: number, domain: [number, number]): string {
   const d = new Date(t);
   return domain[1] - domain[0] <= 2 * DAY
     ? d.toISOString().slice(11, 16)
-    : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+    : d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        timeZone: "UTC",
+      });
 }
 
 /**
  * Merges the A and B window series onto one decimated time axis (≤ MAX_POINTS rows). The axis comes
  * from A when present, otherwise from B; B samples are looked up by time so a stale B window still lines up.
  */
-export function buildChartData(a: PointAnalysis | null, b: PointAnalysis | null): ChartData | null {
+export function buildChartData(
+  a: PointAnalysis | null,
+  b: PointAnalysis | null,
+): ChartData | null {
   const base = a ?? b;
   if (!base) return null;
   const { start, stepMinutes } = base.series;

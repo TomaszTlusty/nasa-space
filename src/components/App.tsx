@@ -1,41 +1,40 @@
 "use client";
 
+import { Timeline } from "@/components/hud/Timeline";
+import { TopBar } from "@/components/hud/TopBar";
+import { ChartsDrawer, ChartsToggle } from "@/components/science/charts/ChartsDrawer";
+import { DiscoveryPanel } from "@/components/science/discovery/DiscoveryPanel";
+import { LanderPanel } from "@/components/science/lander/LanderPanel";
+import { LayersPanel } from "@/components/science/layers/LayersPanel";
 import { AppShell } from "@/components/shell/AppShell";
-import { Panel, PanelHeader } from "@/components/ui/panel";
-import { Segmented } from "@/components/ui/segmented";
-import { type Mode, useApp } from "@/lib/store";
+import { useApp } from "@/lib/store";
 
-/**
- * Composition root. Feature panels plug into the shell slots here; each feature owns its own files.
- */
+/** Composition root. Feature panels plug into the shell slots here; each feature owns its own files. */
 export function App() {
   const mode = useApp((s) => s.mode);
-  const setMode = useApp((s) => s.setMode);
-  const time = useApp((s) => s.time);
+  const science = mode === "science";
 
   return (
     <AppShell
-      top={
-        <div className="glass mx-auto flex h-14 w-fit items-center gap-4 rounded-full px-3 pl-5">
-          <span className="font-medium text-sm tracking-[-0.01em]">Malapert</span>
-          <Segmented<Mode>
-            ariaLabel="Mode"
-            value={mode}
-            onChange={setMode}
-            options={[
-              { value: "science", label: "Mission planning" },
-              { value: "student", label: "Explore & learn" },
-            ]}
-          />
-          <span className="tabular text-fg-muted text-xs">{new Date(time).toISOString().slice(0, 16)}Z</span>
+      top={<TopBar />}
+      left={
+        science ? (
+          <>
+            <LayersPanel />
+            <DiscoveryPanel className="min-h-0 flex-1" />
+          </>
+        ) : undefined
+      }
+      right={science ? <LanderPanel /> : undefined}
+      bottom={
+        <div className="mx-auto flex max-w-[1180px] items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <Timeline />
+          </div>
+          {science && <ChartsToggle className="mb-2" />}
         </div>
       }
-      right={
-        <Panel>
-          <PanelHeader eyebrow="Placeholder" title="Panels plug in here" />
-        </Panel>
-      }
-      bottom={<div className="glass mx-auto h-20 max-w-5xl rounded-2xl" />}
+      overlay={science ? <ChartsDrawer /> : undefined}
     />
   );
 }

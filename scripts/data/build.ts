@@ -3,13 +3,26 @@
  * Writes public/regions/<id>/{meta.json, heights.bin, normal.png, horizon.bin, slope.bin}.
  */
 import { mkdir } from "node:fs/promises";
-import { MOON_RADIUS_M, RAD, polarToLatLon, toLocal } from "../../src/lib/moon/frames";
+import {
+  MOON_RADIUS_M,
+  polarToLatLon,
+  RAD,
+  toLocal,
+} from "../../src/lib/moon/frames";
 import type { RegionMeta, RegionSite } from "../../src/lib/moon/types";
 import { MultiDem } from "./dem";
 import { HorizonMarcher } from "./horizon-core";
 import { encodePngRgb } from "./png";
 import { HorizonPool } from "./pool";
-import { DATA_BOOK_URL, GLASER_2018_URL, LOLA_GDR_URL, MAZARICO_URL, REGIONS, type RegionDef, type SiteDef } from "./regions";
+import {
+  DATA_BOOK_URL,
+  GLASER_2018_URL,
+  LOLA_GDR_URL,
+  MAZARICO_URL,
+  REGIONS,
+  type RegionDef,
+  type SiteDef,
+} from "./regions";
 
 const OUT_DIR = `${import.meta.dir}/../../public/regions`;
 export const EXTENT = 40_960;
@@ -38,7 +51,8 @@ class RegionSampler {
       [-h, h],
       [h, h],
     ].map(([x, y]) => dem.pick(def.X + x, def.Y + y));
-    if (idx.some((i) => i < 0)) throw new Error(`${def.id}: region not covered by DEMs`);
+    if (idx.some((i) => i < 0))
+      throw new Error(`${def.id}: region not covered by DEMs`);
     this.ri = Math.max(...idx);
     this.scale = dem.rasters[this.ri].scale;
   }
@@ -101,12 +115,18 @@ function buildSlope(s: RegionSampler): Uint8Array {
       const y = -EXTENT / 2 + r * step;
       const gx = (s.h(x + d, y) - s.h(x - d, y)) / (2 * d);
       const gy = (s.h(x, y + d) - s.h(x, y - d)) / (2 * d);
-      out[r * HORIZON_N + c] = Math.min(90, Math.round(Math.atan(Math.hypot(gx, gy)) * RAD));
+      out[r * HORIZON_N + c] = Math.min(
+        90,
+        Math.round(Math.atan(Math.hypot(gx, gy)) * RAD),
+      );
     }
   return out;
 }
 
-async function buildHorizonGrid(pool: HorizonPool, def: RegionDef): Promise<Uint8Array> {
+async function buildHorizonGrid(
+  pool: HorizonPool,
+  def: RegionDef,
+): Promise<Uint8Array> {
   const step = EXTENT / (HORIZON_N - 1);
   const plane = HORIZON_N * HORIZON_N;
   const out = new Uint8Array(AZ_BINS * plane);
@@ -128,35 +148,60 @@ async function buildHorizonGrid(pool: HorizonPool, def: RegionDef): Promise<Uint
   return out;
 }
 
-/** Malapert reference points picked from the DEM to contrast with the summit. */
-function malapertReferences(s: RegionSampler, summit: { x: number; y: number }): SiteDef[] {
+/**
+ * Malapert reference points picked from the DEM: the massif's summit (highest terrain within 8 km of
+ * Site 23), the lowest point 3 km from the summit (a slope facing away from Earth) and the lowest
+ * terrain within 12 km of the summit (crater floor).
+ */
+function malapertReferences(
+  s: RegionSampler,
+  site23: { x: number; y: number },
+): SiteDef[] {
+  let top = { x: 0, y: 0, h: -Infinity };
+  for (let y = site23.y - 8000; y <= site23.y + 8000; y += 20)
+    for (let x = site23.x - 8000; x <= site23.x + 8000; x += 20) {
+      if (Math.hypot(x - site23.x, y - site23.y) > 8000) continue;
+      const h = s.h(x, y);
+      if (h > top.h) top = { x, y, h };
+    }
   let low = { x: 0, y: 0, h: Infinity };
   for (let a = 0; a < 360; a += 1) {
-    const x = summit.x + 3000 * Math.sin(a / RAD);
-    const y = summit.y + 3000 * Math.cos(a / RAD);
+    const x = top.x + 3000 * Math.sin(a / RAD);
+    const y = top.y + 3000 * Math.cos(a / RAD);
     const h = s.h(x, y);
     if (h < low.h) low = { x, y, h };
   }
-  // crater floor: lowest terrain within 12 km of the summit (kept 2 km inside the region)
   let floor = { x: 0, y: 0, h: Infinity };
   for (let y = -EXTENT / 2 + 2000; y <= EXTENT / 2 - 2000; y += 100)
     for (let x = -EXTENT / 2 + 2000; x <= EXTENT / 2 - 2000; x += 100) {
-      if (Math.hypot(x - summit.x, y - summit.y) > 12_000) continue;
+      if (Math.hypot(x - top.x, y - top.y) > 12_000) continue;
       const h = s.h(x, y);
       if (h < floor.h) floor = { x, y, h };
     }
   const ll = (p: { x: number; y: number }) => {
     const g = polarToLatLon(s.def.X + p.x, s.def.Y + p.y);
-    return { lat: Math.round(g.lat * 1e5) / 1e5, lon: Math.round(g.lon * 1e5) / 1e5 };
+    return {
+      lat: Math.round(g.lat * 1e5) / 1e5,
+      lon: Math.round(g.lon * 1e5) / 1e5,
+    };
   };
+  const dem = s.dem.rasters[s.ri].name;
   return [
+    {
+      id: "malapert-summit",
+      name: "Malapert summit",
+      kind: "reference",
+      ...ll(top),
+      source: LOLA_GDR_URL,
+      note: `Highest terrain within 8 km of Site 23 in LOLA ${dem} (${Math.round(top.h)} m).`,
+    },
     {
       id: "malapert-slope",
       name: "Malapert lower slope",
       kind: "reference",
       ...ll(low),
       source: LOLA_GDR_URL,
-      note: `Reference point picked from LOLA LDEM_85S_40M: lowest terrain 3 km from Site 23 (${Math.round(low.h)} m).`,
+      note: `Lowest terrain 3 km from the summit in LOLA ${dem} (${Math.round(low.h)} m): a slope facing away from Earth.`,
     },
     {
       id: "malapert-floor",
@@ -164,12 +209,17 @@ function malapertReferences(s: RegionSampler, summit: { x: number; y: number }):
       kind: "reference",
       ...ll(floor),
       source: LOLA_GDR_URL,
-      note: `Reference point picked from LOLA LDEM_85S_40M: lowest terrain within 12 km of Site 23 (${Math.round(floor.h)} m).`,
+      note: `Lowest terrain within 12 km of the summit in LOLA ${dem} (${Math.round(floor.h)} m).`,
     },
   ];
 }
 
-async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | null, pool: HorizonPool | null) {
+async function buildRegion(
+  id: string,
+  dem: MultiDem,
+  marcher: HorizonMarcher | null,
+  pool: HorizonPool | null,
+) {
   const def = REGIONS[id];
   if (!def) throw new Error(`unknown region ${id}`);
   const t0 = performance.now();
@@ -192,21 +242,39 @@ async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | 
   const tTerrain = performance.now();
 
   let siteDefs = def.sites;
-  if (id === "malapert") siteDefs = [...siteDefs, ...malapertReferences(s, toLocal(def.sites[0].lat, def.sites[0].lon, { center: metaCenter }))];
+  if (id === "malapert")
+    siteDefs = [
+      ...siteDefs,
+      ...malapertReferences(
+        s,
+        toLocal(def.sites[0].lat, def.sites[0].lon, { center: metaCenter }),
+      ),
+    ];
   const sites: RegionSite[] = siteDefs.map((sd) => {
     const { x, y } = toLocal(sd.lat, sd.lon, { center: metaCenter });
-    if (Math.abs(x) > EXTENT / 2 - 500 || Math.abs(y) > EXTENT / 2 - 500) throw new Error(`${sd.id} outside ${id}`);
+    if (Math.abs(x) > EXTENT / 2 - 500 || Math.abs(y) > EXTENT / 2 - 500)
+      throw new Error(`${sd.id} outside ${id}`);
     const horizons = marcher
       ? SITE_MASTS.map((mast) => {
           const v = new Float64Array(SITE_BINS);
           marcher.horizon(def.X + x, def.Y + y, mast, SITE_BINS, v);
-          return { mastHeight: mast, values: Array.from(v, (e) => Math.round(e * 1e4) / 1e4) };
+          return {
+            mastHeight: mast,
+            values: Array.from(v, (e) => Math.round(e * 1e4) / 1e4),
+          };
         })
       : [];
-    return { ...sd, x, y, elevation: dem.heightFrom(s.ri, def.X + x, def.Y + y), horizons } as RegionSite;
+    return {
+      ...sd,
+      x,
+      y,
+      elevation: dem.heightFrom(s.ri, def.X + x, def.Y + y),
+      horizons,
+    } as RegionSite;
   });
 
-  if (pool) await Bun.write(`${dir}/horizon.bin`, await buildHorizonGrid(pool, def));
+  if (pool)
+    await Bun.write(`${dir}/horizon.bin`, await buildHorizonGrid(pool, def));
   const tEnd = performance.now();
 
   const hstep = EXTENT / (HORIZON_N - 1);
@@ -243,12 +311,32 @@ async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | 
     slope: { file: "slope.bin" },
     sites,
     sources: [
-      { label: `LOLA polar DEMs (${dem.rasters.map((r) => r.name).join(", ")}), NASA PDS`, url: LOLA_GDR_URL },
-      { label: "Mazarico et al. 2011 average Sun/Earth visibility (PGDA)", url: MAZARICO_URL },
-      { label: "NASA Lunar Surface Data Book ACD-50044 Rev A (site coordinates)", url: DATA_BOOK_URL },
-      { label: "Glaser et al. 2018, illumination near Shackleton (site coordinates)", url: GLASER_2018_URL },
-      { label: "JPL Horizons (ephemeris validation)", url: "https://ssd.jpl.nasa.gov/horizons/" },
-      { label: "Astronomy Engine (IAU 2015 lunar rotation, ephemeris)", url: "https://github.com/cosinekitty/astronomy" },
+      {
+        label: `LOLA polar DEMs (${dem.rasters.map((r) => r.name).join(", ")}), NASA PDS`,
+        url: LOLA_GDR_URL,
+      },
+      {
+        label: "Mazarico et al. 2011 average Sun/Earth visibility (PGDA)",
+        url: MAZARICO_URL,
+      },
+      {
+        label:
+          "NASA Lunar Surface Data Book ACD-50044 Rev A (site coordinates)",
+        url: DATA_BOOK_URL,
+      },
+      {
+        label:
+          "Glaser et al. 2018, illumination near Shackleton (site coordinates)",
+        url: GLASER_2018_URL,
+      },
+      {
+        label: "JPL Horizons (ephemeris validation)",
+        url: "https://ssd.jpl.nasa.gov/horizons/",
+      },
+      {
+        label: "Astronomy Engine (IAU 2015 lunar rotation, ephemeris)",
+        url: "https://github.com/cosinekitty/astronomy",
+      },
     ],
   };
   await Bun.write(`${dir}/meta.json`, JSON.stringify(meta, null, 1));
@@ -263,7 +351,9 @@ if (import.meta.main) {
   const ids = arg === "all" ? Object.keys(REGIONS) : [arg];
   const dem = await MultiDem.load();
   const maxHeight = dem.maxHeight();
-  const marcher = terrainOnly ? null : new HorizonMarcher(dem.rasters, maxHeight);
+  const marcher = terrainOnly
+    ? null
+    : new HorizonMarcher(dem.rasters, maxHeight);
   const pool = terrainOnly ? null : await HorizonPool.create(dem, maxHeight);
   for (const id of ids) await buildRegion(id, dem, marcher, pool);
   pool?.terminate();

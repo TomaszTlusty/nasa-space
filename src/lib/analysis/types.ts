@@ -75,6 +75,24 @@ export interface PointAnalysis {
 export interface WindowAverageStats {
   /** grid of mean sun fraction per horizon-grid node (row-major, row 0 = min y) */
   sun: Float32Array;
+  /** share of steps with any part of Earth visible per node (same layout) */
   earth: Float32Array;
   computeMs: number;
+  /** sampling step used for the average (1 h, or 2 h when hourly would exceed the time budget) */
+  stepHours: number;
+}
+
+/** Sun and Earth state at the playhead. Azimuths are GRID azimuths (deg from local grid north +y, clockwise). */
+export interface LiveVisibility {
+  /** visible disc fractions 0..1 */
+  sunVis: number;
+  earthVis: number;
+  /** degrees above the mathematical (airless, smooth-Moon) horizon */
+  sunElev: number;
+  earthElev: number;
+  sunAz: number;
+  earthAz: number;
+  /** terrain horizon elevation in the body's direction, degrees */
+  sunHorizon: number;
+  earthHorizon: number;
 }

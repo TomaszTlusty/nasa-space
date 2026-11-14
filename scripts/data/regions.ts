@@ -4,11 +4,15 @@ import type { RegionSite } from "../../src/lib/moon/types";
 
 export const DATA_BOOK_URL =
   "https://ntrs.nasa.gov/api/citations/20230007818/downloads/ACD-50044%20Lunar%20Surface%20Data%20Book%20Rev%20A.pdf";
-export const GLASER_2018_URL = "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf";
+export const GLASER_2018_URL =
+  "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf";
 export const LOLA_GDR_URL = "http://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/";
 export const MAZARICO_URL = "https://pgda.gsfc.nasa.gov/products/69";
 
-export type SiteDef = Pick<RegionSite, "id" | "name" | "kind" | "lat" | "lon" | "source" | "note">;
+export type SiteDef = Pick<
+  RegionSite,
+  "id" | "name" | "kind" | "lat" | "lon" | "source" | "note"
+>;
 
 export interface RegionDef {
   id: string;
@@ -113,7 +117,7 @@ export const REGIONS: Record<string, RegionDef> = {
     id: "malapert",
     name: "Malapert Massif",
     description:
-      "41 x 41 km around the Malapert Massif (Artemis candidate region): a ~5 km high mountain whose summit sees the Sun and the Earth far more often than the surrounding lowlands.",
+      "41 x 41 km around the Malapert Massif (Artemis candidate region): a ~5 km high mountain whose summit faces the Earth and sees far more sunlight than the surrounding lowlands, while slopes behind it lose the Earth entirely.",
     X: Math.round(site23.X),
     Y: Math.round(site23.Y),
     sites: [

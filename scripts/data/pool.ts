@@ -18,11 +18,17 @@ export class HorizonPool {
 
   private constructor() {}
 
-  static async create(dem: MultiDem, maxHeight: number, size = availableParallelism()): Promise<HorizonPool> {
+  static async create(
+    dem: MultiDem,
+    maxHeight: number,
+    size = availableParallelism(),
+  ): Promise<HorizonPool> {
     const pool = new HorizonPool();
     await Promise.all(
       Array.from({ length: size }, async () => {
-        const w = new Worker(new URL("./horizon-worker.ts", import.meta.url).href);
+        const w = new Worker(
+          new URL("./horizon-worker.ts", import.meta.url).href,
+        );
         const ready = Promise.withResolvers<void>();
         w.onerror = (e) => ready.reject(e);
         w.onmessage = (ev) => {
@@ -43,7 +49,11 @@ export class HorizonPool {
   }
 
   /** Horizons for points [X0, Y0, X1, Y1, ...]; result is point-major (point * azBins + k). */
-  run(points: Float64Array, mast: number, azBins: number): Promise<Float32Array> {
+  run(
+    points: Float64Array,
+    mast: number,
+    azBins: number,
+  ): Promise<Float32Array> {
     const { promise, resolve } = Promise.withResolvers<Float32Array>();
     this.queue.push({ points, mast, azBins, resolve });
     this.pump();
@@ -51,17 +61,28 @@ export class HorizonPool {
   }
 
   private pump(): void {
-    while (this.idle.length > 0 && this.queue.length > 0) {
-      const w = this.idle.pop()!;
-      const job = this.queue.shift()!;
+    for (;;) {
+      const w = this.idle.pop();
+      if (!w) return;
+      const job = this.queue.shift();
+      if (!job) {
+        this.idle.push(w);
+        return;
+      }
       const id = this.nextId++;
       this.pending.set(id, job);
-      w.postMessage({ id, points: job.points, mast: job.mast, azBins: job.azBins });
+      w.postMessage({
+        id,
+        points: job.points,
+        mast: job.mast,
+        azBins: job.azBins,
+      });
     }
   }
 
   private onResult(w: Worker, data: { id: number; out: Float32Array }): void {
-    const job = this.pending.get(data.id)!;
+    const job = this.pending.get(data.id);
+    if (!job) throw new Error(`unknown job ${data.id}`);
     this.pending.delete(data.id);
     this.idle.push(w);
     job.resolve(data.out);

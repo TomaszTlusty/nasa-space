@@ -10,7 +10,12 @@
  * Step length grows with distance: ds = max(dsMin, growth * s), out to maxDist (or the DEM edge).
  * The ray stops early once even the highest terrain in the DEMs could not beat the current maximum.
  */
-import { MOON_RADIUS_M, RAD, gridBasis, polarToUnit } from "../../src/lib/moon/frames";
+import {
+  gridBasis,
+  MOON_RADIUS_M,
+  polarToUnit,
+  RAD,
+} from "../../src/lib/moon/frames";
 import type { PolarRaster } from "./pds";
 
 const R = MOON_RADIUS_M;
@@ -21,7 +26,11 @@ export interface MarchOptions {
   growth: number;
 }
 
-export const DEFAULT_MARCH: MarchOptions = { maxDistM: 320_000, dsMinM: 10, growth: 0.004 };
+export const DEFAULT_MARCH: MarchOptions = {
+  maxDistM: 320_000,
+  dsMinM: 10,
+  growth: 0.004,
+};
 
 interface FastRaster {
   data: Int16Array;
@@ -40,9 +49,18 @@ export class HorizonMarcher {
   /** highest terrain radius over all rasters (m) */
   private readonly rMax: number;
 
-  constructor(rasters: PolarRaster[], maxHeight: number, opts: MarchOptions = DEFAULT_MARCH) {
+  constructor(
+    rasters: PolarRaster[],
+    maxHeight: number,
+    opts: MarchOptions = DEFAULT_MARCH,
+  ) {
     this.fr = rasters.map((r) => {
-      const half = Math.min(r.sampleOffset, r.lineOffset, r.samples - 1 - r.sampleOffset, r.lines - 1 - r.lineOffset);
+      const half = Math.min(
+        r.sampleOffset,
+        r.lineOffset,
+        r.samples - 1 - r.sampleOffset,
+        r.lines - 1 - r.lineOffset,
+      );
       const lim = Math.min(r.rhoMax, half * r.scale) - 2 * r.scale;
       return {
         data: r.data,
@@ -55,7 +73,12 @@ export class HorizonMarcher {
       };
     });
     const th: number[] = [];
-    for (let s = opts.dsMinM; s <= opts.maxDistM; s += Math.max(opts.dsMinM, opts.growth * s)) th.push(s / R);
+    for (
+      let s = opts.dsMinM;
+      s <= opts.maxDistM;
+      s += Math.max(opts.dsMinM, opts.growth * s)
+    )
+      th.push(s / R);
     this.cosT = Float64Array.from(th, Math.cos);
     this.sinT = Float64Array.from(th, Math.sin);
     this.rMax = R + maxHeight;
@@ -75,7 +98,8 @@ export class HorizonMarcher {
       const i = l0 * f.samples + c0;
       const d = f.data;
       const a = d[i] + (d[i + 1] - d[i]) * fc;
-      const b = d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
+      const b =
+        d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
       return (a + (b - a) * fl) * f.k;
     }
     return Number.NaN;
@@ -98,7 +122,10 @@ export class HorizonMarcher {
     const ro = R + h0 + mast;
     const q0 = polarToUnit(X, Y);
     const { ex, ey } = gridBasis(X, Y);
-    const { cosT, sinT, rMax, fr } = this;
+    const cosT = this.cosT;
+    const sinT = this.sinT;
+    const rMax = this.rMax;
+    const fr = this.fr;
     const n = cosT.length;
     const nf = fr.length;
     for (let k = 0; k < azBins; k++) {
@@ -134,11 +161,12 @@ export class HorizonMarcher {
           const i = l0 * f.samples + c0;
           const d = f.data;
           const a = d[i] + (d[i + 1] - d[i]) * fc;
-          const b = d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
+          const b =
+            d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
           h = (a + (b - a) * fl) * f.k;
           break;
         }
-        if (h !== h) break; // left every DEM
+        if (Number.isNaN(h)) break; // left every DEM
         const rt = R + h;
         const tn = (rt * c - ro) / (rt * s);
         if (tn > best) best = tn;

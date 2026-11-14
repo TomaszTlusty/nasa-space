@@ -1,0 +1,125 @@
+{
+ "generatedAt": "2026-11-14T13:33:30.318Z",
+ "horizons": [
+  {
+   "body": "sun",
+   "lat": -89.5,
+   "lon": 0,
+   "utc": "2026-11-14T00:00:00Z",
+   "jplAzimuth": 126.627332945,
+   "jplElevation": 1.25833464,
+   "oursAzimuth": 126.6261,
+   "oursElevation": 1.2573
+  },
+  {
+   "body": "earth",
+   "lat": -89.45,
+   "lon": -135,
+   "utc": "2026-11-14T00:00:00Z",
+   "jplAzimuth": 133.740725833,
+   "jplElevation": -5.0285092,
+   "oursAzimuth": 133.7401,
+   "oursElevation": -5.0282
+  },
+  {
+   "body": "sun",
+   "lat": -85.9948,
+   "lon": -0.2357999999999265,
+   "utc": "2027-03-01T12:00:00Z",
+   "jplAzimuth": 259.723530559,
+   "jplElevation": -1.296969175,
+   "oursAzimuth": 259.7228,
+   "oursElevation": -1.2952
+  },
+  {
+   "body": "earth",
+   "lat": -85.9948,
+   "lon": -0.2357999999999265,
+   "utc": "2027-03-01T12:00:00Z",
+   "jplAzimuth": 3.668698597,
+   "jplElevation": -1.884230386,
+   "oursAzimuth": 3.6688,
+   "oursElevation": -1.8867
+  },
+  {
+   "body": "sun",
+   "lat": -45,
+   "lon": 30,
+   "utc": "2026-12-01T06:00:00Z",
+   "jplAzimuth": 252.281167901,
+   "jplElevation": -14.939850325,
+   "oursAzimuth": 252.2781,
+   "oursElevation": -14.9421
+  },
+  {
+   "body": "earth",
+   "lat": -45,
+   "lon": 30,
+   "utc": "2026-12-01T06:00:00Z",
+   "jplAzimuth": 329.541046219,
+   "jplElevation": 38.705744107,
+   "oursAzimuth": 329.537,
+   "oursElevation": 38.7051
+  },
+  {
+   "body": "sun",
+   "lat": -89.4505,
+   "lon": -137.15999999999997,
+   "utc": "2027-06-15T18:00:00Z",
+   "jplAzimuth": 180.148769682,
+   "jplElevation": -1.736070621,
+   "oursAzimuth": 180.1486,
+   "oursElevation": -1.7365
+  },
+  {
+   "body": "earth",
+   "lat": -89.7668,
+   "lon": -171.87,
+   "utc": "2026-12-20T03:00:00Z",
+   "jplAzimuth": 164.715203241,
+   "jplElevation": 5.791895053,
+   "oursAzimuth": 164.7148,
+   "oursElevation": 5.7916
+  },
+  {
+   "body": "sun",
+   "lat": 20,
+   "lon": 160,
+   "utc": "2027-01-10T09:30:00Z",
+   "jplAzimuth": 209.376237114,
+   "jplElevation": 66.364233236,
+   "oursAzimuth": 209.3796,
+   "oursElevation": 66.3646
+  },
+  {
+   "body": "earth",
+   "lat": -10,
+   "lon": -85,
+   "utc": "2027-02-05T21:00:00Z",
+   "jplAzimuth": 87.318611565,
+   "jplElevation": 6.254877368,
+   "oursAzimuth": 87.3178,
+   "oursElevation": 6.2554
+  }
+ ],
+ "mazarico": [
+  {
+   "region": "shackleton",
+   "samples": 64,
+   "sunMaePp": 2.12,
+   "earthMaePp": 1.27,
+   "sunBiasPp": -0.73,
+   "earthBiasPp": -0.74,
+   "method": "64 stratified horizon-grid nodes (43 with NASA Earth visibility > 0); horizons recomputed at 0 m above the LOLA surface (720 azimuths, great-circle march to 320 km over LDEM 20/40/80/240 m); Sun and Earth from astronomy-engine every 3 h, 2016-08-01 to 2035-03-01 (18.6 yr). Visible = any part of the disc above the horizon (AVGVISIB label definition); compared with AVGVISIB_85S_060M_201608 (Sun) and _EARTH, bilinear at the same point. Percentage points; bias = ours - NASA."
+  },
+  {
+   "region": "malapert",
+   "samples": 64,
+   "sunMaePp": 1.13,
+   "earthMaePp": 1.19,
+   "sunBiasPp": -0.75,
+   "earthBiasPp": 0.12,
+   "method": "64 stratified horizon-grid nodes (47 with NASA Earth visibility > 0); horizons recomputed at 0 m above the LOLA surface (720 azimuths, great-circle march to 320 km over LDEM 20/40/80/240 m); Sun and Earth from astronomy-engine every 3 h, 2016-08-01 to 2035-03-01 (18.6 yr). Visible = any part of the disc above the horizon (AVGVISIB label definition); compared with AVGVISIB_85S_060M_201608 (Sun) and _EARTH, bilinear at the same point. Percentage points; bias = ours - NASA."
+  }
+ ]
+}

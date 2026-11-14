@@ -10,6 +10,7 @@ import { discVisibleFraction, horizonAt, type LoadedRegion } from "@/lib/moon/ho
 import { type LanderId, type LanderPlacement, useApp } from "@/lib/store";
 import { heightAt, sceneY } from "@/lib/terrain";
 import { useRegion } from "@/lib/use-region";
+import { Beacons } from "./Beacons";
 import { Lander } from "./Lander";
 import { SiteMarkers } from "./SiteMarkers";
 import { Sky } from "./Sky";
@@ -130,6 +131,7 @@ function World({ region }: { region: LoadedRegion }) {
   const setActiveLander = useApp((s) => s.setActiveLander);
   const averageData = useApp((s) => s.averageData);
   const mastHeight = useApp((s) => s.mastHeight);
+  const discoveryResults = useApp((s) => s.discovery.results);
 
   const sky = useSky(region, time) as SkyState;
   const centerHeight = useMemo(() => heightAt(region.meta, region.heights, 0, 0), [region]);
@@ -173,6 +175,7 @@ function World({ region }: { region: LoadedRegion }) {
         onSelect={(s) => placeLander(placing ?? activeLander, { x: s.x, y: s.y, siteId: s.id })}
       />
       {profile && <Skyline profile={profile} />}
+      {!fpLander && <Beacons region={region} centerHeight={centerHeight} results={discoveryResults} />}
       {landerEntries
         .filter((l) => !(fpLander && l.id === activeLander))
         .map((l) => (

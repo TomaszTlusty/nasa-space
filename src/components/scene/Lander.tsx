@@ -115,7 +115,7 @@ export function Lander({ id, position, earthDir, sunVis, earthVis, scale, showLa
         <lineSegments geometry={beam} material={beamMaterial} onUpdate={(l) => l.computeLineDistances()} />
       </group>
       {showLabel && (
-        <Html position={[0, antennaTop * 1.35, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+        <Html position={[0, antennaTop * 1.35, 0]} center zIndexRange={[9, 0]} style={{ pointerEvents: "none" }}>
           <div
             className={`tabular flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs ring-1 backdrop-blur-md ${
               active ? "bg-black/70 text-fg ring-white/25" : "bg-black/50 text-fg-muted ring-white/10"

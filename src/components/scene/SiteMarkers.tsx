@@ -44,7 +44,7 @@ export function SiteMarkers({
         const s = sites[0];
         return (
           <group key={s.id} position={[s.x / 1000, sceneY(s.elevation, s.x, s.y, centerHeight), -s.y / 1000]}>
-            <Html center zIndexRange={[15, 0]} style={{ pointerEvents: dimmed ? "none" : "auto" }}>
+            <Html center zIndexRange={[7, 0]} style={{ pointerEvents: dimmed ? "none" : "auto" }}>
               <button
                 type="button"
                 onClick={() => onSelect(s)}

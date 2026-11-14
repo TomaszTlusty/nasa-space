@@ -7,7 +7,13 @@
  * All azimuths here are GRID azimuths (from local grid north +y, clockwise); convert with
  * `gridToTrueAz(gridAz, lon)` from `frames.ts` for display.
  */
-import { type CelestialBody, type MoonEphemeris, altAzAtLocalPoint, bodyVectorRegionFromEphemeris, moonEphemeris } from "./ephemeris";
+import {
+  altAzAtLocalPoint,
+  bodyVectorRegionFromEphemeris,
+  type CelestialBody,
+  type MoonEphemeris,
+  moonEphemeris,
+} from "./ephemeris";
 import type { RegionMeta, RegionSite } from "./types";
 
 export interface LoadedRegion {
@@ -18,7 +24,10 @@ export interface LoadedRegion {
 }
 
 /** Fetches `${baseUrl}/regions/${id}/…` (baseUrl may be "" for same-origin). */
-export async function loadRegion(baseUrl: string, id: string): Promise<LoadedRegion> {
+export async function loadRegion(
+  baseUrl: string,
+  id: string,
+): Promise<LoadedRegion> {
   const root = `${baseUrl.replace(/\/$/, "")}/regions/${id}`;
   const get = async (file: string) => {
     const r = await fetch(`${root}/${file}`);
@@ -36,14 +45,22 @@ export async function loadRegion(baseUrl: string, id: string): Promise<LoadedReg
   const heights = new Float32Array(h);
   const horizon = new Uint8Array(hz);
   const slope = new Uint8Array(sl);
-  if (heights.length !== t.width * t.height) throw new Error(`${id}: heights.bin size mismatch`);
-  if (horizon.length !== g.width * g.height * g.azBins) throw new Error(`${id}: horizon.bin size mismatch`);
-  if (slope.length !== g.width * g.height) throw new Error(`${id}: slope.bin size mismatch`);
+  if (heights.length !== t.width * t.height)
+    throw new Error(`${id}: heights.bin size mismatch`);
+  if (horizon.length !== g.width * g.height * g.azBins)
+    throw new Error(`${id}: horizon.bin size mismatch`);
+  if (slope.length !== g.width * g.height)
+    throw new Error(`${id}: slope.bin size mismatch`);
   return { meta, heights, horizon, slope };
 }
 
 /** Horizon elevation (deg) at local (x, y): bilinear in x, y (clamped to the grid), linear in azimuth (wrapping). */
-export function horizonAt(region: LoadedRegion, x: number, y: number, gridAzDeg: number): number {
+export function horizonAt(
+  region: LoadedRegion,
+  x: number,
+  y: number,
+  gridAzDeg: number,
+): number {
   const g = region.meta.horizon;
   const W = g.width;
   const H = g.height;
@@ -71,7 +88,10 @@ export function horizonAt(region: LoadedRegion, x: number, y: number, gridAzDeg:
 }
 
 /** Linear-in-azimuth (wrapping) lookup of a full-circle horizon profile. */
-export function profileAt(values: ArrayLike<number>, gridAzDeg: number): number {
+export function profileAt(
+  values: ArrayLike<number>,
+  gridAzDeg: number,
+): number {
   const n = values.length;
   const af = ((((gridAzDeg % 360) + 360) % 360) / 360) * n;
   const k0 = Math.floor(af) % n;
@@ -83,14 +103,20 @@ export function profileAt(values: ArrayLike<number>, gridAzDeg: number): number 
  * Exact fraction of a circular disc (angular radius r) above a locally straight horizon line.
  * With d = (bodyElev - horizonElev) / r clamped to [-1, 1]:  f = 1 - (acos(d) - d sqrt(1 - d^2)) / pi.
  */
-export function discVisibleFraction(bodyElevDeg: number, horizonElevDeg: number, angularRadiusDeg: number): number {
+export function discVisibleFraction(
+  bodyElevDeg: number,
+  horizonElevDeg: number,
+  angularRadiusDeg: number,
+): number {
   const d = (bodyElevDeg - horizonElevDeg) / angularRadiusDeg;
   if (d >= 1) return 1;
   if (d <= -1) return 0;
   return 1 - (Math.acos(d) - d * Math.sqrt(1 - d * d)) / Math.PI;
 }
 
-export type TimelinePoint = { x: number; y: number } | { siteId: string; mastHeight: number };
+export type TimelinePoint =
+  | { x: number; y: number }
+  | { siteId: string; mastHeight: number };
 
 /** Resolved observer: local position + horizon function of grid azimuth. */
 interface Observer {
@@ -113,14 +139,19 @@ function siteHorizon(site: RegionSite, mast: number): (az: number) => number {
   const lo = hs[j - 1];
   const hi = hs[j];
   const f = (mast - lo.mastHeight) / (hi.mastHeight - lo.mastHeight);
-  return (az) => profileAt(lo.values, az) * (1 - f) + profileAt(hi.values, az) * f;
+  return (az) =>
+    profileAt(lo.values, az) * (1 - f) + profileAt(hi.values, az) * f;
 }
 
 function resolveObserver(region: LoadedRegion, point: TimelinePoint): Observer {
   if ("siteId" in point) {
     const site = region.meta.sites.find((s) => s.id === point.siteId);
     if (!site) throw new Error(`unknown site ${point.siteId}`);
-    return { x: site.x, y: site.y, horizon: siteHorizon(site, point.mastHeight) };
+    return {
+      x: site.x,
+      y: site.y,
+      horizon: siteHorizon(site, point.mastHeight),
+    };
   }
   const { x, y } = point;
   return { x, y, horizon: (az) => horizonAt(region, x, y, az) };
@@ -133,21 +164,44 @@ export interface BodySample {
   fraction: number;
 }
 
-function sampleBody(region: LoadedRegion, obs: Observer, eph: MoonEphemeris, body: CelestialBody): BodySample {
-  const { v, angularRadiusDeg } = bodyVectorRegionFromEphemeris(eph, body, region.meta);
+function sampleBody(
+  region: LoadedRegion,
+  obs: Observer,
+  eph: MoonEphemeris,
+  body: CelestialBody,
+): BodySample {
+  const { v, angularRadiusDeg } = bodyVectorRegionFromEphemeris(
+    eph,
+    body,
+    region.meta,
+  );
   const aa = altAzAtLocalPoint(v, obs.x, obs.y, region.meta);
   const horizonDeg = obs.horizon(aa.gridAzimuthDeg);
   return {
     elevationDeg: aa.elevationDeg,
     gridAzimuthDeg: aa.gridAzimuthDeg,
     horizonDeg,
-    fraction: discVisibleFraction(aa.elevationDeg, horizonDeg, angularRadiusDeg),
+    fraction: discVisibleFraction(
+      aa.elevationDeg,
+      horizonDeg,
+      angularRadiusDeg,
+    ),
   };
 }
 
 /** Sun or Earth state for one point and instant. */
-export function visibilityAt(region: LoadedRegion, point: TimelinePoint, date: Date, body: CelestialBody): BodySample {
-  return sampleBody(region, resolveObserver(region, point), moonEphemeris(date), body);
+export function visibilityAt(
+  region: LoadedRegion,
+  point: TimelinePoint,
+  date: Date,
+  body: CelestialBody,
+): BodySample {
+  return sampleBody(
+    region,
+    resolveObserver(region, point),
+    moonEphemeris(date),
+    body,
+  );
 }
 
 export interface Timeline {
@@ -217,7 +271,11 @@ export interface VisibilityWindow {
  * Contiguous intervals where values > threshold. Edges are placed by linear interpolation between
  * the bracketing samples (use `nextTransition` for minute-accurate edges).
  */
-export function windows(times: ArrayLike<number>, values: ArrayLike<number>, threshold = 0): VisibilityWindow[] {
+export function windows(
+  times: ArrayLike<number>,
+  values: ArrayLike<number>,
+  threshold = 0,
+): VisibilityWindow[] {
   const out: VisibilityWindow[] = [];
   const n = Math.min(times.length, values.length);
   const cross = (i: number) => {
@@ -238,7 +296,8 @@ export function windows(times: ArrayLike<number>, values: ArrayLike<number>, thr
       start = null;
     }
   }
-  if (start !== null) out.push({ startMs: start, endMs: times[n - 1], openStart, openEnd: true });
+  if (start !== null)
+    out.push({ startMs: start, endMs: times[n - 1], openStart, openEnd: true });
   return out;
 }
 
@@ -262,7 +321,9 @@ export function nextTransition(
   maxDays = 30,
 ): Transition | null {
   const obs = resolveObserver(region, point);
-  const visible = (t: number) => sampleBody(region, obs, moonEphemeris(new Date(t)), body).fraction > threshold;
+  const visible = (t: number) =>
+    sampleBody(region, obs, moonEphemeris(new Date(t)), body).fraction >
+    threshold;
   const scan = 10 * 60_000;
   const t0 = date.getTime();
   const v0 = visible(t0);
@@ -276,7 +337,10 @@ export function nextTransition(
         if (visible(mid) === v0) lo = mid;
         else hi = mid;
       }
-      return { date: new Date(Math.round(hi / 60_000) * 60_000), kind: v0 ? "set" : "rise" };
+      return {
+        date: new Date(Math.round(hi / 60_000) * 60_000),
+        kind: v0 ? "set" : "rise",
+      };
     }
     prev = t;
   }
@@ -284,9 +348,15 @@ export function nextTransition(
 }
 
 /** Per-node min / max over azimuth of the quantised horizon (for fast accept / reject). */
-const nodeBounds = new WeakMap<LoadedRegion, { min: Float32Array; max: Float32Array }>();
+const nodeBounds = new WeakMap<
+  LoadedRegion,
+  { min: Float32Array; max: Float32Array }
+>();
 
-function getNodeBounds(region: LoadedRegion): { min: Float32Array; max: Float32Array } {
+function getNodeBounds(region: LoadedRegion): {
+  min: Float32Array;
+  max: Float32Array;
+} {
   const cached = nodeBounds.get(region);
   if (cached) return cached;
   const g = region.meta.horizon;
@@ -311,10 +381,13 @@ function getNodeBounds(region: LoadedRegion): { min: Float32Array; max: Float32A
 
 /** Disc-fraction lookup over d = (elev - horizon) / radius in [-1, 1] (linear interp, error < 1e-6). */
 const FRACTION_LUT_N = 2048;
-const FRACTION_LUT = Float64Array.from({ length: FRACTION_LUT_N + 2 }, (_, i) => {
-  const d = Math.min(1, -1 + (2 * i) / FRACTION_LUT_N);
-  return 1 - (Math.acos(d) - d * Math.sqrt(1 - d * d)) / Math.PI;
-});
+const FRACTION_LUT = Float64Array.from(
+  { length: FRACTION_LUT_N + 2 },
+  (_, i) => {
+    const d = Math.min(1, -1 + (2 * i) / FRACTION_LUT_N);
+    return 1 - (Math.acos(d) - d * Math.sqrt(1 - d * d)) / Math.PI;
+  },
+);
 
 interface PassGrid {
   W: number;
@@ -401,13 +474,28 @@ export interface AverageGrid {
  * over a 41 km region is < 0.001 deg), so the per-node work is two adds, a min/max accept/reject and,
  * only for nodes where the disc may straddle the horizon, one azimuth-interpolated horizon lookup.
  */
-export function averageGrid(region: LoadedRegion, startDate: Date, hours: number, stepHours: number): AverageGrid {
+export function averageGrid(
+  region: LoadedRegion,
+  startDate: Date,
+  hours: number,
+  stepHours: number,
+): AverageGrid {
   const g = region.meta.horizon;
   const W = g.width;
   const H = g.height;
   const plane = W * H;
   const { min, max } = getNodeBounds(region);
-  const pass: PassGrid = { W, H, plane, nBins: g.azBins, hz: region.horizon, min, max, qd: g.quantDeg, off: g.offsetDeg };
+  const pass: PassGrid = {
+    W,
+    H,
+    plane,
+    nBins: g.azBins,
+    hz: region.horizon,
+    min,
+    max,
+    qd: g.quantDeg,
+    off: g.offsetDeg,
+  };
   const binsPerDeg = g.azBins / 360;
   // centre node coordinates and the half-span used for the linear fits
   const cc = (W - 1) / 2;
@@ -422,11 +510,16 @@ export function averageGrid(region: LoadedRegion, startDate: Date, hours: number
   const t0 = startDate.getTime();
   let globalMin = Infinity;
   for (const m of min) if (m < globalMin) globalMin = m;
-  const angDiff = (a: number, b: number) => ((((a - b) % 360) + 540) % 360) - 180;
+  const angDiff = (a: number, b: number) =>
+    ((((a - b) % 360) + 540) % 360) - 180;
   for (let s = 0; s < steps; s++) {
     const eph = moonEphemeris(new Date(t0 + s * stepHours * 3_600_000));
     for (const body of ["sun", "earth"] as const) {
-      const { v, angularRadiusDeg: rad } = bodyVectorRegionFromEphemeris(eph, body, region.meta);
+      const { v, angularRadiusDeg: rad } = bodyVectorRegionFromEphemeris(
+        eph,
+        body,
+        region.meta,
+      );
       const c0 = altAzAtLocalPoint(v, xc, yc, region.meta);
       // whole region below every horizon (tilt across the region < 0.7 deg)
       if (c0.elevationDeg + rad + 1 < globalMin) continue;

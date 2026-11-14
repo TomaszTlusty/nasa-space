@@ -6,7 +6,7 @@ import { Popover } from "@/components/ui/overlay";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/cn";
 import { DATE_MAX, DATE_MIN, DAY, HOUR, useApp } from "@/lib/store";
-import { formatClock, formatDate, toDateInput } from "./format";
+import { formatClock, formatDate, formatDayMonth, toDateInput } from "./format";
 
 /** UTC playhead readout; opens a popover to move the mission window (landing date + hour). */
 export function DateJump() {
@@ -39,9 +39,18 @@ export function DateJump() {
             "data-popup-open:bg-white/5",
           )}
         >
-          <CalendarBlank size={15} weight="light" className="shrink-0 text-fg-faint" />
+          <CalendarBlank
+            size={15}
+            weight="light"
+            className="shrink-0 text-fg-faint max-xl:hidden"
+          />
           <span className="tabular whitespace-nowrap text-xs">
-            {formatDate(time)} <span className="text-fg-muted">{formatClock(time)}</span>
+            {formatDayMonth(time)}
+            <span className="max-xl:hidden">
+              {" "}
+              {new Date(time).getUTCFullYear()}
+            </span>{" "}
+            <span className="text-fg-muted">{formatClock(time)}</span>
             <span className="ml-1 text-fg-faint">UTC</span>
           </span>
         </button>
@@ -51,7 +60,9 @@ export function DateJump() {
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="eyebrow">Landing date</span>
-          <p className="text-fg-muted text-xs">Moves the mission window start. Times are UTC.</p>
+          <p className="text-fg-muted text-xs">
+            Moves the mission window start. Times are UTC.
+          </p>
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg-muted text-xs">Date</span>

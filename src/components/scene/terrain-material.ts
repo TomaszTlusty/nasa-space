@@ -124,18 +124,25 @@ const fragment = /* glsl */ `
                + vec3(0.012, 0.014, 0.02);
     vec3 col = albedo * light;
 
+    #include <logdepthbuf_fragment>
+    gl_FragColor = vec4(col, 1.0);
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+
+    // Overlays are mixed AFTER tone mapping + sRGB encoding, so their colours are exact display (sRGB)
+    // values and the legends in the UI can use the same constants.
+    vec3 shade3 = vec3(0.6 + 0.4 * clamp(dot(n, normalize(vec3(-0.4, 0.5, 0.75))), 0.0, 1.0));
+    vec3 outc = gl_FragColor.rgb;
     if (uOverlay == 1) {
-      vec3 sunCol = mix(vec3(0.10, 0.11, 0.16), vec3(0.98, 0.72, 0.30), sunVis);
-      col = mix(col, sunCol * (0.55 + 0.45 * sunLambert * 3.0), uOverlayOpacity);
+      vec3 sunCol = mix(vec3(0.16, 0.17, 0.24), vec3(0.98, 0.72, 0.30), sunVis);
+      outc = mix(outc, sunCol * shade3, uOverlayOpacity);
       // Earth-visible ground gets fine diagonal hatching in Earth blue.
       float stripe = step(0.82, fract((p.x + p.y) / 160.0));
-      col = mix(col, vec3(0.45, 0.72, 1.0), stripe * earthVis * 0.55 * uOverlayOpacity);
+      outc = mix(outc, vec3(0.45, 0.72, 1.0), stripe * step(0.001, earthVis) * 0.7 * uOverlayOpacity);
     } else if (uOverlay == 2) {
       vec2 g = ((p - uHorizonGrid.xy) / uHorizonGrid.z + 0.5) / uHorizonSize.xy;
       vec4 avg = texture(uOverlayTex, g);
-      vec3 heat = inferno(0.08 + 0.92 * avg.r);
-      float shade = 0.65 + 0.35 * clamp(dot(n, normalize(vec3(-0.4, 0.5, 0.75))), 0.0, 1.0);
-      col = mix(col, heat * shade, uOverlayOpacity);
+      outc = mix(outc, inferno(0.08 + 0.92 * avg.r) * shade3, uOverlayOpacity);
     } else if (uOverlay == 3) {
       vec2 g = ((p - uHorizonGrid.xy) / uHorizonGrid.z + 0.5) / uHorizonSize.xy;
       float s = texture(uSlope, g).r * 255.0;
@@ -143,19 +150,13 @@ const fragment = /* glsl */ `
       vec3 warn = vec3(0.95, 0.70, 0.28);
       vec3 bad = vec3(0.86, 0.30, 0.26);
       vec3 sc = s < 5.0 ? ok : (s < 10.0 ? mix(ok, warn, (s - 5.0) / 5.0) : mix(warn, bad, clamp((s - 10.0) / 10.0, 0.0, 1.0)));
-      float shade = 0.6 + 0.4 * clamp(dot(n, normalize(vec3(-0.4, 0.5, 0.75))), 0.0, 1.0);
-      col = mix(col, sc * shade, uOverlayOpacity);
+      outc = mix(outc, sc * shade3, uOverlayOpacity);
     }
 
-    // Fade the tile into the canvas at its border (diorama edge).
+    // Fade the tile into the canvas at its border (diorama edge). uCanvas is sRGB.
     vec2 d = min(p - uTerrainRect.xy, uTerrainRect.xy + uTerrainRect.zw - p);
     float edge = smoothstep(0.0, uEdgeFade, min(d.x, d.y));
-    col = mix(uCanvas, col, edge);
-
-    #include <logdepthbuf_fragment>
-    gl_FragColor = vec4(col, 1.0);
-    #include <tonemapping_fragment>
-    #include <colorspace_fragment>
+    gl_FragColor = vec4(mix(uCanvas, outc, edge), 1.0);
   }
 `;
 
@@ -219,7 +220,7 @@ export function createTerrainMaterial(region: LoadedRegion, normalMap: THREE.Tex
       uOverlay: { value: 0 },
       uOverlayOpacity: { value: 0.85 },
       uEdgeFade: { value: Math.min(spanX, spanY) * 0.06 },
-      uCanvas: { value: new THREE.Color("#0d0e12") },
+      uCanvas: { value: new THREE.Vector3(13 / 255, 14 / 255, 18 / 255) },
     },
   });
 }
