@@ -161,17 +161,8 @@ export const missionTools = {
     description:
       "Set the landing date and mission length. The app supports windows of 1, 7, 15 or 30 days; the shortest window covering `days` is used and reported back.",
     inputSchema: z.object({
-      startIso: z
-        .string()
-        .describe(
-          "Landing date/time in UTC, ISO 8601, e.g. 2027-03-01 or 2027-03-01T12:00Z",
-        ),
-      days: z
-        .number()
-        .int()
-        .min(1)
-        .max(60)
-        .describe("Mission length the user needs, in days"),
+      startIso: z.string().describe("Landing date/time in UTC, ISO 8601, e.g. 2027-03-01 or 2027-03-01T12:00Z"),
+      days: z.number().int().min(1).max(60).describe("Mission length the user needs, in days"),
     }),
     outputSchema: z.custom<WindowOutput>(),
   }),
@@ -185,21 +176,9 @@ export const missionTools = {
     description:
       "Search every terrain grid point of the region over the current window for spots meeting all criteria. Returns the best results (rank 1 = best).",
     inputSchema: z.object({
-      maxSlopeDeg: z
-        .number()
-        .min(0)
-        .max(45)
-        .describe("Maximum ground slope, degrees"),
-      minSunPct: z
-        .number()
-        .min(0)
-        .max(100)
-        .describe("Minimum mean sunlight over the window, %"),
-      minEarthPct: z
-        .number()
-        .min(0)
-        .max(100)
-        .describe("Minimum share of the window with Earth in view, %"),
+      maxSlopeDeg: z.number().min(0).max(45).describe("Maximum ground slope, degrees"),
+      minSunPct: z.number().min(0).max(100).describe("Minimum mean sunlight over the window, %"),
+      minEarthPct: z.number().min(0).max(100).describe("Minimum share of the window with Earth in view, %"),
     }),
     outputSchema: z.custom<DiscoveryOutput>(),
   }),
@@ -226,8 +205,7 @@ export const missionTools = {
     outputSchema: z.custom<PlaceOutput>(),
   }),
   compare_landers: tool({
-    description:
-      "Compare placed landers A and B over the current window. Both must be placed.",
+    description: "Compare placed landers A and B over the current window. Both must be placed.",
     inputSchema: empty,
     outputSchema: z.custom<CompareOutput>(),
   }),
@@ -248,8 +226,5 @@ export interface ChatRequestBody {
 /** Number of model steps already taken in an assistant message (one `step-start` part per step). */
 export function countSteps(message: MissionUIMessage | undefined): number {
   if (!message || message.role !== "assistant") return 0;
-  return message.parts.reduce(
-    (n, p) => (p.type === "step-start" ? n + 1 : n),
-    0,
-  );
+  return message.parts.reduce((n, p) => (p.type === "step-start" ? n + 1 : n), 0);
 }

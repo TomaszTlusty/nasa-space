@@ -1,13 +1,7 @@
 "use client";
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
-import {
-  ArrowRight,
-  Crosshair,
-  GraduationCap,
-  type Icon,
-  X,
-} from "@phosphor-icons/react";
+import { ArrowRight, Crosshair, GraduationCap, type Icon, X } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { type Mode, useApp } from "@/lib/store";
@@ -19,15 +13,7 @@ const STAGGER_S = 0.048;
 const ITEM_S = 0.3;
 
 /** Fade-up for one entrance step; reduced motion keeps the fade and drops the movement. */
-function Reveal({
-  step,
-  className,
-  children,
-}: {
-  step: number;
-  className?: string;
-  children: ReactNode;
-}) {
+function Reveal({ step, className, children }: { step: number; className?: string; children: ReactNode }) {
   const reduce = useReducedMotion();
   return (
     <motion.div
@@ -73,9 +59,7 @@ function ModeTile({
         />
       </span>
       <span>
-        <span className="block font-medium text-fg text-lg tracking-[-0.01em]">
-          {title}
-        </span>
+        <span className="block font-medium text-fg text-lg tracking-[-0.01em]">{title}</span>
         <span className="mt-1 block text-fg-muted text-sm">{body}</span>
       </span>
     </button>
@@ -113,9 +97,7 @@ export function Welcome() {
         >
           <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-6 py-6 md:px-12 md:py-10">
             <Reveal step={0} className="flex items-center justify-between">
-              <span className="font-medium text-fg text-sm tracking-[-0.01em]">
-                Malapert
-              </span>
+              <span className="font-medium text-fg text-sm tracking-[-0.01em]">Malapert</span>
               <BaseDialog.Close
                 aria-label="Close welcome screen"
                 className="inline-flex size-9 items-center justify-center rounded-md text-fg-muted transition-[transform,background-color,color] duration-150 ease-(--ease-out) hover:bg-white/5 hover:text-fg active:scale-[0.97]"
@@ -132,8 +114,8 @@ export function Welcome() {
               </Reveal>
               <Reveal step={2}>
                 <BaseDialog.Description className="mt-5 max-w-[46ch] text-base text-fg-muted md:text-lg">
-                  Real lunar terrain and Sun and Earth positions show where a
-                  lander keeps its power and its radio link home.
+                  Real lunar terrain and Sun and Earth positions show where a lander keeps its power and its radio link
+                  home.
                 </BaseDialog.Description>
               </Reveal>
 
@@ -161,9 +143,7 @@ export function Welcome() {
               step={5}
               className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-line border-t pt-4 text-fg-faint text-xs"
             >
-              <span>
-                Built on NASA LOLA terrain and JPL-validated ephemerides
-              </span>
+              <span>Built on NASA LOLA terrain and JPL-validated ephemerides</span>
               <span>Team — NASA Space Apps 2026</span>
             </Reveal>
           </div>

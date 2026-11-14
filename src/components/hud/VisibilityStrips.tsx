@@ -64,15 +64,7 @@ function StripLayer({
       style={{ transitionDuration: `${FADE_MS}ms` }}
     >
       {sun.map((r) => (
-        <rect
-          key={`s${r.x}`}
-          x={r.x}
-          y={0}
-          width={r.w}
-          height={ROW}
-          fill="var(--color-sun)"
-          opacity={r.opacity}
-        />
+        <rect key={`s${r.x}`} x={r.x} y={0} width={r.w} height={ROW} fill="var(--color-sun)" opacity={r.opacity} />
       ))}
       {earth.map((r) => (
         <rect
@@ -102,9 +94,7 @@ export function VisibilityStrips({
   windowStart: number;
   windowDays: number;
 }) {
-  const [layers, setLayers] = useState<{ key: number; series: PointSeries }[]>(
-    [],
-  );
+  const [layers, setLayers] = useState<{ key: number; series: PointSeries }[]>([]);
   const nextKey = useRef(0);
 
   useEffect(() => {
@@ -114,24 +104,15 @@ export function VisibilityStrips({
     }
     const key = nextKey.current++;
     setLayers((prev) => [...prev.slice(-1), { key, series }]);
-    const id = window.setTimeout(
-      () => setLayers((prev) => prev.filter((l) => l.key >= key)),
-      FADE_MS + 40,
-    );
+    const id = window.setTimeout(() => setLayers((prev) => prev.filter((l) => l.key >= key)), FADE_MS + 40);
     return () => window.clearTimeout(id);
   }, [series]);
 
   const spanH = windowDays * 24;
   return (
     <div className="relative w-full" style={{ height: STRIPS_HEIGHT }}>
-      <div
-        className="absolute inset-x-0 top-0 rounded-[1px] bg-night-soft"
-        style={{ height: ROW }}
-      />
-      <div
-        className="absolute inset-x-0 rounded-[1px] bg-night-soft"
-        style={{ top: ROW + GAP, height: ROW }}
-      />
+      <div className="absolute inset-x-0 top-0 rounded-[1px] bg-night-soft" style={{ height: ROW }} />
+      <div className="absolute inset-x-0 rounded-[1px] bg-night-soft" style={{ top: ROW + GAP, height: ROW }} />
       {layers.map((l, i) => (
         <StripLayer
           key={l.key}

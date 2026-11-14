@@ -25,13 +25,7 @@ export function Section({
   );
 }
 
-export function SourceLink({
-  href,
-  children = "Source",
-}: {
-  href: string;
-  children?: ReactNode;
-}) {
+export function SourceLink({ href, children = "Source" }: { href: string; children?: ReactNode }) {
   return (
     <a
       href={href}

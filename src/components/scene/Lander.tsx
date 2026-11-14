@@ -79,7 +79,11 @@ export function Lander({ id, position, earthDir, sunVis, earthVis, scale, showLa
   const linked = earthVis > 0.001;
 
   const beam = useMemo(
-    () => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), earthDir.clone().multiplyScalar(BEAM_LENGTH)]),
+    () =>
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        earthDir.clone().multiplyScalar(BEAM_LENGTH),
+      ]),
     [earthDir],
   );
 

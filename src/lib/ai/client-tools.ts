@@ -3,14 +3,7 @@
 import { analyzePoint, runDiscovery } from "@/lib/analysis";
 import type { PointAnalysis } from "@/lib/analysis/types";
 import type { RegionMeta } from "@/lib/moon/types";
-import {
-  DATE_MAX,
-  DATE_MIN,
-  DAY,
-  type LanderPlacement,
-  useApp,
-  type WindowDays,
-} from "@/lib/store";
+import { DATE_MAX, DATE_MIN, DAY, type LanderPlacement, useApp, type WindowDays } from "@/lib/store";
 import { fetchRegion } from "@/lib/use-region";
 import type {
   AnalyzeOutput,
@@ -61,10 +54,7 @@ async function regionMeta(): Promise<RegionMeta> {
   return (await fetchRegion(useApp.getState().regionId)).meta;
 }
 
-function placeRef(
-  meta: RegionMeta,
-  p: { x: number; y: number; siteId?: string },
-): PlaceRef {
+function placeRef(meta: RegionMeta, p: { x: number; y: number; siteId?: string }): PlaceRef {
   const site = p.siteId ? meta.sites.find((s) => s.id === p.siteId) : undefined;
   return {
     ...(site ? { siteId: site.id, siteName: site.name } : {}),
@@ -73,21 +63,14 @@ function placeRef(
   };
 }
 
-function summarize(
-  a: PointAnalysis,
-  meta: RegionMeta,
-  start: number,
-  days: number,
-): PointSummary {
+function summarize(a: PointAnalysis, meta: RegionMeta, start: number, days: number): PointSummary {
   const end = start + days * DAY;
   const firstEnd = (ws: PointAnalysis["sunWindows"]) => {
     const t = ws.find((w) => w.end > start && w.end < end)?.end;
     return isoOrNull(t);
   };
-  const firstStart = (ws: PointAnalysis["sunWindows"]) =>
-    isoOrNull(ws.find((w) => w.start > start)?.start);
-  const upAt = (ws: PointAnalysis["sunWindows"]) =>
-    ws.some((w) => w.start <= start && w.end > start);
+  const firstStart = (ws: PointAnalysis["sunWindows"]) => isoOrNull(ws.find((w) => w.start > start)?.start);
+  const upAt = (ws: PointAnalysis["sunWindows"]) => ws.some((w) => w.start <= start && w.end > start);
   const sunPct = round(a.sunMean * 100);
   const earthPct = round(a.earthMean * 100);
   const depleted = a.power.depletedAt;
@@ -115,8 +98,7 @@ function summarize(
       energyKWh: round(a.power.energyWh / 1000, 1),
       minBatteryPct: round(a.power.minSocPct),
       batteryEmptyUtc: isoOrNull(depleted),
-      batteryLastsDays:
-        depleted == null ? null : round((depleted - start) / DAY, 1),
+      batteryLastsDays: depleted == null ? null : round((depleted - start) / DAY, 1),
     },
     screening: {
       slopeOk: a.slopeDeg < SCREENING.maxSlopeDeg,
@@ -126,16 +108,9 @@ function summarize(
   };
 }
 
-async function analyze(
-  p: { x: number; y: number; siteId?: string },
-  meta: RegionMeta,
-): Promise<PointSummary> {
+async function analyze(p: { x: number; y: number; siteId?: string }, meta: RegionMeta): Promise<PointSummary> {
   const s = useApp.getState();
-  const a = await analyzePoint(
-    { ...p, mastHeight: s.mastHeight },
-    s.windowStart,
-    s.windowDays,
-  );
+  const a = await analyzePoint({ ...p, mastHeight: s.mastHeight }, s.windowStart, s.windowDays);
   return summarize(a, meta, s.windowStart, s.windowDays);
 }
 
@@ -147,30 +122,22 @@ function resolvePlace(
   if (input.siteId) {
     const site = meta.sites.find((s) => s.id === input.siteId);
     if (!site)
-      throw new Error(
-        `Unknown siteId "${input.siteId}". Known ids: ${meta.sites.map((s) => s.id).join(", ")}.`,
-      );
+      throw new Error(`Unknown siteId "${input.siteId}". Known ids: ${meta.sites.map((s) => s.id).join(", ")}.`);
     return {
       placement: { x: site.x, y: site.y, siteId: site.id },
       label: site.name,
     };
   }
   if (input.resultRank != null) {
-    const r = useApp
-      .getState()
-      .discovery.results.find((d) => d.rank === input.resultRank);
+    const r = useApp.getState().discovery.results.find((d) => d.rank === input.resultRank);
     if (!r)
-      throw new Error(
-        `No discovery result with rank ${input.resultRank}. Run set_discovery_criteria_and_run first.`,
-      );
+      throw new Error(`No discovery result with rank ${input.resultRank}. Run set_discovery_criteria_and_run first.`);
     return { placement: { x: r.x, y: r.y }, label: `Site #${r.rank}` };
   }
   if (input.x != null && input.y != null) {
     const half = meta.extent / 2;
     if (Math.abs(input.x) > half || Math.abs(input.y) > half)
-      throw new Error(
-        `x and y must be within ±${round(half)} m of the region centre.`,
-      );
+      throw new Error(`x and y must be within ±${round(half)} m of the region centre.`);
     return {
       placement: { x: input.x, y: input.y },
       label: `x ${round(input.x / 1000, 1)} km, y ${round(input.y / 1000, 1)} km`,
@@ -221,15 +188,9 @@ async function getContext(): Promise<ContextOutput> {
   };
 }
 
-function setMissionWindow({
-  startIso,
-  days,
-}: MissionUITools["set_mission_window"]["input"]): WindowOutput {
+function setMissionWindow({ startIso, days }: MissionUITools["set_mission_window"]["input"]): WindowOutput {
   const start = Date.parse(startIso);
-  if (Number.isNaN(start))
-    throw new Error(
-      `Could not read the date "${startIso}". Use ISO format, e.g. 2027-03-01.`,
-    );
+  if (Number.isNaN(start)) throw new Error(`Could not read the date "${startIso}". Use ISO format, e.g. 2027-03-01.`);
   const previousWindow = currentWindow();
   const applied = WINDOW_DAYS.find((d) => d >= days) ?? 30;
   useApp.getState().setWindow(start, applied);
@@ -253,9 +214,7 @@ function setMissionWindow({
   };
 }
 
-function slipLaunch({
-  days,
-}: MissionUITools["slip_launch"]["input"]): WindowOutput {
+function slipLaunch({ days }: MissionUITools["slip_launch"]["input"]): WindowOutput {
   const before = useApp.getState().windowStart;
   const previousWindow = currentWindow();
   useApp.getState().slipDays(days);
@@ -265,15 +224,11 @@ function slipLaunch({
     window,
     previousWindow,
     slippedDays: moved,
-    ...(moved !== days
-      ? { note: "The window hit the supported date range and was clamped." }
-      : {}),
+    ...(moved !== days ? { note: "The window hit the supported date range and was clamped." } : {}),
   };
 }
 
-async function runSearch(
-  input: MissionUITools["set_discovery_criteria_and_run"]["input"],
-): Promise<DiscoveryOutput> {
+async function runSearch(input: MissionUITools["set_discovery_criteria_and_run"]["input"]): Promise<DiscoveryOutput> {
   const meta = await regionMeta();
   const criteria = {
     maxSlopeDeg: input.maxSlopeDeg,
@@ -310,17 +265,13 @@ async function runSearch(
   };
 }
 
-async function analyzeTool(
-  input: MissionUITools["analyze_point"]["input"],
-): Promise<AnalyzeOutput> {
+async function analyzeTool(input: MissionUITools["analyze_point"]["input"]): Promise<AnalyzeOutput> {
   const meta = await regionMeta();
   const { placement, label } = resolvePlace(meta, input);
   return { label, analysis: await analyze(placement, meta) };
 }
 
-async function placeLander(
-  input: MissionUITools["place_lander"]["input"],
-): Promise<PlaceOutput> {
+async function placeLander(input: MissionUITools["place_lander"]["input"]): Promise<PlaceOutput> {
   const meta = await regionMeta();
   const { placement, label } = resolvePlace(meta, input);
   useApp.getState().placeLander(input.lander, placement);
@@ -335,16 +286,12 @@ async function placeLander(
 async function compareLanders(): Promise<CompareOutput> {
   const meta = await regionMeta();
   const { A, B } = useApp.getState().landers;
-  if (!A || !B)
-    throw new Error(
-      `Lander ${A ? "B" : "A"} is not placed. Use place_lander first.`,
-    );
+  if (!A || !B) throw new Error(`Lander ${A ? "B" : "A"} is not placed. Use place_lander first.`);
   const [a, b] = await Promise.all([analyze(A, meta), analyze(B, meta)]);
   const pick = (va: number, vb: number, higherIsBetter: boolean) =>
     va === vb ? "tie" : va > vb === higherIsBetter ? "A" : "B";
   // battery: surviving the whole window beats running out; otherwise the later run-out wins
-  const lasts = (s: PointSummary) =>
-    s.power.batteryLastsDays ?? Number.POSITIVE_INFINITY;
+  const lasts = (s: PointSummary) => s.power.batteryLastsDays ?? Number.POSITIVE_INFINITY;
   return {
     window: currentWindow(),
     A: a,

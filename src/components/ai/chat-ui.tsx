@@ -12,47 +12,21 @@ export function AiBadge() {
     <Tooltip content="Answers are written by Claude (AI) from this app's own calculations">
       <Badge tabIndex={0}>
         AI
-        <span className="sr-only">
-          {" "}
-          — answers are written by Claude from this app's own calculations
-        </span>
+        <span className="sr-only"> — answers are written by Claude from this app's own calculations</span>
       </Badge>
     </Tooltip>
   );
 }
 
-export function ChatError({
-  error,
-  onRetry,
-  className,
-}: {
-  error: Error;
-  onRetry: () => void;
-  className?: string;
-}) {
+export function ChatError({ error, onRetry, className }: { error: Error; onRetry: () => void; className?: string }) {
   return (
     <div
       role="alert"
-      className={cn(
-        "flex items-start gap-2 rounded-md bg-danger-soft px-3 py-2 text-danger text-xs",
-        className,
-      )}
+      className={cn("flex items-start gap-2 rounded-md bg-danger-soft px-3 py-2 text-danger text-xs", className)}
     >
-      <WarningCircle
-        size={15}
-        weight="regular"
-        className="mt-px shrink-0"
-        aria-hidden
-      />
-      <p className="min-w-0 flex-1 break-words">
-        {error.message || "Something went wrong."}
-      </p>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={onRetry}
-        className="-my-1 h-6 text-danger hover:text-danger"
-      >
+      <WarningCircle size={15} weight="regular" className="mt-px shrink-0" aria-hidden />
+      <p className="min-w-0 flex-1 break-words">{error.message || "Something went wrong."}</p>
+      <Button size="sm" variant="ghost" onClick={onRetry} className="-my-1 h-6 text-danger hover:text-danger">
         <ArrowCounterClockwise size={13} weight="regular" aria-hidden />
         Retry
       </Button>

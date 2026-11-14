@@ -88,11 +88,7 @@ export function Stat({
   );
 }
 
-export function Badge({
-  tone = "neutral",
-  className,
-  ...props
-}: ComponentProps<"span"> & { tone?: Tone }) {
+export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: Tone }) {
   return (
     <span
       className={cn(

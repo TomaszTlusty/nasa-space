@@ -57,20 +57,14 @@ export function RegionSelect({ className }: { className?: string }) {
               </>
             )}
           </Select.Value>
-          <span className="mt-1 truncate text-2xs text-fg-faint max-xl:hidden">
-            {current.subtitle}
-          </span>
+          <span className="mt-1 truncate text-2xs text-fg-faint max-xl:hidden">{current.subtitle}</span>
         </span>
         <Select.Icon className="shrink-0 text-fg-faint">
           <CaretUpDown size={14} weight="regular" />
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Positioner
-          className="z-40 select-none outline-none"
-          sideOffset={8}
-          alignItemWithTrigger={false}
-        >
+        <Select.Positioner className="z-40 select-none outline-none" sideOffset={8} alignItemWithTrigger={false}>
           <Select.Popup
             className={cn(
               "glass min-w-(--anchor-width) origin-(--transform-origin) rounded-lg bg-glass-strong p-1 shadow-(--shadow-pop) outline-none",
@@ -92,9 +86,7 @@ export function RegionSelect({ className }: { className?: string }) {
                     <Check size={14} weight="regular" />
                   </Select.ItemIndicator>
                   <span className="col-start-2 flex flex-col gap-0.5">
-                    <Select.ItemText className="font-medium text-fg text-sm">
-                      {r.label}
-                    </Select.ItemText>
+                    <Select.ItemText className="font-medium text-fg text-sm">{r.label}</Select.ItemText>
                     <span className="text-fg-faint text-xs">{r.subtitle}</span>
                   </span>
                 </Select.Item>

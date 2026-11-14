@@ -1,18 +1,9 @@
 "use client";
 
 import { Chat } from "@ai-sdk/react";
-import {
-  DefaultChatTransport,
-  lastAssistantMessageIsCompleteWithToolCalls,
-} from "ai";
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { toolExecutors } from "@/lib/ai/client-tools";
-import {
-  type ChatMode,
-  countSteps,
-  MAX_HISTORY,
-  MAX_STEPS,
-  type MissionUIMessage,
-} from "@/lib/ai/tools";
+import { type ChatMode, countSteps, MAX_HISTORY, MAX_STEPS, type MissionUIMessage } from "@/lib/ai/tools";
 
 /**
  * One chat per mode, kept at module scope so conversations survive mode switches and panel
@@ -29,8 +20,7 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
       }),
     }),
     sendAutomaticallyWhen: ({ messages }) =>
-      lastAssistantMessageIsCompleteWithToolCalls({ messages }) &&
-      countSteps(messages.at(-1)) < MAX_STEPS,
+      lastAssistantMessageIsCompleteWithToolCalls({ messages }) && countSteps(messages.at(-1)) < MAX_STEPS,
     onToolCall: async ({ toolCall }) => {
       if (toolCall.dynamic) return;
       const { toolCallId } = toolCall;
@@ -62,9 +52,7 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
             void chat.addToolOutput({
               tool: "set_discovery_criteria_and_run",
               toolCallId,
-              output: await toolExecutors.set_discovery_criteria_and_run(
-                toolCall.input,
-              ),
+              output: await toolExecutors.set_discovery_criteria_and_run(toolCall.input),
             });
             break;
           case "analyze_point":

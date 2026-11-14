@@ -65,10 +65,9 @@ export function useGuideEvents(): void {
           once: true,
           text: (
             <>
-              Lander {id} landed in a crater that gets almost no sunlight (
-              <Num>{pct(analysis.sunMean)}%</Num> this window). Floors like this
-              can sit in the dark for ages and drop to about <Num>−238 °C</Num>.
-              Let's find higher ground!
+              Lander {id} landed in a crater that gets almost no sunlight (<Num>{pct(analysis.sunMean)}%</Num> this
+              window). Floors like this can sit in the dark for ages and drop to about <Num>−238 °C</Num>. Let's find
+              higher ground!
             </>
           ),
           source: SOURCES.moonWater,
@@ -80,10 +79,8 @@ export function useGuideEvents(): void {
           once: true,
           text: (
             <>
-              Great spot! Lander {id} sees the Sun{" "}
-              <Num>{pct(analysis.sunMean)}%</Num> of the time in this window.
-              For comparison, Connecting Ridge, one of the sunniest places at
-              the pole, gets about <Num>76%</Num>.
+              Great spot! Lander {id} sees the Sun <Num>{pct(analysis.sunMean)}%</Num> of the time in this window. For
+              comparison, Connecting Ridge, one of the sunniest places at the pole, gets about <Num>76%</Num>.
             </>
           ),
           source: SOURCES.glaser2018,
@@ -104,9 +101,8 @@ export function useGuideEvents(): void {
       once: true,
       text: (
         <>
-          At the pole the Sun doesn't rise and set like at home: it circles the
-          sky, never more than about <Num>1.5°</Num> above or below the horizon,
-          skimming just over the mountains.
+          At the pole the Sun doesn't rise and set like at home: it circles the sky, never more than about{" "}
+          <Num>1.5°</Num> above or below the horizon, skimming just over the mountains.
         </>
       ),
       source: SOURCES.svs4944,
@@ -115,12 +111,8 @@ export function useGuideEvents(): void {
 
   // Earth link and Sun transitions at the playhead for the active lander.
   const placement = landers[activeLander];
-  const placementKey = placement
-    ? `${activeLander}:${placement.x}:${placement.y}`
-    : null;
-  const prev = useRef<{ key: string; sun: boolean; earth: boolean } | null>(
-    null,
-  );
+  const placementKey = placement ? `${activeLander}:${placement.x}:${placement.y}` : null;
+  const prev = useRef<{ key: string; sun: boolean; earth: boolean } | null>(null);
   useEffect(() => {
     if (!live || !placementKey) {
       prev.current = null;

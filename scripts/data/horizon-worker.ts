@@ -9,10 +9,7 @@ let marcher: HorizonMarcher | null = null;
 self.onmessage = (ev: MessageEvent) => {
   const msg = ev.data;
   if (msg.type === "init") {
-    marcher = new HorizonMarcher(
-      msg.rasters as PolarRaster[],
-      msg.maxHeight as number,
-    );
+    marcher = new HorizonMarcher(msg.rasters as PolarRaster[], msg.maxHeight as number);
     self.postMessage({ type: "ready" });
     return;
   }
@@ -25,15 +22,6 @@ self.onmessage = (ev: MessageEvent) => {
   };
   const n = points.length / 2;
   const out = new Float32Array(n * azBins);
-  for (let i = 0; i < n; i++)
-    marcher.horizon(
-      points[2 * i],
-      points[2 * i + 1],
-      mast,
-      azBins,
-      out,
-      i * azBins,
-      1,
-    );
+  for (let i = 0; i < n; i++) marcher.horizon(points[2 * i], points[2 * i + 1], mast, azBins, out, i * azBins, 1);
   self.postMessage({ type: "result", id, out }, [out.buffer]);
 };

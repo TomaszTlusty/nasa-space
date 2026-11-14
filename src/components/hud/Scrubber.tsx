@@ -16,11 +16,7 @@ function buildTicks(windowStart: number, windowDays: number): Tick[] {
   const end = windowStart + windowDays * DAY;
   if (windowDays === 1) {
     const ticks: Tick[] = [];
-    for (
-      let t = Math.ceil(windowStart / (3 * HOUR)) * 3 * HOUR;
-      t <= end;
-      t += 3 * HOUR
-    ) {
+    for (let t = Math.ceil(windowStart / (3 * HOUR)) * 3 * HOUR; t <= end; t += 3 * HOUR) {
       ticks.push({
         t,
         label: new Date(t).getUTCHours() % 6 === 0 ? formatClock(t) : null,
@@ -38,28 +34,15 @@ function buildTicks(windowStart: number, windowDays: number): Tick[] {
 }
 
 /** what the active lander sees at time t, from the hourly series */
-function describe(
-  series: PointSeries | null,
-  t: number,
-): { sun: string; earth: string } | null {
+function describe(series: PointSeries | null, t: number): { sun: string; earth: string } | null {
   if (!series) return null;
   const i = Math.floor((t - series.start) / (series.stepMinutes * 60_000));
   if (i < 0 || i >= series.sunFraction.length) return null;
   const sun = series.sunFraction[i];
   const earth = series.earthFraction[i];
   return {
-    sun:
-      sun <= 0
-        ? "Sun below horizon"
-        : sun >= 1
-          ? "Sun fully up"
-          : `Sun ${Math.round(sun * 100)}% visible`,
-    earth:
-      earth <= 0
-        ? "Earth hidden"
-        : earth >= 1
-          ? "Earth in view"
-          : `Earth ${Math.round(earth * 100)}% visible`,
+    sun: sun <= 0 ? "Sun below horizon" : sun >= 1 ? "Sun fully up" : `Sun ${Math.round(sun * 100)}% visible`,
+    earth: earth <= 0 ? "Earth hidden" : earth >= 1 ? "Earth in view" : `Earth ${Math.round(earth * 100)}% visible`,
   };
 }
 
@@ -128,11 +111,7 @@ export function Scrubber({
     raf.current = 0;
     const t = pending.current ?? time;
     pending.current = null;
-    setTime(
-      snap
-        ? Math.min(end, Math.max(windowStart, Math.round(t / HOUR) * HOUR))
-        : t,
-    );
+    setTime(snap ? Math.min(end, Math.max(windowStart, Math.round(t / HOUR) * HOUR)) : t);
   };
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -204,32 +183,21 @@ export function Scrubber({
       onLostPointerCapture={() => endDrag(true)}
       onPointerLeave={() => setHover(null)}
       onKeyDown={onKeyDown}
-      className={cn(
-        "relative w-full cursor-ew-resize touch-none select-none rounded-xs outline-offset-4",
-        className,
-      )}
+      className={cn("relative w-full cursor-ew-resize touch-none select-none rounded-xs outline-offset-4", className)}
       style={{ height: STRIPS_Y + STRIPS_HEIGHT + 2 }}
     >
       {/* day / hour ticks */}
       {ticks.map(({ t, label }) => {
         const f = (t - windowStart) / span;
         return (
-          <div
-            key={t}
-            aria-hidden
-            className="pointer-events-none absolute top-0"
-            style={{ left: `${f * 100}%` }}
-          >
+          <div key={t} aria-hidden className="pointer-events-none absolute top-0" style={{ left: `${f * 100}%` }}>
             {label && f < 0.96 && (
               <span className="tabular absolute top-0 left-1 whitespace-nowrap text-2xs text-fg-faint leading-none">
                 {label}
               </span>
             )}
             <span
-              className={cn(
-                "absolute w-px bg-line-strong",
-                label ? "top-0" : "top-2.5",
-              )}
+              className={cn("absolute w-px bg-line-strong", label ? "top-0" : "top-2.5")}
               style={{ height: TRACK_Y + 3 - (label ? 0 : 10) }}
             />
           </div>
@@ -243,21 +211,11 @@ export function Scrubber({
         style={{ top: TRACK_Y - 1 }}
       />
 
-      <div
-        className="pointer-events-none absolute inset-x-0"
-        style={{ top: STRIPS_Y }}
-      >
+      <div className="pointer-events-none absolute inset-x-0" style={{ top: STRIPS_Y }}>
         {hasLander ? (
-          <VisibilityStrips
-            series={series}
-            windowStart={windowStart}
-            windowDays={windowDays}
-          />
+          <VisibilityStrips series={series} windowStart={windowStart} windowDays={windowDays} />
         ) : (
-          <div
-            className="relative w-full rounded-[1px] bg-white/4"
-            style={{ height: STRIPS_HEIGHT }}
-          />
+          <div className="relative w-full rounded-[1px] bg-white/4" style={{ height: STRIPS_HEIGHT }} />
         )}
       </div>
 
@@ -282,9 +240,7 @@ export function Scrubber({
               </div>
             ) : (
               <div className="mt-0.5 text-fg-faint">
-                {hasLander
-                  ? "Computing Sun and Earth"
-                  : "Place a lander to see Sun and Earth"}
+                {hasLander ? "Computing Sun and Earth" : "Place a lander to see Sun and Earth"}
               </div>
             )}
           </div>

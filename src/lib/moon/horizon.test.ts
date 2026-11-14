@@ -20,10 +20,7 @@ beforeAll(async () => {
     port: 0,
     fetch: (req) => new Response(Bun.file(PUBLIC + new URL(req.url).pathname)),
   });
-  shackleton = await loadRegion(
-    `http://localhost:${server.port}`,
-    "shackleton",
-  );
+  shackleton = await loadRegion(`http://localhost:${server.port}`, "shackleton");
 });
 afterAll(() => server.stop(true));
 
@@ -34,9 +31,7 @@ describe("discVisibleFraction", () => {
     expect(discVisibleFraction(1, 0, 0.25)).toBe(1);
     expect(discVisibleFraction(-1, 0, 0.25)).toBe(0);
     expect(discVisibleFraction(0, 0, 0.25)).toBeCloseTo(0.5, 12);
-    expect(
-      discVisibleFraction(0.1, 0, 0.25) + discVisibleFraction(-0.1, 0, 0.25),
-    ).toBeCloseTo(1, 12);
+    expect(discVisibleFraction(0.1, 0, 0.25) + discVisibleFraction(-0.1, 0, 0.25)).toBeCloseTo(1, 12);
   });
   test("matches numerical integration", () => {
     const d = 0.3;
@@ -62,8 +57,7 @@ describe("region runtime", () => {
       const prof = site?.horizons.find((h) => h.mastHeight === 2)?.values;
       if (!site || !prof) throw new Error(`site ${id} missing 2 m horizon`);
       let err = 0;
-      for (let k = 0; k < 720; k += 4)
-        err += Math.abs(horizonAt(shackleton, site.x, site.y, k / 2) - prof[k]);
+      for (let k = 0; k < 720; k += 4) err += Math.abs(horizonAt(shackleton, site.x, site.y, k / 2) - prof[k]);
       expect(err / 180).toBeLessThan(1.0);
     }
   });
@@ -88,9 +82,7 @@ describe("region runtime", () => {
       360,
     );
     const m = mean(tl.sunFraction);
-    console.log(
-      `C1 2 m mean solar disc visibility 2017-2021: ${(m * 100).toFixed(1)} %`,
-    );
+    console.log(`C1 2 m mean solar disc visibility 2017-2021: ${(m * 100).toFixed(1)} %`);
     expect(Math.abs(m - 0.88)).toBeLessThan(0.08);
   });
 
@@ -118,35 +110,18 @@ describe("region runtime", () => {
       [250, 240],
       [90, 170],
     ]) {
-      const tl = timeline(
-        shackleton,
-        { x: g.x0 + c * g.step, y: g.y0 + r * g.step },
-        start,
-        24 * 20 - 4,
-        240,
-      );
-      expect(
-        Math.abs(avg.sun[r * g.width + c] - mean(tl.sunFraction)),
-      ).toBeLessThan(0.002);
-      expect(
-        Math.abs(avg.earth[r * g.width + c] - mean(tl.earthFraction)),
-      ).toBeLessThan(0.002);
+      const tl = timeline(shackleton, { x: g.x0 + c * g.step, y: g.y0 + r * g.step }, start, 24 * 20 - 4, 240);
+      expect(Math.abs(avg.sun[r * g.width + c] - mean(tl.sunFraction))).toBeLessThan(0.002);
+      expect(Math.abs(avg.earth[r * g.width + c] - mean(tl.earthFraction))).toBeLessThan(0.002);
     }
   });
 
   test("averageGrid speed (360 steps)", () => {
     averageGrid(shackleton, new Date("2027-01-01T00:00:00Z"), 24, 2); // warm-up (JIT)
     const t = performance.now();
-    const avg = averageGrid(
-      shackleton,
-      new Date("2027-01-01T00:00:00Z"),
-      360 * 2,
-      2,
-    );
+    const avg = averageGrid(shackleton, new Date("2027-01-01T00:00:00Z"), 360 * 2, 2);
     const ms = performance.now() - t;
-    console.log(
-      `averageGrid 360 steps x ${avg.sun.length} nodes: ${ms.toFixed(0)} ms`,
-    );
+    console.log(`averageGrid 360 steps x ${avg.sun.length} nodes: ${ms.toFixed(0)} ms`);
     expect(avg.steps).toBe(360);
     expect(ms).toBeLessThan(600);
   });

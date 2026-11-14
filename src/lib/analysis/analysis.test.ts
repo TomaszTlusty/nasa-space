@@ -29,13 +29,7 @@ const filled = (n: number, v: number) => new Float32Array(n).fill(v);
 
 describe("simulatePower", () => {
   test("watts follow S0 · eff · area · fraction · cos(elev)", () => {
-    const p = simulatePower(
-      [0, 60, 1.5],
-      [1, 0.5, 0],
-      T0,
-      60,
-      preset({ panelAreaM2: 2, efficiency: 0.25 }),
-    );
+    const p = simulatePower([0, 60, 1.5], [1, 0.5, 0], T0, 60, preset({ panelAreaM2: 2, efficiency: 0.25 }));
     expect(p.watts[0]).toBeCloseTo(SOLAR_CONSTANT_W_M2 * 0.5, 3);
     expect(p.watts[1]).toBeCloseTo(SOLAR_CONSTANT_W_M2 * 0.5 * 0.5 * 0.5, 3);
     expect(p.watts[2]).toBe(0);
@@ -63,13 +57,7 @@ describe("simulatePower", () => {
 
   test("depletion time is interpolated inside a step", () => {
     // 2-hour steps, 250 Wh battery, 100 W load: empty after 2.5 h
-    const p = simulatePower(
-      filled(4, 0),
-      filled(4, 0),
-      T0,
-      120,
-      preset({ batteryWh: 250 }),
-    );
+    const p = simulatePower(filled(4, 0), filled(4, 0), T0, 120, preset({ batteryWh: 250 }));
     expect(p.depletedAt).toBeCloseTo(T0 + 2.5 * HOUR, -1);
   });
 
@@ -90,23 +78,11 @@ describe("simulatePower", () => {
     expect(empty.watts.length).toBe(0);
     expect(empty.depletedAt).toBeNull();
     expect(empty.energyWh).toBe(0);
-    const noBattery = simulatePower(
-      filled(3, 0),
-      filled(3, 0),
-      T0,
-      60,
-      preset({ batteryWh: 0 }),
-    );
+    const noBattery = simulatePower(filled(3, 0), filled(3, 0), T0, 60, preset({ batteryWh: 0 }));
     expect(noBattery.socPct[1]).toBe(0);
     expect(noBattery.depletedAt).toBeGreaterThanOrEqual(T0);
     expect(noBattery.depletedAt).toBeLessThanOrEqual(T0 + HOUR);
-    const noLoad = simulatePower(
-      filled(5, 0),
-      filled(5, 0),
-      T0,
-      60,
-      preset({ loadW: 0 }),
-    );
+    const noLoad = simulatePower(filled(5, 0), filled(5, 0), T0, 60, preset({ loadW: 0 }));
     expect(noLoad.minSocPct).toBe(100);
     expect(noLoad.depletedAt).toBeNull();
   });
@@ -175,28 +151,12 @@ describe("discovery picking", () => {
     const sun = [0.9, 0.95, 0.5, 0.8];
     const earth = [0.6, 0.6, 0.9, 0.6];
     const slope = [2, 2, 2, 20];
-    const picks = pickCandidates(
-      grid,
-      sun,
-      earth,
-      slope,
-      { maxSlopeDeg: 10, minSun: 0.6, minEarth: 0.5 },
-      5,
-      1200,
-    );
+    const picks = pickCandidates(grid, sun, earth, slope, { maxSlopeDeg: 10, minSun: 0.6, minEarth: 0.5 }, 5, 1200);
     // node 2 fails minSun, node 3 fails slope, node 0 is 500 m from the better node 1
     expect(picks.map((p) => p.i)).toEqual([1]);
     expect(picks[0].score).toBeCloseTo(discoveryScore(0.95, 0.6, 2, 10), 12);
     expect(
-      pickCandidates(
-        grid,
-        sun,
-        earth,
-        slope,
-        { maxSlopeDeg: 10, minSun: 0.6, minEarth: 0.5 },
-        5,
-        400,
-      ).length,
+      pickCandidates(grid, sun, earth, slope, { maxSlopeDeg: 10, minSun: 0.6, minEarth: 0.5 }, 5, 400).length,
     ).toBe(2);
   });
   test("score weights", () => {
@@ -205,13 +165,8 @@ describe("discovery picking", () => {
     expect(discoveryScore(0.6, 0.4, 5, 10)).toBeCloseTo(0.3 + 0.14 + 0.075, 12);
   });
   test("RGBA8 encoding", () => {
-    const rgba = encodeAverage(
-      Float32Array.of(0, 0.5, 1),
-      Float32Array.of(1, 0.25, 0),
-    );
-    expect([...rgba]).toEqual([
-      0, 255, 0, 255, 128, 64, 0, 255, 255, 0, 0, 255,
-    ]);
+    const rgba = encodeAverage(Float32Array.of(0, 0.5, 1), Float32Array.of(1, 0.25, 0));
+    expect([...rgba]).toEqual([0, 255, 0, 255, 128, 64, 0, 255, 255, 0, 0, 255]);
   });
 });
 
@@ -222,13 +177,9 @@ describe("Shackleton point analysis (real data)", () => {
   beforeAll(async () => {
     server = Bun.serve({
       port: 0,
-      fetch: (req) =>
-        new Response(Bun.file(PUBLIC + new URL(req.url).pathname)),
+      fetch: (req) => new Response(Bun.file(PUBLIC + new URL(req.url).pathname)),
     });
-    shackleton = await loadRegion(
-      `http://localhost:${server.port}`,
-      "shackleton",
-    );
+    shackleton = await loadRegion(`http://localhost:${server.port}`, "shackleton");
   });
   afterAll(() => server.stop(true));
 
@@ -245,20 +196,8 @@ describe("Shackleton point analysis (real data)", () => {
     });
     const ridgeQ = { x: c1.x, y: c1.y, siteId: "c1", mastHeight: 2 };
     const floorQ = { x: floor.x, y: floor.y };
-    const ridge = analyzeTimeline(
-      shackleton,
-      "A",
-      ridgeQ,
-      pointTimeline(shackleton, ridgeQ, T0, 30),
-      power,
-    );
-    const crater = analyzeTimeline(
-      shackleton,
-      "B",
-      floorQ,
-      pointTimeline(shackleton, floorQ, T0, 30),
-      power,
-    );
+    const ridge = analyzeTimeline(shackleton, "A", ridgeQ, pointTimeline(shackleton, ridgeQ, T0, 30), power);
+    const crater = analyzeTimeline(shackleton, "B", floorQ, pointTimeline(shackleton, floorQ, T0, 30), power);
     expect(ridge.sunMean).toBeGreaterThan(0.8);
     expect(ridge.power.depletedAt).toBeNull();
     expect(crater.sunMean).toBeLessThan(0.02);

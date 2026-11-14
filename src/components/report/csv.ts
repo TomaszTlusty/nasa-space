@@ -45,14 +45,9 @@ export function buildHourlyCsv(analyses: PointAnalysis[]): string {
     }
   });
 
-  const header = [
-    "utc",
-    ...analyses.flatMap((a) => COLUMNS.map((c) => `${a.id}_${c}`)),
-  ].join(",");
+  const header = ["utc", ...analyses.flatMap((a) => COLUMNS.map((c) => `${a.id}_${c}`))].join(",");
   const lines = [...rows.entries()]
     .sort(([t1], [t2]) => t1 - t2)
-    .map(([t, cells]) =>
-      [new Date(t).toISOString(), ...cells.flat()].join(","),
-    );
+    .map(([t, cells]) => [new Date(t).toISOString(), ...cells.flat()].join(","));
   return `${header}\n${lines.join("\n")}\n`;
 }

@@ -26,9 +26,7 @@ export function CountdownRing({
   useEffect(() => {
     done.current = onDone;
   });
-  const [seconds, setSeconds] = useState(() =>
-    Math.max(0, Math.ceil((deadline - performance.now()) / 1000)),
-  );
+  const [seconds, setSeconds] = useState(() => Math.max(0, Math.ceil((deadline - performance.now()) / 1000)));
 
   useEffect(() => {
     let raf = 0;
@@ -38,10 +36,7 @@ export function CountdownRing({
       const whole = Math.ceil(left / 1000);
       setSeconds(whole);
       const shown = reducedMotion ? whole : left / 1000;
-      arc.current?.setAttribute(
-        "stroke-dashoffset",
-        String(CIRC * (1 - shown / totalSeconds)),
-      );
+      arc.current?.setAttribute("stroke-dashoffset", String(CIRC * (1 - shown / totalSeconds)));
       if (left <= 0) {
         if (!fired) {
           fired = true;
@@ -62,19 +57,8 @@ export function CountdownRing({
       role="timer"
       aria-label={`${seconds} seconds left to pick a landing spot`}
     >
-      <svg
-        viewBox="0 0 80 80"
-        className="size-full -rotate-90"
-        aria-hidden="true"
-      >
-        <circle
-          cx="40"
-          cy="40"
-          r={R}
-          fill="none"
-          strokeWidth="4"
-          className="stroke-white/8"
-        />
+      <svg viewBox="0 0 80 80" className="size-full -rotate-90" aria-hidden="true">
+        <circle cx="40" cy="40" r={R} fill="none" strokeWidth="4" className="stroke-white/8" />
         <circle
           ref={arc}
           cx="40"
@@ -85,21 +69,11 @@ export function CountdownRing({
           strokeLinecap="round"
           strokeDasharray={CIRC}
           strokeDashoffset={0}
-          className={cn(
-            "transition-[stroke] duration-200",
-            urgent ? "stroke-danger" : "stroke-sun",
-          )}
+          className={cn("transition-[stroke] duration-200", urgent ? "stroke-danger" : "stroke-sun")}
         />
       </svg>
-      <div
-        className="absolute inset-0 flex flex-col items-center justify-center"
-        aria-hidden="true"
-      >
-        <span
-          className={cn("tabular text-2xl", urgent ? "text-danger" : "text-fg")}
-        >
-          {seconds}
-        </span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
+        <span className={cn("tabular text-2xl", urgent ? "text-danger" : "text-fg")}>{seconds}</span>
         <span className="eyebrow -mt-0.5">sec</span>
       </div>
     </div>

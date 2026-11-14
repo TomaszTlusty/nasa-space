@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowUpRight,
-  CaretLeft,
-  CaretRight,
-  Check,
-  Play,
-  X,
-} from "@phosphor-icons/react";
+import { ArrowUpRight, CaretLeft, CaretRight, Check, Play, X } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Divider, Panel } from "@/components/ui/panel";
@@ -19,10 +12,7 @@ import { LESSONS } from "./lessons";
 export function LessonsPanel({ className }: { className?: string }) {
   const active = useLessons((s) => s.active);
   return (
-    <Panel
-      className={cn("flex min-h-0 flex-col overflow-hidden", className)}
-      aria-label="Lessons"
-    >
+    <Panel className={cn("flex min-h-0 flex-col overflow-hidden", className)} aria-label="Lessons">
       {active ? <LessonPlayer active={active} /> : <LessonList />}
     </Panel>
   );
@@ -34,9 +24,7 @@ function LessonList() {
     <>
       <header className="px-4 pt-3.5 pb-2">
         <div className="eyebrow mb-0.5">Knowledge pills</div>
-        <h2 className="font-medium text-fg text-sm">
-          Learn something in 30 seconds
-        </h2>
+        <h2 className="font-medium text-fg text-sm">Learn something in 30 seconds</h2>
       </header>
       <ol className="flex min-h-0 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
         {LESSONS.map((lesson, i) => (
@@ -46,19 +34,13 @@ function LessonList() {
               onClick={() => start(lesson.id)}
               className="group flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left transition-[background-color,transform] duration-150 ease-(--ease-out) hover:bg-white/4 active:scale-[0.98]"
             >
-              <span className="tabular mt-px text-fg-faint text-xs">
-                {String(i + 1).padStart(2, "0")}
-              </span>
+              <span className="tabular mt-px text-fg-faint text-xs">{String(i + 1).padStart(2, "0")}</span>
               <span className="min-w-0 flex-1">
-                <span className="block text-balance font-medium text-fg text-sm">
-                  {lesson.title}
-                </span>
-                <span className="mt-0.5 block text-fg-muted text-xs">
-                  {lesson.summary}
-                </span>
+                <span className="block text-balance font-medium text-fg text-sm">{lesson.title}</span>
+                <span className="mt-0.5 block text-fg-muted text-xs">{lesson.summary}</span>
                 <span className="mt-1 block text-2xs text-fg-faint">
-                  <span className="tabular">{lesson.steps.length}</span> steps ·
-                  about <span className="tabular">30</span> s
+                  <span className="tabular">{lesson.steps.length}</span> steps · about{" "}
+                  <span className="tabular">30</span> s
                 </span>
               </span>
               <Play
@@ -91,12 +73,9 @@ function LessonPlayer({ active }: { active: ActiveLesson }) {
       <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-2.5">
         <div className="min-w-0">
           <div className="eyebrow mb-0.5">
-            Lesson <span className="tabular">{index + 1}</span> of{" "}
-            <span className="tabular">{LESSONS.length}</span>
+            Lesson <span className="tabular">{index + 1}</span> of <span className="tabular">{LESSONS.length}</span>
           </div>
-          <h2 className="text-balance font-medium text-fg text-sm">
-            {lesson.title}
-          </h2>
+          <h2 className="text-balance font-medium text-fg text-sm">{lesson.title}</h2>
         </div>
         <Button
           variant="ghost"
@@ -131,16 +110,8 @@ function LessonPlayer({ active }: { active: ActiveLesson }) {
 
       <motion.div
         key={`${lesson.id}-${active.step}`}
-        initial={
-          reduceMotion
-            ? { opacity: 0 }
-            : { opacity: 0, transform: "translateY(4px)" }
-        }
-        animate={
-          reduceMotion
-            ? { opacity: 1 }
-            : { opacity: 1, transform: "translateY(0px)" }
-        }
+        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, transform: "translateY(4px)" }}
+        animate={reduceMotion ? { opacity: 1 } : { opacity: 1, transform: "translateY(0px)" }}
         transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
         className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-3.5"
       >
@@ -148,16 +119,10 @@ function LessonPlayer({ active }: { active: ActiveLesson }) {
           Step <span className="tabular">{active.step + 1}</span> of{" "}
           <span className="tabular">{lesson.steps.length}</span>
         </div>
-        <h3 className="mt-0.5 mb-1.5 font-medium text-fg text-sm">
-          {step.title}
-        </h3>
+        <h3 className="mt-0.5 mb-1.5 font-medium text-fg text-sm">{step.title}</h3>
         <Body />
-        {active.busy && (
-          <p className="mt-2 text-2xs text-fg-faint">Setting up the view…</p>
-        )}
-        {active.note && (
-          <p className="mt-2 text-2xs text-fg-muted">{active.note}</p>
-        )}
+        {active.busy && <p className="mt-2 text-2xs text-fg-faint">Setting up the view…</p>}
+        {active.note && <p className="mt-2 text-2xs text-fg-muted">{active.note}</p>}
         <a
           href={step.source.url}
           target="_blank"
@@ -171,31 +136,17 @@ function LessonPlayer({ active }: { active: ActiveLesson }) {
 
       <Divider />
       <footer className="flex items-center justify-between gap-2 px-3 py-2.5">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={active.step === 0}
-          onClick={() => goTo(active.step - 1)}
-        >
+        <Button variant="ghost" size="sm" disabled={active.step === 0} onClick={() => goTo(active.step - 1)}>
           <CaretLeft size={14} aria-hidden />
           Back
         </Button>
         {last ? (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={exit}
-            title="End the lesson and put the scene back as it was"
-          >
+          <Button variant="primary" size="sm" onClick={exit} title="End the lesson and put the scene back as it was">
             <Check size={14} aria-hidden />
             Finish
           </Button>
         ) : (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => goTo(active.step + 1)}
-          >
+          <Button variant="primary" size="sm" onClick={() => goTo(active.step + 1)}>
             Next
             <CaretRight size={14} aria-hidden />
           </Button>

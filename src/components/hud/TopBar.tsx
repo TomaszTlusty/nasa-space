@@ -28,9 +28,7 @@ export function TopBar({ right }: { right?: ReactNode }) {
 
   return (
     <header className="glass mx-auto flex h-14 w-fit max-w-full items-center gap-1.5 rounded-full pr-2 pl-3 xl:gap-2 xl:pl-5">
-      <span className="mr-1 shrink-0 font-medium text-sm tracking-[-0.01em] max-xl:hidden">
-        Malapert
-      </span>
+      <span className="mr-1 shrink-0 font-medium text-sm tracking-[-0.01em] max-xl:hidden">Malapert</span>
       <Segmented<Mode>
         ariaLabel="Mode"
         size={wide ? "md" : "sm"}
@@ -46,9 +44,7 @@ export function TopBar({ right }: { right?: ReactNode }) {
       <DateJump />
       <span aria-hidden className="h-6 w-px shrink-0 bg-line max-xl:hidden" />
       <Countdowns />
-      {right && (
-        <div className="ml-1 flex shrink-0 items-center gap-1">{right}</div>
-      )}
+      {right && <div className="ml-1 flex shrink-0 items-center gap-1">{right}</div>}
     </header>
   );
 }

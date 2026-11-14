@@ -4,11 +4,7 @@
  */
 
 import { simulatePower } from "@/lib/analysis/power";
-import type {
-  LiveVisibility,
-  PointAnalysis,
-  Transitions,
-} from "@/lib/analysis/types";
+import type { LiveVisibility, PointAnalysis, Transitions } from "@/lib/analysis/types";
 import type { CelestialBody } from "@/lib/moon/ephemeris";
 import { fromLocal } from "@/lib/moon/frames";
 import {
@@ -22,12 +18,7 @@ import {
   windows,
 } from "@/lib/moon/horizon";
 import type { RegionGrid } from "@/lib/moon/types";
-import type {
-  DiscoveryCriteria,
-  DiscoveryResult,
-  LanderId,
-  PowerPreset,
-} from "@/lib/store";
+import type { DiscoveryCriteria, DiscoveryResult, LanderId, PowerPreset } from "@/lib/store";
 import { heightAt } from "@/lib/terrain";
 
 /** Search span for sunset / sunrise / Earthset / Earthrise. */
@@ -43,10 +34,7 @@ export interface PointQuery {
 }
 
 /** Observer for the horizon library: the exact site profile when available, else the grid horizon. */
-export function timelinePoint(
-  region: LoadedRegion,
-  q: PointQuery,
-): TimelinePoint {
+export function timelinePoint(region: LoadedRegion, q: PointQuery): TimelinePoint {
   if (q.siteId && region.meta.sites.some((s) => s.id === q.siteId)) {
     return {
       siteId: q.siteId,
@@ -57,22 +45,14 @@ export function timelinePoint(
 }
 
 /** Local position actually observed (a site's own coordinates when `siteId` resolves). */
-function resolvedXY(
-  region: LoadedRegion,
-  q: PointQuery,
-): { x: number; y: number; lat: number; lon: number } {
-  const site = q.siteId
-    ? region.meta.sites.find((s) => s.id === q.siteId)
-    : undefined;
+function resolvedXY(region: LoadedRegion, q: PointQuery): { x: number; y: number; lat: number; lon: number } {
+  const site = q.siteId ? region.meta.sites.find((s) => s.id === q.siteId) : undefined;
   if (site) return { x: site.x, y: site.y, lat: site.lat, lon: site.lon };
   return { x: q.x, y: q.y, ...fromLocal(q.x, q.y, region.meta) };
 }
 
 /** Longest run of consecutive samples with value <= 0, in hours (each sample stands for one step). */
-export function longestZeroRunHours(
-  values: ArrayLike<number>,
-  stepMinutes: number,
-): number {
+export function longestZeroRunHours(values: ArrayLike<number>, stepMinutes: number): number {
   let best = 0;
   let run = 0;
   for (let i = 0; i < values.length; i++) {
@@ -85,12 +65,7 @@ export function longestZeroRunHours(
 }
 
 /** Bilinear sample of a row-major grid (row 0 = min y), clamped to the grid. */
-export function sampleGrid(
-  grid: RegionGrid,
-  data: ArrayLike<number>,
-  x: number,
-  y: number,
-): number {
+export function sampleGrid(grid: RegionGrid, data: ArrayLike<number>, x: number, y: number): number {
   const { width: W, height: H } = grid;
   const cf = Math.min(Math.max((x - grid.x0) / grid.step, 0), W - 1);
   const rf = Math.min(Math.max((y - grid.y0) / grid.step, 0), H - 1);
@@ -105,19 +80,8 @@ export function sampleGrid(
 }
 
 /** Hourly visibility timeline of a point over [start, start + days]. */
-export function pointTimeline(
-  region: LoadedRegion,
-  q: PointQuery,
-  start: number,
-  days: number,
-): Timeline {
-  return timeline(
-    region,
-    timelinePoint(region, q),
-    new Date(start),
-    days * 24,
-    60,
-  );
+export function pointTimeline(region: LoadedRegion, q: PointQuery, start: number, days: number): Timeline {
+  return timeline(region, timelinePoint(region, q), new Date(start), days * 24, 60);
 }
 
 /** Full analysis of one point from its (cacheable) timeline; power is cheap and recomputed per call. */
@@ -131,8 +95,7 @@ export function analyzeTimeline(
   const { x, y, lat, lon } = resolvedXY(region, q);
   const n = tl.times.length;
   const start = n > 0 ? tl.times[0] : 0;
-  const stepMinutes =
-    n > 1 ? Math.round((tl.times[1] - tl.times[0]) / 60_000) : 60;
+  const stepMinutes = n > 1 ? Math.round((tl.times[1] - tl.times[0]) / 60_000) : 60;
   let sunSum = 0;
   let earthSteps = 0;
   for (let i = 0; i < n; i++) {
@@ -191,20 +154,9 @@ export function bodyTransitions(
   from: number,
   body: CelestialBody,
 ): BodyTransitions {
-  const t1 = nextTransition(
-    region,
-    point,
-    new Date(from),
-    body,
-    0,
-    TRANSITION_SEARCH_DAYS,
-  );
-  const up = t1
-    ? t1.kind === "set"
-    : visibilityAt(region, point, new Date(from), body).fraction > 0;
-  const t2 = t1
-    ? nextTransition(region, point, t1.date, body, 0, TRANSITION_SEARCH_DAYS)
-    : null;
+  const t1 = nextTransition(region, point, new Date(from), body, 0, TRANSITION_SEARCH_DAYS);
+  const up = t1 ? t1.kind === "set" : visibilityAt(region, point, new Date(from), body).fraction > 0;
+  const t2 = t1 ? nextTransition(region, point, t1.date, body, 0, TRANSITION_SEARCH_DAYS) : null;
   return {
     from,
     up,
@@ -222,11 +174,7 @@ export function stillValid(b: BodyTransitions, t: number): boolean {
   return b.first === null ? t - b.from < 86_400_000 : t < b.first;
 }
 
-export function toTransitions(
-  sun: BodyTransitions,
-  earth: BodyTransitions,
-  from: number,
-): Transitions {
+export function toTransitions(sun: BodyTransitions, earth: BodyTransitions, from: number): Transitions {
   return {
     from,
     sunUp: sun.up,
@@ -252,11 +200,7 @@ let msPerStep = 0.65;
 /** Windows longer than 15 days use 2-hour steps when hourly is predicted to exceed this budget. */
 const AVERAGE_BUDGET_MS = 300;
 
-export function windowAverage(
-  region: LoadedRegion,
-  start: number,
-  days: number,
-): WindowAverage {
+export function windowAverage(region: LoadedRegion, start: number, days: number): WindowAverage {
   const hours = days * 24;
   const stepHours = days > 15 && hours * msPerStep > AVERAGE_BUDGET_MS ? 2 : 1;
   const t0 = performance.now();
@@ -267,10 +211,7 @@ export function windowAverage(
 }
 
 /** RGBA8 per node for the heatmap shader: R = mean Sun, G = share of time with Earth, B = 0, A = 255. */
-export function encodeAverage(
-  sun: Float32Array,
-  earthAny: Float32Array,
-): Uint8Array {
+export function encodeAverage(sun: Float32Array, earthAny: Float32Array): Uint8Array {
   const out = new Uint8Array(sun.length * 4);
   for (let i = 0; i < sun.length; i++) {
     const o = i * 4;
@@ -286,12 +227,7 @@ export const DISCOVERY_TOP_N = 5;
 export const DISCOVERY_MIN_SEPARATION_M = 1200;
 
 /** Weighted site score, 0..1. */
-export function discoveryScore(
-  sun: number,
-  earth: number,
-  slopeDeg: number,
-  maxSlopeDeg: number,
-): number {
+export function discoveryScore(sun: number, earth: number, slopeDeg: number, maxSlopeDeg: number): number {
   const flat = maxSlopeDeg > 0 ? 1 - Math.min(1, slopeDeg / maxSlopeDeg) : 1;
   return 0.5 * sun + 0.35 * earth + 0.15 * flat;
 }
@@ -320,12 +256,7 @@ export function pickCandidates(
   for (let r = 0; r < grid.height; r++) {
     for (let c = 0; c < grid.width; c++) {
       const i = r * grid.width + c;
-      if (
-        slope[i] > criteria.maxSlopeDeg ||
-        sun[i] < criteria.minSun ||
-        earth[i] < criteria.minEarth
-      )
-        continue;
+      if (slope[i] > criteria.maxSlopeDeg || sun[i] < criteria.minSun || earth[i] < criteria.minEarth) continue;
       all.push({
         i,
         x: grid.x0 + c * grid.step,
@@ -354,13 +285,7 @@ export function discover(
   days: number,
 ): DiscoveryResult[] {
   const grid = region.meta.horizon;
-  return pickCandidates(
-    grid,
-    avg.sun,
-    avg.earthAny,
-    region.slope,
-    criteria,
-  ).map((c, k) => {
+  return pickCandidates(grid, avg.sun, avg.earthAny, region.slope, criteria).map((c, k) => {
     const tl = pointTimeline(region, { x: c.x, y: c.y }, start, days);
     return {
       rank: k + 1,

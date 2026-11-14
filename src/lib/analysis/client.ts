@@ -1,11 +1,6 @@
 "use client";
 
-import type {
-  JobResults,
-  WorkerJob,
-  WorkerRequest,
-  WorkerResponse,
-} from "@/lib/analysis/protocol";
+import type { JobResults, WorkerJob, WorkerRequest, WorkerResponse } from "@/lib/analysis/protocol";
 import type { RegionId } from "@/lib/store";
 
 /**
@@ -50,13 +45,11 @@ function getWorker(): Worker {
     const p = settle(msg.reqId);
     if (!p) return;
     if (msg.ok) p.resolve(msg.result);
-    else
-      p.reject(msg.cancelled ? new AnalysisCancelled() : new Error(msg.error));
+    else p.reject(msg.cancelled ? new AnalysisCancelled() : new Error(msg.error));
   });
   w.addEventListener("error", (e) => {
     // the worker script itself failed: fail everything in flight and start fresh next time
-    for (const id of [...pending.keys()])
-      settle(id)?.reject(new Error(`analysis worker failed: ${e.message}`));
+    for (const id of [...pending.keys()]) settle(id)?.reject(new Error(`analysis worker failed: ${e.message}`));
     w.terminate();
     if (worker === w) worker = null;
   });

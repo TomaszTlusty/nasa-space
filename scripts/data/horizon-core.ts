@@ -10,12 +10,7 @@
  * Step length grows with distance: ds = max(dsMin, growth * s), out to maxDist (or the DEM edge).
  * The ray stops early once even the highest terrain in the DEMs could not beat the current maximum.
  */
-import {
-  gridBasis,
-  MOON_RADIUS_M,
-  polarToUnit,
-  RAD,
-} from "../../src/lib/moon/frames";
+import { gridBasis, MOON_RADIUS_M, polarToUnit, RAD } from "../../src/lib/moon/frames";
 import type { PolarRaster } from "./pds";
 
 const R = MOON_RADIUS_M;
@@ -49,18 +44,9 @@ export class HorizonMarcher {
   /** highest terrain radius over all rasters (m) */
   private readonly rMax: number;
 
-  constructor(
-    rasters: PolarRaster[],
-    maxHeight: number,
-    opts: MarchOptions = DEFAULT_MARCH,
-  ) {
+  constructor(rasters: PolarRaster[], maxHeight: number, opts: MarchOptions = DEFAULT_MARCH) {
     this.fr = rasters.map((r) => {
-      const half = Math.min(
-        r.sampleOffset,
-        r.lineOffset,
-        r.samples - 1 - r.sampleOffset,
-        r.lines - 1 - r.lineOffset,
-      );
+      const half = Math.min(r.sampleOffset, r.lineOffset, r.samples - 1 - r.sampleOffset, r.lines - 1 - r.lineOffset);
       const lim = Math.min(r.rhoMax, half * r.scale) - 2 * r.scale;
       return {
         data: r.data,
@@ -73,12 +59,7 @@ export class HorizonMarcher {
       };
     });
     const th: number[] = [];
-    for (
-      let s = opts.dsMinM;
-      s <= opts.maxDistM;
-      s += Math.max(opts.dsMinM, opts.growth * s)
-    )
-      th.push(s / R);
+    for (let s = opts.dsMinM; s <= opts.maxDistM; s += Math.max(opts.dsMinM, opts.growth * s)) th.push(s / R);
     this.cosT = Float64Array.from(th, Math.cos);
     this.sinT = Float64Array.from(th, Math.sin);
     this.rMax = R + maxHeight;
@@ -98,8 +79,7 @@ export class HorizonMarcher {
       const i = l0 * f.samples + c0;
       const d = f.data;
       const a = d[i] + (d[i + 1] - d[i]) * fc;
-      const b =
-        d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
+      const b = d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
       return (a + (b - a) * fl) * f.k;
     }
     return Number.NaN;
@@ -161,8 +141,7 @@ export class HorizonMarcher {
           const i = l0 * f.samples + c0;
           const d = f.data;
           const a = d[i] + (d[i + 1] - d[i]) * fc;
-          const b =
-            d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
+          const b = d[i + f.samples] + (d[i + f.samples + 1] - d[i + f.samples]) * fc;
           h = (a + (b - a) * fl) * f.k;
           break;
         }

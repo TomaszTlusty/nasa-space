@@ -19,8 +19,7 @@ export const CORE_SOURCES: SourceLink[] = [
     url: "https://ssd.jpl.nasa.gov/horizons/",
   },
   {
-    label:
-      "Mazarico et al. 2011, average Sun and Earth visibility at the poles (NASA PGDA)",
+    label: "Mazarico et al. 2011, average Sun and Earth visibility at the poles (NASA PGDA)",
     url: "https://pgda.gsfc.nasa.gov/products/69",
   },
   {
@@ -28,8 +27,7 @@ export const CORE_SOURCES: SourceLink[] = [
     url: "https://ntrs.nasa.gov/api/citations/20230007818/downloads/ACD-50044%20Lunar%20Surface%20Data%20Book%20Rev%20A.pdf",
   },
   {
-    label:
-      "Gläser et al. 2018, illumination conditions at the lunar south pole (NTRS 20170007365)",
+    label: "Gläser et al. 2018, illumination conditions at the lunar south pole (NTRS 20170007365)",
     url: "https://ntrs.nasa.gov/citations/20170007365",
   },
   {
@@ -60,10 +58,7 @@ export interface Assumption {
  * Model assumptions, phrased for the public. `gridMast` is the observer height of the precomputed skyline
  * grid (`meta.horizon.mastHeight`).
  */
-export function assumptions(
-  power: PowerPreset,
-  gridMast: number,
-): Assumption[] {
+export function assumptions(power: PowerPreset, gridMast: number): Assumption[] {
   return [
     {
       title: "Vertical, sun-tracking solar panels",

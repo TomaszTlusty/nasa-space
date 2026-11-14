@@ -28,16 +28,8 @@ export function Countdowns() {
 
   const sunUp = transitions?.sunUp;
   const earthUp = transitions?.earthUp;
-  const sunEvent = transitions
-    ? transitions.sunUp
-      ? transitions.sunset
-      : transitions.sunrise
-    : undefined;
-  const earthEvent = transitions
-    ? transitions.earthUp
-      ? transitions.earthset
-      : transitions.earthrise
-    : undefined;
+  const sunEvent = transitions ? (transitions.sunUp ? transitions.sunset : transitions.sunrise) : undefined;
+  const earthEvent = transitions ? (transitions.earthUp ? transitions.earthset : transitions.earthrise) : undefined;
 
   return (
     <div className="flex items-center gap-1.5">
@@ -56,9 +48,7 @@ export function Countdowns() {
       <Chip
         tone="earth"
         icon={<GlobeHemisphereWest size={14} weight="regular" />}
-        label={
-          earthUp === undefined ? "Earth" : earthUp ? "Earthset" : "Earthrise"
-        }
+        label={earthUp === undefined ? "Earth" : earthUp ? "Earthset" : "Earthrise"}
         event={earthEvent}
         time={time}
         stuck={earthUp ? "Earth stays up" : "Earth stays hidden"}
@@ -94,10 +84,7 @@ function Chip({
   } else {
     text = (
       <>
-        {label} in{" "}
-        <span className="tabular font-medium">
-          {formatDuration(event - time)}
-        </span>
+        {label} in <span className="tabular font-medium">{formatDuration(event - time)}</span>
       </>
     );
     hint = `${label} at ${formatUtc(event)}, seen from the real terrain horizon`;
@@ -109,9 +96,7 @@ function Chip({
         className={cn(
           "flex h-8 min-w-[10.75rem] items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-2xs ring-1",
           "xl:min-w-[12rem] xl:text-xs",
-          tone === "sun"
-            ? "bg-sun-soft text-sun ring-sun/25"
-            : "bg-earth-soft text-earth ring-earth/25",
+          tone === "sun" ? "bg-sun-soft text-sun ring-sun/25" : "bg-earth-soft text-earth ring-earth/25",
         )}
       >
         <span className="shrink-0">{icon}</span>

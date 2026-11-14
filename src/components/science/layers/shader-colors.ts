@@ -48,11 +48,7 @@ const SLOPE_WARN: RGB = [0.95, 0.7, 0.28];
 const SLOPE_BAD: RGB = [0.86, 0.3, 0.26];
 
 export function mix(a: RGB, b: RGB, t: number): RGB {
-  return [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t,
-    a[2] + (b[2] - a[2]) * t,
-  ];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
 /** Slope colour for s degrees, same piecewise ramp as the shader. */
@@ -64,8 +60,6 @@ export function slopeColor(s: number): RGB {
 
 /** CSS colour of a display-sRGB overlay constant, scaled by the shader's flat-ground relief shade. */
 export function toCss(c: RGB, shade = FLAT_SHADE): string {
-  const [r, g, b] = c.map((v) =>
-    Math.round(Math.min(1, Math.max(0, v * shade)) * 255),
-  );
+  const [r, g, b] = c.map((v) => Math.round(Math.min(1, Math.max(0, v * shade)) * 255));
   return `rgb(${r} ${g} ${b})`;
 }

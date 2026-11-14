@@ -21,8 +21,7 @@ const EXAMPLES = [
  * landers) and explains the results. Mount in the left column, top.
  */
 export function MissionAssistant({ className }: { className?: string }) {
-  const { messages, busy, error, send, retry, stop, clear } =
-    useAssistant("science");
+  const { messages, busy, error, send, retry, stop, clear } = useAssistant("science");
   const [draft, setDraft] = useState("");
   const [isMac, setIsMac] = useState(true);
 
@@ -37,24 +36,14 @@ export function MissionAssistant({ className }: { className?: string }) {
   };
 
   return (
-    <Panel
-      className={cn(
-        "flex max-h-[min(72vh,680px)] flex-col overflow-hidden",
-        className,
-      )}
-    >
+    <Panel className={cn("flex max-h-[min(72vh,680px)] flex-col overflow-hidden", className)}>
       <PanelHeader
         eyebrow="Mission assistant"
         title="Plan a mission in words"
         actions={
           <>
             {messages.length > 0 && (
-              <IconButton
-                label="Clear conversation"
-                size="sm"
-                onClick={clear}
-                disabled={busy}
-              >
+              <IconButton label="Clear conversation" size="sm" onClick={clear} disabled={busy}>
                 <Trash size={14} weight="regular" />
               </IconButton>
             )}
@@ -66,24 +55,16 @@ export function MissionAssistant({ className }: { className?: string }) {
       {messages.length === 0 ? (
         <div className="flex flex-col gap-2.5 px-4 pb-3">
           <p className="text-fg-muted text-xs leading-relaxed">
-            Say what your lander needs. The assistant sets the dates, searches
-            the terrain and places landers using this app's own calculations —
-            watch the scene update.
+            Say what your lander needs. The assistant sets the dates, searches the terrain and places landers using this
+            app's own calculations — watch the scene update.
           </p>
           <ExamplePrompts prompts={EXAMPLES} onPick={submit} disabled={busy} />
         </div>
       ) : (
-        <ChatThread
-          messages={messages}
-          busy={busy}
-          assistantName="Assistant"
-          className="min-h-0 flex-1 px-4 pb-3"
-        />
+        <ChatThread messages={messages} busy={busy} assistantName="Assistant" className="min-h-0 flex-1 px-4 pb-3" />
       )}
 
-      {error && (
-        <ChatError error={error} onRetry={retry} className="mx-3 mb-2" />
-      )}
+      {error && <ChatError error={error} onRetry={retry} className="mx-3 mb-2" />}
 
       <form
         className="border-line border-t p-3"
@@ -120,8 +101,7 @@ export function MissionAssistant({ className }: { className?: string }) {
             <span className="ml-0.5">to send</span>
             {draft.length > MAX_INPUT_CHARS * 0.8 && (
               <span className="tabular ml-2">
-                {draft.length.toLocaleString("en-US")}/
-                {MAX_INPUT_CHARS.toLocaleString("en-US")}
+                {draft.length.toLocaleString("en-US")}/{MAX_INPUT_CHARS.toLocaleString("en-US")}
               </span>
             )}
           </span>
@@ -131,12 +111,7 @@ export function MissionAssistant({ className }: { className?: string }) {
               Stop
             </Button>
           ) : (
-            <Button
-              type="submit"
-              size="sm"
-              variant="primary"
-              disabled={!draft.trim()}
-            >
+            <Button type="submit" size="sm" variant="primary" disabled={!draft.trim()}>
               <ArrowUp size={13} weight="regular" aria-hidden />
               Ask
             </Button>

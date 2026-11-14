@@ -72,8 +72,7 @@ export const useLessons = create<LessonState>((set, get) => {
           isCurrent: () => id === runId,
         })) ?? null;
     } catch {
-      note =
-        "LUNA-Bot could not set up this step, but you can still read along.";
+      note = "LUNA-Bot could not set up this step, but you can still read along.";
     }
     if (id !== runId) return;
     const latest = get().active;
@@ -112,8 +111,7 @@ export const useLessons = create<LessonState>((set, get) => {
       runId++;
       set({ active: null });
       const app = useApp.getState();
-      if (app.regionId !== active.snapshot.regionId)
-        app.setRegion(active.snapshot.regionId);
+      if (app.regionId !== active.snapshot.regionId) app.setRegion(active.snapshot.regionId);
       useApp.setState(active.snapshot);
     },
   };

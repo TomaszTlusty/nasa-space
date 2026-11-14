@@ -17,8 +17,7 @@ const DATE_FMT = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 const SHOWN = 5;
-const COLS =
-  "grid grid-cols-[1.25rem_2.5rem_1fr_1fr_1fr_1fr] items-baseline gap-x-2";
+const COLS = "grid grid-cols-[1.25rem_2.5rem_1fr_1fr_1fr_1fr] items-baseline gap-x-2";
 
 function ResultRow({
   r,
@@ -57,9 +56,7 @@ function ResultRow({
         <span className="text-fg">{score}%</span>
         <span className="text-sun">{sun}%</span>
         <span className="text-earth">{earth}%</span>
-        <span className={r.slopeDeg >= 10 ? "text-danger" : "text-fg-muted"}>
-          {r.slopeDeg.toFixed(1)}°
-        </span>
+        <span className={r.slopeDeg >= 10 ? "text-danger" : "text-fg-muted"}>{r.slopeDeg.toFixed(1)}°</span>
         <span className="text-fg-muted">{dark} h</span>
       </button>
     </li>
@@ -87,8 +84,7 @@ export function DiscoveryPanel({ className }: { className?: string }) {
   const target: LanderId = placing ?? "A";
   const shown = results.slice(0, SHOWN);
   const stale = shown.length > 0 && lastRunKey !== key;
-  const searchedEmpty =
-    !running && !error && lastRunKey === key && results.length === 0;
+  const searchedEmpty = !running && !error && lastRunKey === key && results.length === 0;
 
   useEffect(() => () => setHoveredRank(null), [setHoveredRank]);
 
@@ -103,10 +99,7 @@ export function DiscoveryPanel({ className }: { className?: string }) {
   };
 
   return (
-    <Panel
-      className={cn("flex flex-col", className)}
-      aria-label="Site discovery"
-    >
+    <Panel className={cn("flex flex-col", className)} aria-label="Site discovery">
       <PanelHeader eyebrow="Site discovery" title="Where can a lander live?" />
       <div className="flex flex-col gap-3.5 px-4 pb-3.5">
         <Slider
@@ -144,26 +137,16 @@ export function DiscoveryPanel({ className }: { className?: string }) {
           <span className="tabular text-fg-muted">
             {windowDays} {windowDays === 1 ? "day" : "days"}
           </span>{" "}
-          from{" "}
-          <span className="tabular text-fg-muted">
-            {DATE_FMT.format(windowStart)}
-          </span>
+          from <span className="tabular text-fg-muted">{DATE_FMT.format(windowStart)}</span>
         </p>
-        <Button
-          variant="primary"
-          onClick={find}
-          disabled={running}
-          aria-busy={running}
-        >
+        <Button variant="primary" onClick={find} disabled={running} aria-busy={running}>
           <MagnifyingGlass size={16} weight="regular" />
           {running ? "Searching every grid point…" : "Find landing sites"}
         </Button>
         <div aria-live="polite" className="empty:hidden">
           {error && <p className="text-danger text-xs">{error}</p>}
           {searchedEmpty && (
-            <p className="text-fg-muted text-xs">
-              No spot meets all three — try relaxing Earth contact.
-            </p>
+            <p className="text-fg-muted text-xs">No spot meets all three — try relaxing Earth contact.</p>
           )}
           {!running && !error && lastRunKey === key && results.length > 0 && (
             <p className="tabular text-fg-muted text-xs">
@@ -176,12 +159,7 @@ export function DiscoveryPanel({ className }: { className?: string }) {
       {shown.length > 0 && (
         <>
           <Divider />
-          <div
-            className={cn(
-              "px-2 pt-2.5 pb-2 transition-opacity duration-150",
-              running && "opacity-50",
-            )}
-          >
+          <div className={cn("px-2 pt-2.5 pb-2 transition-opacity duration-150", running && "opacity-50")}>
             <div aria-hidden className={cn(COLS, "eyebrow px-2 pb-1")}>
               <span>#</span>
               <span>Score</span>
@@ -190,10 +168,7 @@ export function DiscoveryPanel({ className }: { className?: string }) {
               <span>Slope</span>
               <span>Dark</span>
             </div>
-            <ol
-              aria-label="Best landing sites"
-              onPointerLeave={() => setHoveredRank(null)}
-            >
+            <ol aria-label="Best landing sites" onPointerLeave={() => setHoveredRank(null)}>
               {shown.map((r) => (
                 <ResultRow
                   key={r.rank}
@@ -207,8 +182,7 @@ export function DiscoveryPanel({ className }: { className?: string }) {
             </ol>
             <p className="px-2 pt-1.5 text-2xs text-fg-faint">
               {stale ? "From earlier settings — search again to update. " : ""}
-              Click a site to place lander {target}. “Dark” is the longest
-              stretch without Sun.
+              Click a site to place lander {target}. “Dark” is the longest stretch without Sun.
             </p>
           </div>
         </>

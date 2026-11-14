@@ -103,7 +103,9 @@ export function Skyline({ profile }: { profile: Float32Array }) {
     const v = new THREE.Vector3();
     return [0, 45, 90, 135, 180, 225, 270, 315].map((az) => ({
       az,
-      pos: dirFor(az, 21.5, v).multiplyScalar(RING_DISTANCE * 0.97).toArray(),
+      pos: dirFor(az, 21.5, v)
+        .multiplyScalar(RING_DISTANCE * 0.97)
+        .toArray(),
     }));
   }, []);
 

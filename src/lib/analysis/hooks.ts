@@ -4,19 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { AnalysisCancelled, memoRequest, request } from "@/lib/analysis/client";
 import { liveAt } from "@/lib/analysis/compute";
-import type {
-  LiveVisibility,
-  PointAnalysis,
-  Transitions,
-  WindowAverageStats,
-} from "@/lib/analysis/types";
-import {
-  type DiscoveryCriteria,
-  type DiscoveryResult,
-  type LanderId,
-  type RegionId,
-  useApp,
-} from "@/lib/store";
+import type { LiveVisibility, PointAnalysis, Transitions, WindowAverageStats } from "@/lib/analysis/types";
+import { type DiscoveryCriteria, type DiscoveryResult, type LanderId, type RegionId, useApp } from "@/lib/store";
 import { useRegion } from "@/lib/use-region";
 
 /** Playhead-driven transition searches are sent at most this often (latest wins). */
@@ -31,17 +20,16 @@ function reportFailure(error: unknown): void {
  * Keeps returning the previous result while a new one is computed; null when the lander is not placed.
  */
 export function usePointAnalysis(id: LanderId): PointAnalysis | null {
-  const { regionId, lander, windowStart, windowDays, power, mastHeight } =
-    useApp(
-      useShallow((s) => ({
-        regionId: s.regionId,
-        lander: s.landers[id],
-        windowStart: s.windowStart,
-        windowDays: s.windowDays,
-        power: s.power,
-        mastHeight: s.mastHeight,
-      })),
-    );
+  const { regionId, lander, windowStart, windowDays, power, mastHeight } = useApp(
+    useShallow((s) => ({
+      regionId: s.regionId,
+      lander: s.landers[id],
+      windowStart: s.windowStart,
+      windowDays: s.windowDays,
+      power: s.power,
+      mastHeight: s.mastHeight,
+    })),
+  );
   const [result, setResult] = useState<{
     regionId: RegionId;
     analysis: PointAnalysis;
@@ -58,10 +46,7 @@ export function usePointAnalysis(id: LanderId): PointAnalysis | null {
       start: windowStart,
       days: windowDays,
       power,
-    }).then(
-      (analysis) => alive && setResult({ regionId, analysis }),
-      reportFailure,
-    );
+    }).then((analysis) => alive && setResult({ regionId, analysis }), reportFailure);
     return () => {
       alive = false;
     };
@@ -85,9 +70,7 @@ export function useTransitions(id: LanderId): Transitions | null {
     transitions: Transitions;
   } | null>(null);
   const lastSent = useRef(0);
-  const pointKey = lander
-    ? `${regionId}|${lander.x}|${lander.y}|${lander.siteId ?? ""}|${mastHeight}`
-    : null;
+  const pointKey = lander ? `${regionId}|${lander.x}|${lander.y}|${lander.siteId ?? ""}|${mastHeight}` : null;
   const currentPoint = useRef(pointKey);
 
   useEffect(() => {
@@ -110,12 +93,10 @@ export function useTransitions(id: LanderId): Transitions | null {
         from: time,
       }).then((transitions) => {
         // latest-wins already rejected older requests; only drop results for a lander that moved since
-        if (currentPoint.current === pointKey)
-          setResult({ point: pointKey, transitions });
+        if (currentPoint.current === pointKey) setResult({ point: pointKey, transitions });
       }, reportFailure);
     };
-    const wait =
-      TRANSITIONS_THROTTLE_MS - (performance.now() - lastSent.current);
+    const wait = TRANSITIONS_THROTTLE_MS - (performance.now() - lastSent.current);
     if (wait <= 0) {
       send();
       return;
@@ -177,8 +158,7 @@ export function useWindowAverage(enabled: boolean): WindowAverageStats | null {
     }).then(({ stats, rgba }) => {
       if (!alive) return;
       const s = useApp.getState();
-      if (s.regionId === regionId && s.averageData !== rgba)
-        s.setAverageData(rgba);
+      if (s.regionId === regionId && s.averageData !== rgba) s.setAverageData(rgba);
       setResult({ regionId, stats });
     }, reportFailure);
     return () => {
@@ -194,9 +174,7 @@ export function useWindowAverage(enabled: boolean): WindowAverageStats | null {
  * `discovery.running` while working and writes the results to the store. A newer call supersedes an
  * older one, which then rejects with an AbortError.
  */
-export async function runDiscovery(
-  criteria: DiscoveryCriteria,
-): Promise<DiscoveryResult[]> {
+export async function runDiscovery(criteria: DiscoveryCriteria): Promise<DiscoveryResult[]> {
   const s = useApp.getState();
   s.setDiscoveryRunning(true);
   try {
@@ -211,8 +189,7 @@ export async function runDiscovery(
     now.setDiscoveryRunning(false);
     return results;
   } catch (e) {
-    if (!(e instanceof AnalysisCancelled))
-      useApp.getState().setDiscoveryRunning(false);
+    if (!(e instanceof AnalysisCancelled)) useApp.getState().setDiscoveryRunning(false);
     throw e;
   }
 }

@@ -4,15 +4,11 @@ import type { RegionSite } from "../../src/lib/moon/types";
 
 export const DATA_BOOK_URL =
   "https://ntrs.nasa.gov/api/citations/20230007818/downloads/ACD-50044%20Lunar%20Surface%20Data%20Book%20Rev%20A.pdf";
-export const GLASER_2018_URL =
-  "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf";
+export const GLASER_2018_URL = "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf";
 export const LOLA_GDR_URL = "http://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/";
 export const MAZARICO_URL = "https://pgda.gsfc.nasa.gov/products/69";
 
-export type SiteDef = Pick<
-  RegionSite,
-  "id" | "name" | "kind" | "lat" | "lon" | "source" | "note"
->;
+export type SiteDef = Pick<RegionSite, "id" | "name" | "kind" | "lat" | "lon" | "source" | "note">;
 
 export interface RegionDef {
   id: string;

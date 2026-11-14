@@ -20,14 +20,7 @@ import type { PointAnalysis } from "@/lib/analysis/types";
 import { cn } from "@/lib/cn";
 import { DAY, HOUR, useApp } from "@/lib/store";
 import { useGame } from "./game-store";
-import {
-  EARTH_GOAL_SOURCE,
-  MISSIONS,
-  type Mission,
-  RANKS,
-  sampleAt,
-  scoreMission,
-} from "./missions";
+import { EARTH_GOAL_SOURCE, MISSIONS, type Mission, RANKS, sampleAt, scoreMission } from "./missions";
 
 /** Real-time length of the mission time-lapse. */
 const TIMELAPSE_MS = 10_000;
@@ -73,13 +66,9 @@ function LandingSequence() {
     analysis !== null &&
     lander !== undefined &&
     analysis.siteId === lander.siteId &&
-    Math.hypot(analysis.x - lander.x, analysis.y - lander.y) <
-      MATCH_TOLERANCE_M &&
+    Math.hypot(analysis.x - lander.x, analysis.y - lander.y) < MATCH_TOLERANCE_M &&
     analysis.series.start === mission.start &&
-    (analysis.series.sunFraction.length - 1) *
-      analysis.series.stepMinutes *
-      60_000 >=
-      end - mission.start;
+    (analysis.series.sunFraction.length - 1) * analysis.series.stepMinutes * 60_000 >= end - mission.start;
   const current = ready ? analysis : null;
 
   // Lander removed (e.g. region switched) mid-sequence: nothing left to land.
@@ -96,8 +85,7 @@ function LandingSequence() {
     const tick = (now: number) => {
       const p = Math.min(1, (now - t0) / TIMELAPSE_MS);
       let elapsed = p * span;
-      if (reducedMotion && p < 1)
-        elapsed = Math.floor(elapsed / REDUCED_STEP_MS) * REDUCED_STEP_MS;
+      if (reducedMotion && p < 1) elapsed = Math.floor(elapsed / REDUCED_STEP_MS) * REDUCED_STEP_MS;
       setTime(mission.start + elapsed);
       if (p >= 1) {
         finish(scoreMission(mission, current));
@@ -138,10 +126,7 @@ function LandingHud({
   const time = useApp((s) => s.time);
   const loadW = useApp((s) => s.power.loadW);
   const end = mission.start + mission.days * DAY;
-  const progress = Math.min(
-    1,
-    Math.max(0, (time - mission.start) / (end - mission.start)),
-  );
+  const progress = Math.min(1, Math.max(0, (time - mission.start) / (end - mission.start)));
 
   let soc = 100;
   let sunUp: boolean | null = null;
@@ -150,10 +135,7 @@ function LandingHud({
   if (analysis) {
     const { series, power } = analysis;
     const { i, j, f } = sampleAt(series, time);
-    soc = Math.max(
-      0,
-      power.socPct[i] + (power.socPct[j] - power.socPct[i]) * f,
-    );
+    soc = Math.max(0, power.socPct[i] + (power.socPct[j] - power.socPct[i]) * f);
     sunUp = series.sunFraction[i] > 0;
     earthUp = series.earthFraction[i] > 0;
     charging = power.watts[i] > loadW && soc < 100;
@@ -181,29 +163,16 @@ function LandingHud({
             <div className="eyebrow">Mission · {mission.title}</div>
             <div className="tabular mt-0.5 text-fg text-sm">
               Day {day} of {mission.days}
-              <span className="ml-2 text-fg-faint">
-                {dateFmt.format(time)} UTC
-              </span>
+              <span className="ml-2 text-fg-faint">{dateFmt.format(time)} UTC</span>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onSkip}
-            disabled={!analysis}
-          >
+          <Button variant="ghost" size="sm" onClick={onSkip} disabled={!analysis}>
             Skip to results <Kbd>Esc</Kbd>
           </Button>
         </div>
 
-        <div
-          className="mt-2 h-1 overflow-hidden rounded-full bg-white/6"
-          aria-hidden="true"
-        >
-          <div
-            className="h-full origin-left bg-fg-faint"
-            style={{ transform: `scaleX(${progress})` }}
-          />
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/6" aria-hidden="true">
+          <div className="h-full origin-left bg-fg-faint" style={{ transform: `scaleX(${progress})` }} />
         </div>
 
         {analysis ? (
@@ -211,52 +180,25 @@ function LandingHud({
             <div className="mt-4">
               <div className="flex items-baseline justify-between">
                 <span className="eyebrow">Battery</span>
-                <span
-                  className={cn(
-                    "text-xs",
-                    empty ? "text-danger" : "text-fg-muted",
-                  )}
-                >
-                  {empty
-                    ? "Empty: lander asleep"
-                    : charging
-                      ? "Charging in sunlight"
-                      : "Draining"}
+                <span className={cn("text-xs", empty ? "text-danger" : "text-fg-muted")}>
+                  {empty ? "Empty: lander asleep" : charging ? "Charging in sunlight" : "Draining"}
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-3">
-                <meter
-                  className="sr-only"
-                  aria-label="Battery charge"
-                  min={0}
-                  max={100}
-                  value={Math.round(soc)}
-                />
+                <meter className="sr-only" aria-label="Battery charge" min={0} max={100} value={Math.round(soc)} />
                 <div
                   aria-hidden="true"
                   className="relative h-5 flex-1 overflow-hidden rounded-full bg-white/6 ring-1 ring-line"
                 >
                   <div
-                    className={cn(
-                      "h-full origin-left",
-                      low ? "bg-danger" : "bg-sun",
-                    )}
+                    className={cn("h-full origin-left", low ? "bg-danger" : "bg-sun")}
                     style={{ transform: `scaleX(${soc / 100})` }}
                   />
                   {[25, 50, 75].map((t) => (
-                    <span
-                      key={t}
-                      className="absolute inset-y-0 w-px bg-canvas/60"
-                      style={{ left: `${t}%` }}
-                    />
+                    <span key={t} className="absolute inset-y-0 w-px bg-canvas/60" style={{ left: `${t}%` }} />
                   ))}
                 </div>
-                <span
-                  className={cn(
-                    "tabular w-[4.5ch] text-right text-3xl",
-                    low ? "text-danger" : "text-sun",
-                  )}
-                >
+                <span className={cn("tabular w-[4.5ch] text-right text-3xl", low ? "text-danger" : "text-sun")}>
                   {Math.round(soc)}
                   <span className="text-fg-faint text-sm">%</span>
                 </span>
@@ -270,11 +212,7 @@ function LandingHud({
                   sunUp ? (
                     <Sun size={18} weight="regular" className="text-sun" />
                   ) : (
-                    <Moon
-                      size={18}
-                      weight="regular"
-                      className="text-[oklch(0.7_0.05_270)]"
-                    />
+                    <Moon size={18} weight="regular" className="text-[oklch(0.7_0.05_270)]" />
                   )
                 }
                 value={sunUp ? "In sunlight" : "In shadow"}
@@ -289,32 +227,22 @@ function LandingHud({
                 label="Earth signal"
                 icon={
                   earthUp ? (
-                    <CellSignalFull
-                      size={18}
-                      weight="regular"
-                      className="text-earth"
-                    />
+                    <CellSignalFull size={18} weight="regular" className="text-earth" />
                   ) : (
-                    <CellSignalSlash
-                      size={18}
-                      weight="regular"
-                      className="text-fg-faint"
-                    />
+                    <CellSignalSlash size={18} weight="regular" className="text-fg-faint" />
                   )
                 }
                 value={earthUp ? "Connected" : "Earth hidden"}
               />
             </div>
             <p className="sr-only" aria-live="polite">
-              {sunUp ? "In sunlight." : "In shadow."}{" "}
-              {earthUp ? "Earth in view." : "Earth hidden."}
+              {sunUp ? "In sunlight." : "In shadow."} {earthUp ? "Earth in view." : "Earth hidden."}
               {empty ? " Battery empty." : ""}
             </p>
           </>
         ) : (
           <p className="mt-4 text-fg-muted text-sm" aria-live="polite">
-            Touchdown. Working out when the Sun and Earth are above the hills
-            around you…
+            Touchdown. Working out when the Sun and Earth are above the hills around you…
           </p>
         )}
       </section>
@@ -322,32 +250,17 @@ function LandingHud({
   );
 }
 
-function Cell({
-  label,
-  icon,
-  value,
-  hint,
-}: {
-  label: string;
-  icon: ReactNode;
-  value: string;
-  hint?: string;
-}) {
+function Cell({ label, icon, value, hint }: { label: string; icon: ReactNode; value: string; hint?: string }) {
   return (
     <div className="min-w-0 rounded-lg bg-white/3 px-3 py-2.5 ring-1 ring-line">
       <div className="eyebrow truncate">{label}</div>
       <div className="mt-1 flex items-center gap-2 text-fg text-sm">
-        <span
-          className="flex size-5 shrink-0 items-center justify-center"
-          aria-hidden="true"
-        >
+        <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
           {icon}
         </span>
         <span className="truncate">{value}</span>
       </div>
-      {hint && (
-        <div className="mt-0.5 truncate text-2xs text-fg-faint">{hint}</div>
-      )}
+      {hint && <div className="mt-0.5 truncate text-2xs text-fg-faint">{hint}</div>}
     </div>
   );
 }
@@ -396,9 +309,7 @@ function Debrief() {
           <div
             className={cn(
               "flex size-14 shrink-0 items-center justify-center rounded-full ring-1",
-              passed
-                ? "bg-sun-soft text-sun ring-sun/40"
-                : "bg-white/6 text-fg-muted ring-line",
+              passed ? "bg-sun-soft text-sun ring-sun/40" : "bg-white/6 text-fg-muted ring-line",
             )}
             aria-hidden="true"
           >
@@ -406,22 +317,15 @@ function Debrief() {
           </div>
           <div className="min-w-0">
             <div className="eyebrow">Your badge</div>
-            <div className="font-medium text-fg text-xl tracking-[-0.01em]">
-              {result.rank}
-            </div>
-            <div className="tabular text-fg-muted text-xs">
-              Score {result.score} / 100
-            </div>
+            <div className="font-medium text-fg text-xl tracking-[-0.01em]">{result.rank}</div>
+            <div className="tabular text-fg-muted text-xs">Score {result.score} / 100</div>
           </div>
         </div>
 
         <ol className="flex flex-wrap gap-1.5" aria-label="Badge ranks">
           {RANKS.map((r, i) => (
             <li key={r}>
-              <Badge
-                tone={i === earned ? "sun" : "neutral"}
-                className={cn(i > earned && "opacity-50")}
-              >
+              <Badge tone={i === earned ? "sun" : "neutral"} className={cn(i > earned && "opacity-50")}>
                 {r}
               </Badge>
             </li>
@@ -449,13 +353,7 @@ function Debrief() {
             tone="earth"
             hint={`Goal ${Math.round(mission.minEarth * 100)}%`}
           />
-          <Stat
-            label="Sunlight"
-            value={Math.round(result.sunUp * 100)}
-            unit="%"
-            tone="sun"
-            hint="of the time"
-          />
+          <Stat label="Sunlight" value={Math.round(result.sunUp * 100)} unit="%" tone="sun" hint="of the time" />
         </div>
 
         <div className="flex flex-col gap-2 text-fg text-sm">
@@ -464,9 +362,8 @@ function Debrief() {
         </div>
 
         <p className="text-2xs text-fg-faint">
-          Numbers come from the same horizon analysis as Mission planning. Power
-          assumes upright Sun-tracking panels; the Earth goal follows NASA
-          landing-site screening.{" "}
+          Numbers come from the same horizon analysis as Mission planning. Power assumes upright Sun-tracking panels;
+          the Earth goal follows NASA landing-site screening.{" "}
           <a
             href={EARTH_GOAL_SOURCE}
             target="_blank"

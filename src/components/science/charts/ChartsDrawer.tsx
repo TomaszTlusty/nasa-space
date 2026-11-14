@@ -3,16 +3,7 @@
 import { ChartLine, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { memo, useEffect, useMemo } from "react";
-import {
-  Area,
-  ComposedChart,
-  Line,
-  LineChart,
-  ReferenceLine,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, ComposedChart, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 import { Button, IconButton } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
 import { usePointAnalysis } from "@/lib/analysis";
@@ -52,8 +43,7 @@ const tooltipProps = {
   },
   labelStyle: { color: "var(--color-fg-muted)", marginBottom: 2 },
   itemStyle: { padding: 0 },
-  labelFormatter: (t: unknown) =>
-    `${new Date(Number(t)).toISOString().slice(0, 16).replace("T", " ")} UTC`,
+  labelFormatter: (t: unknown) => `${new Date(Number(t)).toISOString().slice(0, 16).replace("T", " ")} UTC`,
 };
 
 const SUN = "var(--color-sun)";
@@ -69,8 +59,7 @@ interface ChartProps {
 }
 
 /** A solid and prominent, B thinner and translucent. */
-const stroke = (id: "a" | "b") =>
-  id === "a" ? { strokeWidth: 1.5 } : { strokeWidth: 1, strokeOpacity: 0.65 };
+const stroke = (id: "a" | "b") => (id === "a" ? { strokeWidth: 1.5 } : { strokeWidth: 1, strokeOpacity: 0.65 });
 
 function xAxis(domain: [number, number], ticks: number[]) {
   return (
@@ -87,23 +76,10 @@ function xAxis(domain: [number, number], ticks: number[]) {
   );
 }
 
-const SkyChart = memo(function SkyChart({
-  rows,
-  domain,
-  ticks,
-  hasA,
-  hasB,
-}: ChartProps) {
-  const ids = [hasA && ("a" as const), hasB && ("b" as const)].filter(
-    (v) => v !== false,
-  );
+const SkyChart = memo(function SkyChart({ rows, domain, ticks, hasA, hasB }: ChartProps) {
+  const ids = [hasA && ("a" as const), hasB && ("b" as const)].filter((v) => v !== false);
   return (
-    <LineChart
-      data={rows}
-      responsive
-      style={{ width: "100%", height: "100%" }}
-      margin={MARGIN}
-    >
+    <LineChart data={rows} responsive style={{ width: "100%", height: "100%" }} margin={MARGIN}>
       {xAxis(domain, ticks)}
       <YAxis
         width={Y_AXIS_W}
@@ -113,12 +89,7 @@ const SkyChart = memo(function SkyChart({
         {...axisProps}
       />
       <ReferenceLine y={0} stroke="var(--color-line)" />
-      <Tooltip
-        {...tooltipProps}
-        formatter={(v) =>
-          typeof v === "number" ? `${v.toFixed(2)}°` : String(v)
-        }
-      />
+      <Tooltip {...tooltipProps} formatter={(v) => (typeof v === "number" ? `${v.toFixed(2)}°` : String(v))} />
       {ids.flatMap((id) => {
         const L = id.toUpperCase();
         return [
@@ -168,28 +139,11 @@ const SkyChart = memo(function SkyChart({
   );
 });
 
-const PowerChart = memo(function PowerChart({
-  rows,
-  domain,
-  ticks,
-  hasA,
-  hasB,
-}: ChartProps) {
+const PowerChart = memo(function PowerChart({ rows, domain, ticks, hasA, hasB }: ChartProps) {
   return (
-    <ComposedChart
-      data={rows}
-      responsive
-      style={{ width: "100%", height: "100%" }}
-      margin={MARGIN}
-    >
+    <ComposedChart data={rows} responsive style={{ width: "100%", height: "100%" }} margin={MARGIN}>
       {xAxis(domain, ticks)}
-      <YAxis
-        yAxisId="w"
-        width={Y_AXIS_W}
-        tickCount={4}
-        tickFormatter={(v: number) => `${v} W`}
-        {...axisProps}
-      />
+      <YAxis yAxisId="w" width={Y_AXIS_W} tickCount={4} tickFormatter={(v: number) => `${v} W`} {...axisProps} />
       <YAxis
         yAxisId="soc"
         orientation="right"
@@ -260,13 +214,7 @@ const PowerChart = memo(function PowerChart({
 });
 
 /** Playhead drawn over the fixed plot area; subscribes to `time` on its own. */
-function Playhead({
-  domain,
-  rightAxis,
-}: {
-  domain: [number, number];
-  rightAxis: boolean;
-}) {
+function Playhead({ domain, rightAxis }: { domain: [number, number]; rightAxis: boolean }) {
   const time = useApp((s) => s.time);
   if (time < domain[0] || time > domain[1]) return null;
   const left = MARGIN.left + Y_AXIS_W;
@@ -376,13 +324,7 @@ function ChartsBody({ onClose }: { onClose: () => void }) {
   return (
     <>
       <header className="flex items-center gap-3 px-3 pt-2.5 pb-1.5">
-        <Segmented<ChartsTab>
-          ariaLabel="Chart"
-          size="sm"
-          value={tab}
-          onChange={setTab}
-          options={TABS}
-        />
+        <Segmented<ChartsTab> ariaLabel="Chart" size="sm" value={tab} onChange={setTab} options={TABS} />
         <div className="flex min-w-0 flex-1 items-center justify-end gap-3 overflow-hidden text-2xs text-fg-muted">
           {tab === "sky" && (
             <>
@@ -452,9 +394,7 @@ function ChartsBody({ onClose }: { onClose: () => void }) {
           )
         ) : (
           <p className="flex h-full items-center justify-center text-fg-muted text-xs">
-            {anyLander
-              ? "Computing the mission window…"
-              : "Place a lander on the terrain to chart its mission window."}
+            {anyLander ? "Computing the mission window…" : "Place a lander on the terrain to chart its mission window."}
           </p>
         )}
       </div>

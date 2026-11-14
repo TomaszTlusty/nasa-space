@@ -2,11 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { isToolUIPart } from "ai";
-import {
-  type ChatMode,
-  MAX_INPUT_CHARS,
-  type MissionUIMessage,
-} from "@/lib/ai/tools";
+import { type ChatMode, MAX_INPUT_CHARS, type MissionUIMessage } from "@/lib/ai/tools";
 import { getChat } from "./chats";
 
 export interface Assistant {
@@ -27,13 +23,8 @@ export function useAssistant(mode: ChatMode): Assistant {
   const toolRunning =
     chat.status !== "error" &&
     last?.role === "assistant" &&
-    last.parts.some(
-      (p) =>
-        isToolUIPart(p) &&
-        (p.state === "input-streaming" || p.state === "input-available"),
-    );
-  const busy =
-    chat.status === "submitted" || chat.status === "streaming" || toolRunning;
+    last.parts.some((p) => isToolUIPart(p) && (p.state === "input-streaming" || p.state === "input-available"));
+  const busy = chat.status === "submitted" || chat.status === "streaming" || toolRunning;
 
   return {
     messages: chat.messages,

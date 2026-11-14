@@ -20,8 +20,7 @@ const EXAMPLES = [
  * container — place it inside the guide panel. `compact` shortens the thread and examples.
  */
 export function GuideChat({ compact = false }: { compact?: boolean }) {
-  const { messages, busy, error, send, retry, stop, clear } =
-    useAssistant("student");
+  const { messages, busy, error, send, retry, stop, clear } = useAssistant("student");
   const [draft, setDraft] = useState("");
 
   const submit = (text: string) => {
@@ -36,12 +35,7 @@ export function GuideChat({ compact = false }: { compact?: boolean }) {
         <span className="eyebrow">Ask LUNA-Bot</span>
         <span className="flex items-center gap-1">
           {messages.length > 0 && (
-            <IconButton
-              label="Clear chat"
-              size="sm"
-              onClick={clear}
-              disabled={busy}
-            >
+            <IconButton label="Clear chat" size="sm" onClick={clear} disabled={busy}>
               <Trash size={14} weight="regular" />
             </IconButton>
           )}
@@ -50,11 +44,7 @@ export function GuideChat({ compact = false }: { compact?: boolean }) {
       </div>
 
       {messages.length === 0 ? (
-        <ExamplePrompts
-          prompts={compact ? EXAMPLES.slice(0, 2) : EXAMPLES}
-          onPick={submit}
-          disabled={busy}
-        />
+        <ExamplePrompts prompts={compact ? EXAMPLES.slice(0, 2) : EXAMPLES} onPick={submit} disabled={busy} />
       ) : (
         <ChatThread
           messages={messages}
@@ -86,21 +76,11 @@ export function GuideChat({ compact = false }: { compact?: boolean }) {
           )}
         />
         {busy ? (
-          <IconButton
-            label="Stop answer"
-            variant="secondary"
-            type="button"
-            onClick={stop}
-          >
+          <IconButton label="Stop answer" variant="secondary" type="button" onClick={stop}>
             <Stop size={14} weight="fill" />
           </IconButton>
         ) : (
-          <IconButton
-            label="Send question"
-            variant="primary"
-            type="submit"
-            disabled={!draft.trim()}
-          >
+          <IconButton label="Send question" variant="primary" type="submit" disabled={!draft.trim()}>
             <ArrowUp size={15} weight="regular" />
           </IconButton>
         )}

@@ -57,18 +57,14 @@ export function GanttStrips({
   const time = useApp((s) => s.time);
   const setTime = useApp((s) => s.setTime);
   const span = domain[1] - domain[0];
-  const x = (t: number) =>
-    ((Math.min(domain[1], Math.max(domain[0], t)) - domain[0]) / span) * 100;
+  const x = (t: number) => ((Math.min(domain[1], Math.max(domain[0], t)) - domain[0]) / span) * 100;
   const playheadIn = time >= domain[0] && time <= domain[1];
   const rows = strips(a, b);
 
   const seek = (e: PointerEvent<HTMLDivElement>) => {
     if (e.type === "pointermove" && e.buttons !== 1) return;
     const r = e.currentTarget.getBoundingClientRect();
-    setTime(
-      domain[0] +
-        Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * span,
-    );
+    setTime(domain[0] + Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * span);
   };
 
   const nudge = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -95,31 +91,18 @@ export function GanttStrips({
           aria-valuemin={domain[0]}
           aria-valuemax={domain[1]}
           aria-valuenow={time}
-          aria-valuetext={new Date(time)
-            .toISOString()
-            .slice(0, 16)
-            .replace("T", " ")}
+          aria-valuetext={new Date(time).toISOString().slice(0, 16).replace("T", " ")}
           className="relative min-w-0 flex-1 cursor-crosshair touch-none rounded-xs"
           onPointerDown={seek}
           onPointerMove={seek}
           onKeyDown={nudge}
         >
           {ticks.map((t) => (
-            <div
-              key={t}
-              className="absolute inset-y-0 w-px bg-line"
-              style={{ left: `${x(t)}%` }}
-            />
+            <div key={t} className="absolute inset-y-0 w-px bg-line" style={{ left: `${x(t)}%` }} />
           ))}
           <div className="absolute inset-0 flex flex-col justify-around">
             {rows.map((s) => (
-              <div
-                key={s.key}
-                className={cn(
-                  "relative rounded-full bg-night-soft",
-                  s.thin ? "h-2" : "h-3",
-                )}
-              >
+              <div key={s.key} className={cn("relative rounded-full bg-night-soft", s.thin ? "h-2" : "h-3")}>
                 {s.windows.map((w) =>
                   w.end <= domain[0] || w.start >= domain[1] ? null : (
                     <div
@@ -139,12 +122,7 @@ export function GanttStrips({
               </div>
             ))}
           </div>
-          {playheadIn && (
-            <div
-              className="absolute inset-y-0 w-px bg-beacon"
-              style={{ left: `${x(time)}%` }}
-            />
-          )}
+          {playheadIn && <div className="absolute inset-y-0 w-px bg-beacon" style={{ left: `${x(time)}%` }} />}
         </div>
       </div>
       <div className="flex gap-3">

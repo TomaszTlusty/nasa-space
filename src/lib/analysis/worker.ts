@@ -24,37 +24,22 @@ import type {
   WorkerRequest,
   WorkerResponse,
 } from "@/lib/analysis/protocol";
-import {
-  type LoadedRegion,
-  loadRegion,
-  type Timeline,
-} from "@/lib/moon/horizon";
+import { type LoadedRegion, loadRegion, type Timeline } from "@/lib/moon/horizon";
 import type { RegionId } from "@/lib/store";
 
 interface WorkerScope {
   postMessage(message: WorkerResponse): void;
-  addEventListener(
-    type: "message",
-    listener: (e: MessageEvent<WorkerInbound>) => void,
-  ): void;
+  addEventListener(type: "message", listener: (e: MessageEvent<WorkerInbound>) => void): void;
 }
 const scope = self as unknown as WorkerScope;
 
 const regions = new Map<RegionId, Promise<LoadedRegion>>();
 const timelines = new Map<string, Timeline>();
-const transitionCache = new Map<
-  string,
-  { sun: BodyTransitions; earth: BodyTransitions }
->();
+const transitionCache = new Map<string, { sun: BodyTransitions; earth: BodyTransitions }>();
 const averages = new Map<string, WindowAverage & { rgba: Uint8Array }>();
 
 /** Small LRU on Map insertion order. */
-function remember<T>(
-  cache: Map<string, T>,
-  key: string,
-  max: number,
-  compute: () => T,
-): T {
+function remember<T>(cache: Map<string, T>, key: string, max: number, compute: () => T): T {
   const hit = cache.get(key);
   if (hit !== undefined) {
     cache.delete(key);
@@ -89,19 +74,13 @@ function average(
   });
 }
 
-function run(
-  r: LoadedRegion,
-  req: WorkerRequest,
-): JobResults[WorkerJob["kind"]] {
+function run(r: LoadedRegion, req: WorkerRequest): JobResults[WorkerJob["kind"]] {
   const job = req.job;
   switch (job.kind) {
     case "point": {
       const pointKey = JSON.stringify(timelinePoint(r, job.query));
-      const tl = remember(
-        timelines,
-        `${req.regionId}|${pointKey}|${job.start}|${job.days}`,
-        8,
-        () => pointTimeline(r, job.query, job.start, job.days),
+      const tl = remember(timelines, `${req.regionId}|${pointKey}|${job.start}|${job.days}`, 8, () =>
+        pointTimeline(r, job.query, job.start, job.days),
       );
       return analyzeTimeline(r, job.id, job.query, tl, job.power);
     }
@@ -109,18 +88,12 @@ function run(
       const point = timelinePoint(r, job.query);
       const key = `${req.regionId}|${JSON.stringify(point)}`;
       const prev = transitionCache.get(key);
-      const sun =
-        prev && stillValid(prev.sun, job.from)
-          ? prev.sun
-          : bodyTransitions(r, point, job.from, "sun");
+      const sun = prev && stillValid(prev.sun, job.from) ? prev.sun : bodyTransitions(r, point, job.from, "sun");
       const earth =
-        prev && stillValid(prev.earth, job.from)
-          ? prev.earth
-          : bodyTransitions(r, point, job.from, "earth");
+        prev && stillValid(prev.earth, job.from) ? prev.earth : bodyTransitions(r, point, job.from, "earth");
       transitionCache.delete(key);
       transitionCache.set(key, { sun, earth });
-      if (transitionCache.size > 8)
-        transitionCache.delete(transitionCache.keys().next().value as string);
+      if (transitionCache.size > 8) transitionCache.delete(transitionCache.keys().next().value as string);
       return toTransitions(sun, earth, job.from);
     }
     case "average": {
@@ -137,13 +110,7 @@ function run(
       return result;
     }
     case "discovery":
-      return discover(
-        r,
-        average(r, req.regionId, job.start, job.days),
-        job.criteria,
-        job.start,
-        job.days,
-      );
+      return discover(r, average(r, req.regionId, job.start, job.days), job.criteria, job.start, job.days);
   }
 }
 

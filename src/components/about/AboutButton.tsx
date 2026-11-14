@@ -67,16 +67,9 @@ export function AboutButton() {
           <Section title="How it works">
             <ol className="grid gap-3 sm:grid-cols-3">
               {steps(meta).map((s, i) => (
-                <li
-                  key={s.title}
-                  className="rounded-md bg-white/3 p-3 ring-1 ring-line"
-                >
-                  <div className="tabular text-2xs text-fg-faint">
-                    {String(i + 1).padStart(2, "0")}
-                  </div>
-                  <div className="mt-1 font-medium text-fg text-sm">
-                    {s.title}
-                  </div>
+                <li key={s.title} className="rounded-md bg-white/3 p-3 ring-1 ring-line">
+                  <div className="tabular text-2xs text-fg-faint">{String(i + 1).padStart(2, "0")}</div>
+                  <div className="mt-1 font-medium text-fg text-sm">{s.title}</div>
                   <p className="mt-1 text-fg-muted text-xs">{s.body}</p>
                 </li>
               ))}

@@ -3,17 +3,8 @@
  * (a) long-run Sun / Earth visibility vs Mazarico et al. AVGVISIB_85S_060M (Sun + Earth),
  * (b) topocentric Sun / Earth az/el vs JPL Horizons fixtures.
  */
-import {
-  bodyAltAz,
-  bodyAltAzFromEphemeris,
-  type MoonEphemeris,
-  moonEphemeris,
-} from "../../src/lib/moon/ephemeris";
-import {
-  normLon,
-  polarToLatLon,
-  trueToGridAz,
-} from "../../src/lib/moon/frames";
+import { bodyAltAz, bodyAltAzFromEphemeris, type MoonEphemeris, moonEphemeris } from "../../src/lib/moon/ephemeris";
+import { normLon, polarToLatLon, trueToGridAz } from "../../src/lib/moon/frames";
 import { discVisibleFraction, profileAt } from "../../src/lib/moon/horizon";
 import type { RegionMeta, ValidationReport } from "../../src/lib/moon/types";
 import { EXTENT, HORIZON_N } from "./build";
@@ -36,23 +27,12 @@ const t0 = performance.now();
 const dem = await MultiDem.load();
 const maxHeight = dem.maxHeight();
 const pool = await HorizonPool.create(dem, maxHeight);
-const sunRef = await loadPolarRaster(
-  RAW_DIR,
-  "AVGVISIB_85S_060M_201608",
-  false,
-);
-const earthRef = await loadPolarRaster(
-  RAW_DIR,
-  "AVGVISIB_85S_060M_201608_EARTH",
-  false,
-);
+const sunRef = await loadPolarRaster(RAW_DIR, "AVGVISIB_85S_060M_201608", false);
+const earthRef = await loadPolarRaster(RAW_DIR, "AVGVISIB_85S_060M_201608_EARTH", false);
 
 const ephs: MoonEphemeris[] = [];
-for (let t = START; t < END; t += STEP_H * 3_600_000)
-  ephs.push(moonEphemeris(new Date(t)));
-console.log(
-  `ephemeris: ${ephs.length} steps (${STEP_H} h) in ${((performance.now() - t0) / 1000).toFixed(1)} s`,
-);
+for (let t = START; t < END; t += STEP_H * 3_600_000) ephs.push(moonEphemeris(new Date(t)));
+console.log(`ephemeris: ${ephs.length} steps (${STEP_H} h) in ${((performance.now() - t0) / 1000).toFixed(1)} s`);
 
 /** deterministic jittered stratified nodes on the region's horizon grid */
 function sampleNodes(seed: number): { c: number; r: number }[] {
@@ -114,19 +94,12 @@ for (const def of Object.values(REGIONS)) {
       X: def.X - EXTENT / 2 + c * step,
       Y: def.Y - EXTENT / 2 + r * step,
     }))
-    .filter(
-      (p) =>
-        rasterContains(sunRef, p.X, p.Y) && rasterContains(earthRef, p.X, p.Y),
-    );
+    .filter((p) => rasterContains(sunRef, p.X, p.Y) && rasterContains(earthRef, p.X, p.Y));
   const pts = Float64Array.from(nodes.flatMap((p) => [p.X, p.Y]));
-  const profiles = await Promise.all(
-    MASTS.map((m) => pool.run(pts, m, AZ_BINS)),
-  );
+  const profiles = await Promise.all(MASTS.map((m) => pool.run(pts, m, AZ_BINS)));
   const results: NodeResult[] = nodes.map((p, i) => {
     const { lat, lon } = polarToLatLon(p.X, p.Y);
-    const runs = MASTS.map((_, m) =>
-      longRun(lat, lon, profiles[m].subarray(i * AZ_BINS, (i + 1) * AZ_BINS)),
-    );
+    const runs = MASTS.map((_, m) => longRun(lat, lon, profiles[m].subarray(i * AZ_BINS, (i + 1) * AZ_BINS)));
     return {
       lat,
       lon,
@@ -170,9 +143,7 @@ for (const def of Object.values(REGIONS)) {
     );
 
   // named sites: exact per-site horizons from meta.json (built by data:build)
-  const meta: RegionMeta = await Bun.file(
-    `${import.meta.dir}/../../public/regions/${def.id}/meta.json`,
-  ).json();
+  const meta: RegionMeta = await Bun.file(`${import.meta.dir}/../../public/regions/${def.id}/meta.json`).json();
   for (const s of meta.sites) {
     const line = s.horizons
       .filter((h) => h.mastHeight <= 2)
@@ -204,20 +175,13 @@ const horizons: ValidationReport["horizons"] = HORIZONS_FIXTURES.map((f) => {
     oursElevation: +ours.elevationDeg.toFixed(4),
   };
 });
-const maxErr = Math.max(
-  ...horizons.map((h) => Math.abs(h.oursElevation - h.jplElevation)),
-);
-console.log(
-  `Horizons fixtures: ${horizons.length}, max |d el| ${maxErr.toFixed(4)} deg`,
-);
+const maxErr = Math.max(...horizons.map((h) => Math.abs(h.oursElevation - h.jplElevation)));
+console.log(`Horizons fixtures: ${horizons.length}, max |d el| ${maxErr.toFixed(4)} deg`);
 
 const report: ValidationReport = {
   generatedAt: new Date().toISOString(),
   horizons,
   mazarico,
 };
-await Bun.write(
-  `${import.meta.dir}/../../public/validation.json`,
-  JSON.stringify(report, null, 1),
-);
+await Bun.write(`${import.meta.dir}/../../public/validation.json`, JSON.stringify(report, null, 1));
 console.log(`done in ${((performance.now() - t0) / 1000).toFixed(1)} s`);

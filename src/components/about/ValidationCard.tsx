@@ -30,8 +30,7 @@ function azDiff(a: number, b: number): number {
   return Math.abs(((((a - b) % 360) + 540) % 360) - 180);
 }
 
-const fmtDelta = (v: number | null) =>
-  v == null ? "n/a" : `${v < 0.001 ? "<0.001" : v.toFixed(3)}°`;
+const fmtDelta = (v: number | null) => (v == null ? "n/a" : `${v < 0.001 ? "<0.001" : v.toFixed(3)}°`);
 
 /** "Validated against NASA/JPL" card: our ephemeris + horizon pipeline vs JPL Horizons and Mazarico et al. */
 export function ValidationCard({ className }: { className?: string }) {
@@ -52,24 +51,15 @@ export function ValidationCard({ className }: { className?: string }) {
   const rows = report.horizons.map((h) => ({
     ...h,
     dEl: Math.abs(h.oursElevation - h.jplElevation),
-    dAz:
-      h.jplAzimuth != null && h.oursAzimuth != null
-        ? azDiff(h.oursAzimuth, h.jplAzimuth)
-        : null,
+    dAz: h.jplAzimuth != null && h.oursAzimuth != null ? azDiff(h.oursAzimuth, h.jplAzimuth) : null,
   }));
   const maxEl = rows.reduce((m, r) => Math.max(m, r.dEl), 0);
 
   return (
-    <section
-      className={cn("rounded-lg bg-white/3 p-4 ring-1 ring-line", className)}
-    >
+    <section className={cn("rounded-lg bg-white/3 p-4 ring-1 ring-line", className)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-medium text-fg text-sm">
-          Validated against NASA/JPL
-        </h3>
-        <span className="tabular text-2xs text-fg-faint">
-          run {formatDate(Date.parse(report.generatedAt))}
-        </span>
+        <h3 className="font-medium text-fg text-sm">Validated against NASA/JPL</h3>
+        <span className="tabular text-2xs text-fg-faint">run {formatDate(Date.parse(report.generatedAt))}</span>
       </div>
 
       {rows.length > 0 && (
@@ -84,8 +74,7 @@ export function ValidationCard({ className }: { className?: string }) {
             >
               JPL Horizons
             </a>
-            . Largest elevation difference{" "}
-            <span className="tabular text-fg">{fmtDelta(maxEl)}</span> over{" "}
+            . Largest elevation difference <span className="tabular text-fg">{fmtDelta(maxEl)}</span> over{" "}
             <span className="tabular text-fg">{rows.length}</span> checks.
           </p>
           <div className="mt-3 max-h-52 overflow-y-auto rounded-sm ring-1 ring-line">
@@ -95,37 +84,21 @@ export function ValidationCard({ className }: { className?: string }) {
                   <th className="px-2 py-1.5 font-medium">Body</th>
                   <th className="px-2 py-1.5 font-medium">Place</th>
                   <th className="px-2 py-1.5 font-medium">UTC</th>
-                  <th className="px-2 py-1.5 text-right font-medium">
-                    |Δ| elev.
-                  </th>
-                  <th className="px-2 py-1.5 text-right font-medium">
-                    |Δ| azim.
-                  </th>
+                  <th className="px-2 py-1.5 text-right font-medium">|Δ| elev.</th>
+                  <th className="px-2 py-1.5 text-right font-medium">|Δ| azim.</th>
                 </tr>
               </thead>
               <tbody className="tabular text-fg-muted">
                 {rows.map((r) => (
-                  <tr
-                    key={`${r.body}-${r.lat}-${r.lon}-${r.utc}`}
-                    className="border-line border-t"
-                  >
-                    <td
-                      className={cn(
-                        "px-2 py-1 font-sans",
-                        r.body === "sun" ? "text-sun" : "text-earth",
-                      )}
-                    >
+                  <tr key={`${r.body}-${r.lat}-${r.lon}-${r.utc}`} className="border-line border-t">
+                    <td className={cn("px-2 py-1 font-sans", r.body === "sun" ? "text-sun" : "text-earth")}>
                       {r.body === "sun" ? "Sun" : "Earth"}
                     </td>
                     <td className="px-2 py-1">
                       {r.lat.toFixed(2)}°, {r.lon.toFixed(2)}°
                     </td>
-                    <td className="px-2 py-1">
-                      {r.utc.replace("T", " ").slice(0, 16)}
-                    </td>
-                    <td className="px-2 py-1 text-right text-fg">
-                      {fmtDelta(r.dEl)}
-                    </td>
+                    <td className="px-2 py-1">{r.utc.replace("T", " ").slice(0, 16)}</td>
+                    <td className="px-2 py-1 text-right text-fg">{fmtDelta(r.dEl)}</td>
                     <td className="px-2 py-1 text-right">{fmtDelta(r.dAz)}</td>
                   </tr>
                 ))}
@@ -139,12 +112,7 @@ export function ValidationCard({ className }: { className?: string }) {
         <div className="mt-3 space-y-1.5">
           <p className="text-fg-muted text-xs">
             Window-average visibility compared with the{" "}
-            <a
-              href={PGDA_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="text-fg underline-offset-2 hover:underline"
-            >
+            <a href={PGDA_URL} target="_blank" rel="noreferrer" className="text-fg underline-offset-2 hover:underline">
               Mazarico et al. maps (NASA PGDA)
             </a>
             :
@@ -154,24 +122,11 @@ export function ValidationCard({ className }: { className?: string }) {
               <span className="text-fg capitalize">{m.region}</span>
               <span className="text-fg-muted">
                 {" "}
-                Sun MAE{" "}
-                <span className="tabular text-sun">
-                  {m.sunMaePp.toFixed(1)} pp
-                </span>
-                , Earth MAE{" "}
-                <span className="tabular text-earth">
-                  {m.earthMaePp.toFixed(1)} pp
-                </span>{" "}
-                over{" "}
-                <span className="tabular text-fg">
-                  {m.samples.toLocaleString("en-US")}
-                </span>{" "}
-                points
+                Sun MAE <span className="tabular text-sun">{m.sunMaePp.toFixed(1)} pp</span>, Earth MAE{" "}
+                <span className="tabular text-earth">{m.earthMaePp.toFixed(1)} pp</span> over{" "}
+                <span className="tabular text-fg">{m.samples.toLocaleString("en-US")}</span> points
               </span>
-              <p
-                className="line-clamp-2 text-2xs text-fg-faint"
-                title={m.method}
-              >
+              <p className="line-clamp-2 text-2xs text-fg-faint" title={m.method}>
                 {m.method}
               </p>
             </div>

@@ -7,14 +7,7 @@ import { Tooltip } from "@/components/ui/overlay";
 import { Panel } from "@/components/ui/panel";
 import { Segmented } from "@/components/ui/segmented";
 import { usePointAnalysis } from "@/lib/analysis";
-import {
-  DATE_MAX,
-  DATE_MIN,
-  DAY,
-  HOUR,
-  useApp,
-  type WindowDays,
-} from "@/lib/store";
+import { DATE_MAX, DATE_MIN, DAY, HOUR, useApp, type WindowDays } from "@/lib/store";
 import { formatDuration } from "./format";
 import { Scrubber } from "./Scrubber";
 import { usePlayLoop } from "./use-play-loop";
@@ -37,8 +30,7 @@ const SLIPS = [-1, 3, 7];
 /** Restart from the window start when play is pressed at (or within an hour of) the end. */
 function togglePlay() {
   const s = useApp.getState();
-  if (!s.playing && s.time >= s.windowStart + s.windowDays * DAY - HOUR / 2)
-    s.setTime(s.windowStart);
+  if (!s.playing && s.time >= s.windowStart + s.windowDays * DAY - HOUR / 2) s.setTime(s.windowStart);
   s.setPlaying(!s.playing);
 }
 
@@ -64,8 +56,7 @@ export function Timeline() {
   // Space toggles playback anywhere except where Space types or activates something itself.
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat || e.metaKey || e.ctrlKey || e.altKey)
-        return;
+      if (e.code !== "Space" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
       const el = e.target instanceof Element ? e.target : null;
       if (
         el?.closest(
@@ -105,18 +96,12 @@ export function Timeline() {
           onClick={togglePlay}
           className="shrink-0 rounded-full"
         >
-          {playing ? (
-            <Pause size={16} weight="regular" />
-          ) : (
-            <Play size={16} weight="regular" />
-          )}
+          {playing ? <Pause size={16} weight="regular" /> : <Play size={16} weight="regular" />}
         </IconButton>
 
         <div className="flex w-[8.5rem] shrink-0 flex-col leading-none">
           <span className="eyebrow">Since landing</span>
-          <span className="tabular mt-1 text-fg text-sm">
-            {elapsed < HOUR / 2 ? "0 h" : formatDuration(elapsed)}
-          </span>
+          <span className="tabular mt-1 text-fg text-sm">{elapsed < HOUR / 2 ? "0 h" : formatDuration(elapsed)}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -173,10 +158,7 @@ export function Timeline() {
         </div>
       </div>
 
-      <Scrubber
-        series={hasLander ? (analysis?.series ?? null) : null}
-        hasLander={hasLander}
-      />
+      <Scrubber series={hasLander ? (analysis?.series ?? null) : null} hasLander={hasLander} />
     </Panel>
   );
 }

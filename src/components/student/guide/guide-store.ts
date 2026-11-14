@@ -9,14 +9,7 @@ import type { Source } from "@/components/student/lessons/sources";
  * cooldown, and a newer message of the same kind replaces the queued one so the bot never lags behind.
  * Other Student-mode features may call `useGuide.getState().say(...)` with kind "custom".
  */
-export type GuideKind =
-  | "intro"
-  | "crater"
-  | "good-site"
-  | "earth"
-  | "sun"
-  | "first-person"
-  | "custom";
+export type GuideKind = "intro" | "crater" | "good-site" | "earth" | "sun" | "first-person" | "custom";
 
 export interface GuideMessage {
   /** dedupe key: identical keys are never queued twice; with `once` they are never shown twice per session */
@@ -58,26 +51,16 @@ export const useGuide = create<GuideState>((set) => ({
   say: (m) =>
     set((s) => {
       if (m.once && s.seen.includes(m.key)) return s;
-      if (s.current?.key === m.key || s.queue.some((q) => q.key === m.key))
-        return s;
+      if (s.current?.key === m.key || s.queue.some((q) => q.key === m.key)) return s;
       const now = Date.now();
       const last = s.lastShownAt[m.kind];
       if (last !== undefined && now - last < COOLDOWN_MS[m.kind]) return s;
       const seen = m.once ? [...s.seen, m.key] : s.seen;
       const lastShownAt = { ...s.lastShownAt, [m.kind]: now };
-      if (!s.current && s.queue.length === 0)
-        return { current: m, seen, lastShownAt };
-      const queue = [
-        ...s.queue.filter((q) => q.kind !== m.kind || m.kind === "custom"),
-        m,
-      ].slice(-MAX_QUEUE);
+      if (!s.current && s.queue.length === 0) return { current: m, seen, lastShownAt };
+      const queue = [...s.queue.filter((q) => q.kind !== m.kind || m.kind === "custom"), m].slice(-MAX_QUEUE);
       return { queue, seen, lastShownAt };
     }),
   dismiss: () => set({ current: null }),
-  advance: () =>
-    set((s) =>
-      s.current || s.queue.length === 0
-        ? s
-        : { current: s.queue[0], queue: s.queue.slice(1) },
-    ),
+  advance: () => set((s) => (s.current || s.queue.length === 0 ? s : { current: s.queue[0], queue: s.queue.slice(1) })),
 }));

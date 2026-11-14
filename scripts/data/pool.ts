@@ -18,17 +18,11 @@ export class HorizonPool {
 
   private constructor() {}
 
-  static async create(
-    dem: MultiDem,
-    maxHeight: number,
-    size = availableParallelism(),
-  ): Promise<HorizonPool> {
+  static async create(dem: MultiDem, maxHeight: number, size = availableParallelism()): Promise<HorizonPool> {
     const pool = new HorizonPool();
     await Promise.all(
       Array.from({ length: size }, async () => {
-        const w = new Worker(
-          new URL("./horizon-worker.ts", import.meta.url).href,
-        );
+        const w = new Worker(new URL("./horizon-worker.ts", import.meta.url).href);
         const ready = Promise.withResolvers<void>();
         w.onerror = (e) => ready.reject(e);
         w.onmessage = (ev) => {
@@ -49,11 +43,7 @@ export class HorizonPool {
   }
 
   /** Horizons for points [X0, Y0, X1, Y1, ...]; result is point-major (point * azBins + k). */
-  run(
-    points: Float64Array,
-    mast: number,
-    azBins: number,
-  ): Promise<Float32Array> {
+  run(points: Float64Array, mast: number, azBins: number): Promise<Float32Array> {
     const { promise, resolve } = Promise.withResolvers<Float32Array>();
     this.queue.push({ points, mast, azBins, resolve });
     this.pump();

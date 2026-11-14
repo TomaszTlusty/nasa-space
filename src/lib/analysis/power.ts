@@ -29,10 +29,7 @@ export function simulatePower(
   const socPct = new Float32Array(n);
   const peak = SOLAR_CONSTANT_W_M2 * preset.efficiency * preset.panelAreaM2;
   for (let i = 0; i < n; i++) {
-    watts[i] = Math.max(
-      0,
-      peak * sunFraction[i] * Math.cos((sunElevDeg[i] * Math.PI) / 180),
-    );
+    watts[i] = Math.max(0, peak * sunFraction[i] * Math.cos((sunElevDeg[i] * Math.PI) / 180));
   }
   const dtH = stepMinutes / 60;
   const capacity = Math.max(preset.batteryWh, 1e-9);

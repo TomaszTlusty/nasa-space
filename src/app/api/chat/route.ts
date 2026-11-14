@@ -42,11 +42,7 @@ const bodySchema = z.object({
   messages: z.array(z.unknown()).min(1).max(200),
 });
 
-const text = (
-  status: number,
-  message: string,
-  headers?: Record<string, string>,
-) =>
+const text = (status: number, message: string, headers?: Record<string, string>) =>
   new Response(message, {
     status,
     headers: { "content-type": "text/plain; charset=utf-8", ...headers },
@@ -58,15 +54,10 @@ function clientIp(req: Request): string {
 }
 
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY)
-    return text(503, "The AI assistant is not configured on this server.");
+  if (!process.env.ANTHROPIC_API_KEY) return text(503, "The AI assistant is not configured on this server.");
 
   const raw = await req.text();
-  if (raw.length > MAX_BODY_BYTES)
-    return text(
-      413,
-      "This conversation is too long. Clear it and start again.",
-    );
+  if (raw.length > MAX_BODY_BYTES) return text(413, "This conversation is too long. Clear it and start again.");
 
   let json: unknown;
   try {
@@ -91,10 +82,7 @@ export async function POST(req: Request) {
   for (const m of messages) {
     if (m.role === "system") return text(400, "Invalid chat messages.");
     if (m.role !== "user") continue;
-    const chars = m.parts.reduce(
-      (n, p) => (p.type === "text" ? n + p.text.length : n),
-      0,
-    );
+    const chars = m.parts.reduce((n, p) => (p.type === "text" ? n + p.text.length : n), 0);
     if (chars > MAX_INPUT_CHARS)
       return text(
         413,
@@ -105,24 +93,18 @@ export async function POST(req: Request) {
   const last = messages[messages.length - 1];
   const ip = clientIp(req);
   const limited = requestLimiter.take(ip);
-  const turnLimited =
-    limited.ok && last.role === "user" ? turnLimiter.take(ip) : limited;
+  const turnLimited = limited.ok && last.role === "user" ? turnLimiter.take(ip) : limited;
   if (!limited.ok || !turnLimited.ok) {
     const retry = Math.max(limited.retryAfterS, turnLimited.retryAfterS);
-    return text(
-      429,
-      `Too many questions in a short time. Try again in ${Math.ceil(retry / 60)} min.`,
-      {
-        "retry-after": String(retry),
-      },
-    );
+    return text(429, `Too many questions in a short time. Try again in ${Math.ceil(retry / 60)} min.`, {
+      "retry-after": String(retry),
+    });
   }
 
   // Steps already taken in this turn (client resubmits after each tool round). The final allowed
   // step must answer in text, so the turn always ends with an explanation.
   const priorSteps = countSteps(last);
-  if (priorSteps >= MAX_STEPS)
-    return text(400, "Step limit reached for this question.");
+  if (priorSteps >= MAX_STEPS) return text(400, "Step limit reached for this question.");
 
   const result = streamText({
     model: anthropic(process.env.AI_MODEL ?? "claude-haiku-5-5"),
@@ -144,8 +126,7 @@ export async function POST(req: Request) {
     stream: toUIMessageStream({
       stream: result.stream,
       tools: missionTools,
-      onError: () =>
-        "The assistant hit a problem while answering. Please try again.",
+      onError: () => "The assistant hit a problem while answering. Please try again.",
     }),
   });
 }

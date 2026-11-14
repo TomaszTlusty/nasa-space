@@ -32,9 +32,7 @@ describe("altAzAtLocalPoint (GLSL approximation) vs exact", () => {
       let maxEl = 0;
       let maxAz = 0;
       for (let day = 0; day < 60; day += 1.7) {
-        const eph = moonEphemeris(
-          new Date(Date.UTC(2026, 10, 14) + day * 86_400_000),
-        );
+        const eph = moonEphemeris(new Date(Date.UTC(2026, 10, 14) + day * 86_400_000));
         for (const body of ["sun", "earth"] as const) {
           const { v } = bodyVectorRegionFromEphemeris(eph, body, meta);
           for (const x of [-30_000, -12_000, 0, 17_000, 30_000])
@@ -42,14 +40,8 @@ describe("altAzAtLocalPoint (GLSL approximation) vs exact", () => {
               const ex = altAzAtLocalPointExact(eph, body, x, y, meta);
               if (ex.elevationDeg < -10) continue;
               const ap = altAzAtLocalPoint(v, x, y, meta);
-              maxEl = Math.max(
-                maxEl,
-                Math.abs(ap.elevationDeg - ex.elevationDeg),
-              );
-              maxAz = Math.max(
-                maxAz,
-                Math.abs(angDiff(ap.gridAzimuthDeg, ex.gridAzimuthDeg)),
-              );
+              maxEl = Math.max(maxEl, Math.abs(ap.elevationDeg - ex.elevationDeg));
+              maxAz = Math.max(maxAz, Math.abs(angDiff(ap.gridAzimuthDeg, ex.gridAzimuthDeg)));
             }
         }
       }

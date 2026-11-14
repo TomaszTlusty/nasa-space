@@ -5,12 +5,7 @@
 import { mkdir, rm } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
 import sharp from "sharp";
-import {
-  MOON_RADIUS_M,
-  polarToLatLon,
-  RAD,
-  toLocal,
-} from "../../src/lib/moon/frames";
+import { MOON_RADIUS_M, polarToLatLon, RAD, toLocal } from "../../src/lib/moon/frames";
 import type { RegionMeta, RegionSite } from "../../src/lib/moon/types";
 import { MultiDem } from "./dem";
 import { HorizonMarcher } from "./horizon-core";
@@ -60,8 +55,7 @@ class RegionSampler {
       [-h, h],
       [h, h],
     ].map(([x, y]) => dem.pick(def.X + x, def.Y + y));
-    if (idx.some((i) => i < 0))
-      throw new Error(`${def.id}: region not covered by DEMs`);
+    if (idx.some((i) => i < 0)) throw new Error(`${def.id}: region not covered by DEMs`);
     this.ri = Math.max(...idx);
     this.scale = dem.rasters[this.ri].scale;
   }
@@ -125,18 +119,12 @@ function buildSlope(s: RegionSampler): Uint8Array {
       const y = -EXTENT / 2 + r * step;
       const gx = (s.h(x + d, y) - s.h(x - d, y)) / (2 * d);
       const gy = (s.h(x, y + d) - s.h(x, y - d)) / (2 * d);
-      out[r * HORIZON_N + c] = Math.min(
-        90,
-        Math.round(Math.atan(Math.hypot(gx, gy)) * RAD),
-      );
+      out[r * HORIZON_N + c] = Math.min(90, Math.round(Math.atan(Math.hypot(gx, gy)) * RAD));
     }
   return out;
 }
 
-async function buildHorizonGrid(
-  pool: HorizonPool,
-  def: RegionDef,
-): Promise<Uint8Array> {
+async function buildHorizonGrid(pool: HorizonPool, def: RegionDef): Promise<Uint8Array> {
   const step = EXTENT / (HORIZON_N - 1);
   const plane = HORIZON_N * HORIZON_N;
   const out = new Uint8Array(AZ_BINS * plane);
@@ -163,10 +151,7 @@ async function buildHorizonGrid(
  * Site 23), the lowest point 3 km from the summit (a slope facing away from Earth) and the lowest
  * terrain within 12 km of the summit (crater floor).
  */
-function malapertReferences(
-  s: RegionSampler,
-  site23: { x: number; y: number },
-): SiteDef[] {
+function malapertReferences(s: RegionSampler, site23: { x: number; y: number }): SiteDef[] {
   let top = { x: 0, y: 0, h: -Infinity };
   for (let y = site23.y - 8000; y <= site23.y + 8000; y += 20)
     for (let x = site23.x - 8000; x <= site23.x + 8000; x += 20) {
@@ -224,12 +209,7 @@ function malapertReferences(
   ];
 }
 
-async function buildRegion(
-  id: string,
-  dem: MultiDem,
-  marcher: HorizonMarcher | null,
-  pool: HorizonPool | null,
-) {
+async function buildRegion(id: string, dem: MultiDem, marcher: HorizonMarcher | null, pool: HorizonPool | null) {
   const def = REGIONS[id];
   if (!def) throw new Error(`unknown region ${id}`);
   const t0 = performance.now();
@@ -257,15 +237,11 @@ async function buildRegion(
   if (id === "malapert")
     siteDefs = [
       ...siteDefs,
-      ...malapertReferences(
-        s,
-        toLocal(def.sites[0].lat, def.sites[0].lon, { center: metaCenter }),
-      ),
+      ...malapertReferences(s, toLocal(def.sites[0].lat, def.sites[0].lon, { center: metaCenter })),
     ];
   const sites: RegionSite[] = siteDefs.map((sd) => {
     const { x, y } = toLocal(sd.lat, sd.lon, { center: metaCenter });
-    if (Math.abs(x) > EXTENT / 2 - 500 || Math.abs(y) > EXTENT / 2 - 500)
-      throw new Error(`${sd.id} outside ${id}`);
+    if (Math.abs(x) > EXTENT / 2 - 500 || Math.abs(y) > EXTENT / 2 - 500) throw new Error(`${sd.id} outside ${id}`);
     const horizons = marcher
       ? SITE_MASTS.map((mast) => {
           const v = new Float64Array(SITE_BINS);
@@ -285,8 +261,7 @@ async function buildRegion(
     } as RegionSite;
   });
 
-  if (pool)
-    await Bun.write(`${dir}/horizon.bin.gz`, gz(await buildHorizonGrid(pool, def)));
+  if (pool) await Bun.write(`${dir}/horizon.bin.gz`, gz(await buildHorizonGrid(pool, def)));
   const tEnd = performance.now();
 
   const hstep = EXTENT / (HORIZON_N - 1);
@@ -332,13 +307,11 @@ async function buildRegion(
         url: MAZARICO_URL,
       },
       {
-        label:
-          "NASA Lunar Surface Data Book ACD-50044 Rev A (site coordinates)",
+        label: "NASA Lunar Surface Data Book ACD-50044 Rev A (site coordinates)",
         url: DATA_BOOK_URL,
       },
       {
-        label:
-          "Glaser et al. 2018, illumination near Shackleton (site coordinates)",
+        label: "Glaser et al. 2018, illumination near Shackleton (site coordinates)",
         url: GLASER_2018_URL,
       },
       {
@@ -363,9 +336,7 @@ if (import.meta.main) {
   const ids = arg === "all" ? Object.keys(REGIONS) : [arg];
   const dem = await MultiDem.load();
   const maxHeight = dem.maxHeight();
-  const marcher = terrainOnly
-    ? null
-    : new HorizonMarcher(dem.rasters, maxHeight);
+  const marcher = terrainOnly ? null : new HorizonMarcher(dem.rasters, maxHeight);
   const pool = terrainOnly ? null : await HorizonPool.create(dem, maxHeight);
   for (const id of ids) await buildRegion(id, dem, marcher, pool);
   pool?.terminate();

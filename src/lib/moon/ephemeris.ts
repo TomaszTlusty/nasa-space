@@ -9,13 +9,7 @@
  * centre (light-time + stellar aberration for the Moon's barycentric velocity), then the observer's
  * surface offset is subtracted (topocentric parallax: ~0.26 deg for Earth, negligible for the Sun).
  */
-import {
-  AstroTime,
-  BackdatePosition,
-  Body,
-  KM_PER_AU,
-  RotationAxis,
-} from "astronomy-engine";
+import { AstroTime, BackdatePosition, Body, KM_PER_AU, RotationAxis } from "astronomy-engine";
 import {
   bodyToRegion,
   DEG,
@@ -44,31 +38,16 @@ export interface MoonEphemeris {
   earth: Vec3;
 }
 
-function toBodyFixed(
-  v: { x: number; y: number; z: number },
-  t: AstroTime,
-): Vec3 {
+function toBodyFixed(v: { x: number; y: number; z: number }, t: AstroTime): Vec3 {
   const axis = RotationAxis(Body.Moon, t);
   const n: Vec3 = [axis.north.x, axis.north.y, axis.north.z];
   const q = normalize([-n[1], n[0], 0]); // z_EQJ x n
-  const nq: Vec3 = [
-    n[1] * q[2] - n[2] * q[1],
-    n[2] * q[0] - n[0] * q[2],
-    n[0] * q[1] - n[1] * q[0],
-  ];
+  const nq: Vec3 = [n[1] * q[2] - n[2] * q[1], n[2] * q[0] - n[0] * q[2], n[0] * q[1] - n[1] * q[0]];
   const w = axis.spin * DEG;
   const cw = Math.cos(w);
   const sw = Math.sin(w);
-  const xb: Vec3 = [
-    q[0] * cw + nq[0] * sw,
-    q[1] * cw + nq[1] * sw,
-    q[2] * cw + nq[2] * sw,
-  ];
-  const yb: Vec3 = [
-    n[1] * xb[2] - n[2] * xb[1],
-    n[2] * xb[0] - n[0] * xb[2],
-    n[0] * xb[1] - n[1] * xb[0],
-  ];
+  const xb: Vec3 = [q[0] * cw + nq[0] * sw, q[1] * cw + nq[1] * sw, q[2] * cw + nq[2] * sw];
+  const yb: Vec3 = [n[1] * xb[2] - n[2] * xb[1], n[2] * xb[0] - n[0] * xb[2], n[0] * xb[1] - n[1] * xb[0]];
   return [
     (v.x * xb[0] + v.y * xb[1] + v.z * xb[2]) * KM_PER_AU,
     (v.x * yb[0] + v.y * yb[1] + v.z * yb[2]) * KM_PER_AU,
@@ -86,18 +65,9 @@ export function moonEphemeris(date: Date): MoonEphemeris {
 }
 
 /** Topocentric vector (km) from a surface point (body-fixed unit `up`, radius in km). */
-function topocentric(
-  eph: MoonEphemeris,
-  body: CelestialBody,
-  up: Vec3,
-  radiusKm: number,
-): Vec3 {
+function topocentric(eph: MoonEphemeris, body: CelestialBody, up: Vec3, radiusKm: number): Vec3 {
   const p = eph[body];
-  return [
-    p[0] - up[0] * radiusKm,
-    p[1] - up[1] * radiusKm,
-    p[2] - up[2] * radiusKm,
-  ];
+  return [p[0] - up[0] * radiusKm, p[1] - up[1] * radiusKm, p[2] - up[2] * radiusKm];
 }
 
 export interface AltAz {
@@ -121,10 +91,7 @@ export function bodyAltAzFromEphemeris(
   const lo = lonDeg * DEG;
   const la = latDeg * DEG;
   const east = -v[0] * Math.sin(lo) + v[1] * Math.cos(lo);
-  const north =
-    -v[0] * Math.sin(la) * Math.cos(lo) -
-    v[1] * Math.sin(la) * Math.sin(lo) +
-    v[2] * Math.cos(la);
+  const north = -v[0] * Math.sin(la) * Math.cos(lo) - v[1] * Math.sin(la) * Math.sin(lo) + v[2] * Math.cos(la);
   const u = v[0] * up[0] + v[1] * up[1] + v[2] * up[2];
   const d = Math.hypot(v[0], v[1], v[2]);
   return {
@@ -135,20 +102,8 @@ export function bodyAltAzFromEphemeris(
   };
 }
 
-export function bodyAltAz(
-  body: CelestialBody,
-  date: Date,
-  latDeg: number,
-  lonDeg: number,
-  heightM = 0,
-): AltAz {
-  return bodyAltAzFromEphemeris(
-    moonEphemeris(date),
-    body,
-    latDeg,
-    lonDeg,
-    heightM,
-  );
+export function bodyAltAz(body: CelestialBody, date: Date, latDeg: number, lonDeg: number, heightM = 0): AltAz {
+  return bodyAltAzFromEphemeris(moonEphemeris(date), body, latDeg, lonDeg, heightM);
 }
 
 export interface RegionBodyVector {
@@ -175,11 +130,7 @@ export function bodyVectorRegionFromEphemeris(
   };
 }
 
-export function bodyVectorRegion(
-  body: CelestialBody,
-  date: Date,
-  meta: Pick<RegionMeta, "center">,
-): Vec3 {
+export function bodyVectorRegion(body: CelestialBody, date: Date, meta: Pick<RegionMeta, "center">): Vec3 {
   return bodyVectorRegionFromEphemeris(moonEphemeris(date), body, meta).v;
 }
 
@@ -208,16 +159,11 @@ export function altAzAtLocalPoint(
 ): { elevationDeg: number; gridAzimuthDeg: number } {
   const ax = x / MOON_RADIUS_M;
   const ay = y / MOON_RADIUS_M;
-  const sinEl =
-    (v[0] * ax + v[1] * ay + v[2]) / Math.sqrt(1 + ax * ax + ay * ay);
-  const gamma =
-    (meta.center.Y * x - meta.center.X * y) /
-    (2 * MOON_RADIUS_M * MOON_RADIUS_M);
+  const sinEl = (v[0] * ax + v[1] * ay + v[2]) / Math.sqrt(1 + ax * ax + ay * ay);
+  const gamma = (meta.center.Y * x - meta.center.X * y) / (2 * MOON_RADIUS_M * MOON_RADIUS_M);
   return {
     elevationDeg: Math.asin(Math.max(-1, Math.min(1, sinEl))) * RAD,
-    gridAzimuthDeg: wrap360(
-      (Math.atan2(v[0] - ax * v[2], v[1] - ay * v[2]) + gamma) * RAD,
-    ),
+    gridAzimuthDeg: wrap360((Math.atan2(v[0] - ax * v[2], v[1] - ay * v[2]) + gamma) * RAD),
   };
 }
 

@@ -22,8 +22,7 @@ const DATE_FMT = new Intl.DateTimeFormat("en-GB", {
  * At the pole the Sun stays within ~1.5° of the horizon, so a flat panel catches sin(1.5°) ≈ 2.6% of
  * the light; vertical Sun-tracking arrays are standard (Gläser et al. 2018).
  */
-const PANEL_SOURCE =
-  "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf";
+const PANEL_SOURCE = "https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf";
 
 function PowerModel() {
   const power = useApp((s) => s.power);
@@ -40,11 +39,7 @@ function PowerModel() {
       align="end"
       className="w-76"
       trigger={
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-auto w-full justify-between gap-3 rounded-md px-2 py-1.5"
-        >
+        <Button variant="ghost" size="sm" className="h-auto w-full justify-between gap-3 rounded-md px-2 py-1.5">
           <span className="flex items-center gap-2 text-fg-muted">
             <Lightning size={14} weight="light" className="text-sun" />
             Lander power model
@@ -60,8 +55,8 @@ function PowerModel() {
         <div>
           <div className="eyebrow">Assumption</div>
           <p className="mt-1 text-fg-muted text-xs">
-            Polar landers use vertical, Sun-tracking panels; flat panels would
-            see ~2.6% of the light. <SourceLink href={PANEL_SOURCE} />
+            Polar landers use vertical, Sun-tracking panels; flat panels would see ~2.6% of the light.{" "}
+            <SourceLink href={PANEL_SOURCE} />
           </p>
         </div>
         <Slider
@@ -103,15 +98,8 @@ function PowerModel() {
           valueLabel={`${power.loadW} W`}
         />
         <div className="flex items-center justify-between gap-3">
-          <span className="text-2xs text-fg-faint">
-            Defaults are illustrative.
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={isDefault}
-            onClick={() => setPower(DEFAULT_POWER)}
-          >
+          <span className="text-2xs text-fg-faint">Defaults are illustrative.</span>
+          <Button variant="ghost" size="sm" disabled={isDefault} onClick={() => setPower(DEFAULT_POWER)}>
             Reset
           </Button>
         </div>
@@ -146,18 +134,12 @@ export function LayersPanel({ className }: { className?: string }) {
         />
         <OverlayLegend overlay={overlay} />
         {overlay === "average" && (
-          <div
-            className="tabular flex items-baseline justify-between gap-2 text-2xs text-fg-faint"
-            aria-live="polite"
-          >
+          <div className="tabular flex items-baseline justify-between gap-2 text-2xs text-fg-faint" aria-live="polite">
             <span>
-              {DATE_FMT.format(windowStart)} →{" "}
-              {DATE_FMT.format(windowStart + windowDays * DAY)}
+              {DATE_FMT.format(windowStart)} → {DATE_FMT.format(windowStart + windowDays * DAY)}
             </span>
             <span className={stats ? undefined : "animate-pulse"}>
-              {stats
-                ? `computed in ${Math.round(stats.computeMs).toLocaleString("en-US")} ms`
-                : "computing…"}
+              {stats ? `computed in ${Math.round(stats.computeMs).toLocaleString("en-US")} ms` : "computing…"}
             </span>
           </div>
         )}

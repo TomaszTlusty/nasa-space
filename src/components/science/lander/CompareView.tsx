@@ -71,24 +71,18 @@ function summary(a: PointAnalysis, b: PointAnalysis): string {
   const d = Math.hypot(b.x - a.x, b.y - a.y);
   const dz = b.elevationM - a.elevationM;
   const where =
-    Math.abs(dz) < 5
-      ? `${distance(d)} from A`
-      : `${distance(d)} ${dz < 0 ? "down-slope" : "up-slope"} from A`;
+    Math.abs(dz) < 5 ? `${distance(d)} from A` : `${distance(d)} ${dz < 0 ? "down-slope" : "up-slope"} from A`;
   const sunPts = (b.sunMean - a.sunMean) * 100;
   const earthPts = (b.earthMean - a.earthMean) * 100;
   const darkH = b.longestDarkHours - a.longestDarkHours;
-  const pts = (v: number) =>
-    `${Math.abs(v).toFixed(Math.abs(v) < 10 ? 1 : 0)} percentage points`;
+  const pts = (v: number) => `${Math.abs(v).toFixed(Math.abs(v) < 10 ? 1 : 0)} percentage points`;
 
   const parts = [
     Math.abs(sunPts) < 0.5
       ? "gets about the same sunlight"
       : `gets ${pts(sunPts)} ${sunPts < 0 ? "less" : "more"} sunlight`,
   ];
-  if (Math.abs(earthPts) >= 0.5)
-    parts.push(
-      `${pts(earthPts)} ${earthPts < 0 ? "less" : "more"} Earth contact`,
-    );
+  if (Math.abs(earthPts) >= 0.5) parts.push(`${pts(earthPts)} ${earthPts < 0 ? "less" : "more"} Earth contact`);
   let sentence = `B, ${where}, ${parts.join(" and ")}`;
   if (Math.abs(darkH) >= 1)
     sentence += `, and its longest night is ${Math.round(Math.abs(darkH))} h ${darkH > 0 ? "longer" : "shorter"}`;
@@ -96,12 +90,10 @@ function summary(a: PointAnalysis, b: PointAnalysis): string {
 
   const aLives = a.power.depletedAt === null;
   const bLives = b.power.depletedAt === null;
-  if (aLives !== bLives)
-    sentence += ` Only ${aLives ? "A" : "B"} keeps its battery alive through the window.`;
+  if (aLives !== bLives) sentence += ` Only ${aLives ? "A" : "B"} keeps its battery alive through the window.`;
   const ga = screen(a).go;
   const gb = screen(b).go;
-  if (ga !== gb)
-    sentence += ` Only ${ga ? "A" : "B"} passes landing screening.`;
+  if (ga !== gb) sentence += ` Only ${ga ? "A" : "B"} passes landing screening.`;
   return sentence;
 }
 
@@ -128,18 +120,10 @@ export function CompareView() {
             const vb = b ? m.get(b) : null;
             const delta = va !== null && vb !== null ? vb - va : null;
             const tie = delta === null || Math.abs(delta) < 10 ** -m.digits / 2;
-            const aBetter =
-              !tie &&
-              delta !== null &&
-              (m.better === "high" ? delta < 0 : delta > 0);
+            const aBetter = !tie && delta !== null && (m.better === "high" ? delta < 0 : delta > 0);
             const bBetter = !tie && !aBetter;
             const cell = (v: number | null, better: boolean) => (
-              <td
-                className={cn(
-                  "tabular py-1 text-right",
-                  better ? "font-medium text-ok" : "text-fg-muted",
-                )}
-              >
+              <td className={cn("tabular py-1 text-right", better ? "font-medium text-ok" : "text-fg-muted")}>
                 {v === null ? DASH : v.toFixed(m.digits)}
               </td>
             );
@@ -161,11 +145,7 @@ export function CompareView() {
         </tbody>
       </table>
       <p className="mt-3 min-h-10 text-fg text-sm leading-5">
-        {ready ? (
-          summary(a, b)
-        ) : (
-          <span className="text-fg-muted">Computing both mission windows…</span>
-        )}
+        {ready ? summary(a, b) : <span className="text-fg-muted">Computing both mission windows…</span>}
       </p>
     </Section>
   );

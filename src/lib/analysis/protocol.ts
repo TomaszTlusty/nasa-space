@@ -1,16 +1,6 @@
 import type { PointQuery } from "@/lib/analysis/compute";
-import type {
-  PointAnalysis,
-  Transitions,
-  WindowAverageStats,
-} from "@/lib/analysis/types";
-import type {
-  DiscoveryCriteria,
-  DiscoveryResult,
-  LanderId,
-  PowerPreset,
-  RegionId,
-} from "@/lib/store";
+import type { PointAnalysis, Transitions, WindowAverageStats } from "@/lib/analysis/types";
+import type { DiscoveryCriteria, DiscoveryResult, LanderId, PowerPreset, RegionId } from "@/lib/store";
 
 /** Main thread <-> analysis worker messages. */
 

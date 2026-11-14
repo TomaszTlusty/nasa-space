@@ -46,30 +46,18 @@ export function ReportButton({ className }: { className?: string }) {
 
   const placed = (["A", "B"] as const).filter((id) => landers[id]);
   const byId = { A: analysisA, B: analysisB };
-  const analyses = placed
-    .map((id) => byId[id])
-    .filter((a): a is PointAnalysis => a !== null);
-  const ready =
-    region !== null && placed.length > 0 && analyses.length === placed.length;
+  const analyses = placed.map((id) => byId[id]).filter((a): a is PointAnalysis => a !== null);
+  const ready = region !== null && placed.length > 0 && analyses.length === placed.length;
 
   if (!ready) {
     return (
-      <Tooltip
-        content={
-          placed.length === 0
-            ? "Place a lander to create a report"
-            : "Analysing the mission window…"
-        }
-      >
+      <Tooltip content={placed.length === 0 ? "Place a lander to create a report" : "Analysing the mission window…"}>
         {/* focusable + hoverable while disabled, so the reason stays reachable by mouse and keyboard */}
         <Button
           variant="ghost"
           disabled
           focusableWhenDisabled
-          className={cn(
-            "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed",
-            className,
-          )}
+          className={cn("data-disabled:pointer-events-auto data-disabled:cursor-not-allowed", className)}
         >
           <FilePdf size={16} weight="light" />
           Report
@@ -94,8 +82,7 @@ export function ReportButton({ className }: { className?: string }) {
             windowDays,
             landers: analyses.map((analysis) => ({
               analysis,
-              siteName:
-                meta.sites.find((s) => s.id === analysis.siteId)?.name ?? null,
+              siteName: meta.sites.find((s) => s.id === analysis.siteId)?.name ?? null,
             })),
             discovery,
             snapshot: snapshotScene(),
@@ -136,32 +123,17 @@ export function ReportButton({ className }: { className?: string }) {
         }
       />
       <Menu.Portal>
-        <Menu.Positioner
-          side="bottom"
-          align="end"
-          sideOffset={8}
-          className="z-40"
-        >
+        <Menu.Positioner side="bottom" align="end" sideOffset={8} className="z-40">
           <Menu.Popup className="glass w-64 origin-(--transform-origin) rounded-lg bg-glass-strong p-1 shadow-(--shadow-pop) outline-none transition-[transform,opacity] duration-150 ease-(--ease-out) data-ending-style:scale-[0.97] data-starting-style:scale-[0.97] data-ending-style:opacity-0 data-starting-style:opacity-0">
             <Menu.Item className={itemClass} onClick={exportPdf}>
-              <FilePdf
-                size={16}
-                weight="light"
-                className="mt-0.5 shrink-0 text-fg-muted"
-              />
+              <FilePdf size={16} weight="light" className="mt-0.5 shrink-0 text-fg-muted" />
               <span>
                 <span className="block text-fg">Site Selection Report</span>
-                <span className="block text-fg-faint text-xs">
-                  PDF with tables, charts and sources
-                </span>
+                <span className="block text-fg-faint text-xs">PDF with tables, charts and sources</span>
               </span>
             </Menu.Item>
             <Menu.Item className={itemClass} onClick={exportCsv}>
-              <FileCsv
-                size={16}
-                weight="light"
-                className="mt-0.5 shrink-0 text-fg-muted"
-              />
+              <FileCsv size={16} weight="light" className="mt-0.5 shrink-0 text-fg-muted" />
               <span>
                 <span className="block text-fg">Hourly data</span>
                 <span className="block text-fg-faint text-xs">

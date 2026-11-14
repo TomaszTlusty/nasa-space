@@ -1,19 +1,7 @@
 import { jsPDF } from "jspdf";
-import {
-  AI_DISCLOSURE,
-  assumptions,
-  type SourceLink,
-} from "@/components/about/content";
-import {
-  formatClock,
-  formatDayMonth,
-  formatUtc,
-} from "@/components/hud/format";
-import {
-  CRITERIA,
-  CRITERIA_SOURCE,
-  screen,
-} from "@/components/science/lander/format";
+import { AI_DISCLOSURE, assumptions, type SourceLink } from "@/components/about/content";
+import { formatClock, formatDayMonth, formatUtc } from "@/components/hud/format";
+import { CRITERIA, CRITERIA_SOURCE, screen } from "@/components/science/lander/format";
 import type { Interval, PointAnalysis } from "@/lib/analysis/types";
 import { DAY, type DiscoveryResult, HOUR, type PowerPreset } from "@/lib/store";
 
@@ -93,20 +81,13 @@ const SUBST: Record<string, string> = {
 
 function latin1(s: string): string {
   let out = "";
-  for (const ch of s)
-    out += (ch.codePointAt(0) ?? 0) <= 0xff ? ch : (SUBST[ch] ?? "?");
+  for (const ch of s) out += (ch.codePointAt(0) ?? 0) <= 0xff ? ch : (SUBST[ch] ?? "?");
   return out;
 }
 
-export function reportFilename(
-  regionId: string,
-  windowStart: number,
-  ext: "pdf" | "csv",
-): string {
+export function reportFilename(regionId: string, windowStart: number, ext: "pdf" | "csv"): string {
   const date = new Date(windowStart).toISOString().slice(0, 10);
-  return ext === "pdf"
-    ? `site-report-${regionId}-${date}.pdf`
-    : `site-hourly-${regionId}-${date}.csv`;
+  return ext === "pdf" ? `site-report-${regionId}-${date}.pdf` : `site-hourly-${regionId}-${date}.csv`;
 }
 
 export interface Verdict {
@@ -167,12 +148,7 @@ class Writer {
     return this.doc.splitTextToSize(latin1(text), width) as string[];
   }
 
-  para(
-    text: string,
-    size: number,
-    color: RGB,
-    opts: { width?: number; style?: "normal" | "bold"; gap?: number } = {},
-  ) {
+  para(text: string, size: number, color: RGB, opts: { width?: number; style?: "normal" | "bold"; gap?: number } = {}) {
     this.font(size, color, opts.style);
     const lh = size * PT * 1.4;
     const lines = this.split(text, opts.width ?? CW);
@@ -216,14 +192,9 @@ function table(w: Writer, columns: Column[], rows: Cell[][], rowH = 6) {
     for (const c of columns) {
       if (c.color) doc.setTextColor(c.color[0], c.color[1], c.color[2]);
       else doc.setTextColor(C.faint[0], C.faint[1], C.faint[2]);
-      doc.text(
-        latin1(c.header),
-        c.align === "right" ? x + c.width - 1 : x + 1,
-        w.y + 4,
-        {
-          align: c.align ?? "left",
-        },
-      );
+      doc.text(latin1(c.header), c.align === "right" ? x + c.width - 1 : x + 1, w.y + 4, {
+        align: c.align ?? "left",
+      });
       x += c.width;
     }
     w.y += rowH;
@@ -244,12 +215,7 @@ function table(w: Writer, columns: Column[], rows: Cell[][], rowH = 6) {
       const col = columns[i];
       w.font(8, cell.color ?? C.ink, cell.bold ? "bold" : "normal");
       const text = w.split(cell.text, col.width - 2)[0] ?? "";
-      doc.text(
-        text,
-        col.align === "right" ? x + col.width - 1 : x + 1,
-        w.y + 4.1,
-        { align: col.align ?? "left" },
-      );
+      doc.text(text, col.align === "right" ? x + col.width - 1 : x + 1, w.y + 4.1, { align: col.align ?? "left" });
       x += col.width;
     });
     w.y += rowH;
@@ -288,23 +254,13 @@ function niceStep(raw: number): { step: number; decimals: number } {
   const base = 10 ** p;
   const f = raw / base;
   const nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
-  const decimals = Math.max(
-    0,
-    -p + (nice === 2.5 ? 1 : 0) - (nice === 10 ? 1 : 0),
-  );
+  const decimals = Math.max(0, -p + (nice === 2.5 ? 1 : 0) - (nice === 10 ? 1 : 0));
   return { step: nice * base, decimals };
 }
 
 const X_TICKS = [6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 3 * DAY, 5 * DAY, 7 * DAY];
 
-function chart(
-  w: Writer,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  spec: ChartSpec,
-) {
+function chart(w: Writer, x: number, y: number, width: number, height: number, spec: ChartSpec) {
   const { doc } = w;
   const n = spec.series.reduce((m, s) => Math.max(m, s.values.length), 0);
   if (n < 2) return;
@@ -364,8 +320,7 @@ function chart(
   const { step, decimals } = niceStep((hi - lo) / 4);
   lo = Math.floor(lo / step) * step;
   hi = Math.ceil(hi / step) * step;
-  const yOf = (v: number) =>
-    py + ph - ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * ph;
+  const yOf = (v: number) => py + ph - ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * ph;
 
   // lit / in-view bands
   if (spec.bands) {
@@ -393,12 +348,7 @@ function chart(
     const xx = xOf(t);
     w.draw(C.line, 0.15);
     doc.line(xx, py, xx, py + ph);
-    doc.text(
-      latin1(tick >= DAY ? formatDayMonth(t) : formatClock(t)),
-      xx,
-      py + ph + 3.6,
-      { align: "center" },
-    );
+    doc.text(latin1(tick >= DAY ? formatDayMonth(t) : formatClock(t)), xx, py + ph + 3.6, { align: "center" });
   }
 
   // series as polylines, broken at missing values
@@ -481,17 +431,12 @@ function landerRows(landers: ReportLander[]): Cell[][] {
     ),
     row("Screening (slope, Earth, Sun)", (l) => {
       const v = verdict(l.analysis);
-      if (v.slope && v.earth && v.sun)
-        return { text: "PASS", color: C.ok, bold: true };
-      const failed = [!v.slope && "slope", !v.earth && "Earth", !v.sun && "Sun"]
-        .filter(Boolean)
-        .join(", ");
+      if (v.slope && v.earth && v.sun) return { text: "PASS", color: C.ok, bold: true };
+      const failed = [!v.slope && "slope", !v.earth && "Earth", !v.sun && "Sun"].filter(Boolean).join(", ");
       return { text: `FAIL: ${failed}`, color: C.danger, bold: true };
     }),
     row("Verdict", (l) =>
-      verdict(l.analysis).go
-        ? { text: "GO", color: C.ok, bold: true }
-        : { text: "NO-GO", color: C.danger, bold: true },
+      verdict(l.analysis).go ? { text: "GO", color: C.ok, bold: true } : { text: "NO-GO", color: C.danger, bold: true },
     ),
   ];
 }
@@ -534,14 +479,9 @@ export function downloadReportPdf(input: ReportInput): void {
     9.5,
     C.ink,
   );
-  w.para(
-    `Generated ${formatUtc(input.generatedAt)} with Malapert, lunar landing site navigator.`,
-    8,
-    C.muted,
-    {
-      gap: 2,
-    },
-  );
+  w.para(`Generated ${formatUtc(input.generatedAt)} with Malapert, lunar landing site navigator.`, 8, C.muted, {
+    gap: 2,
+  });
   w.para(input.regionDescription, 8.5, C.muted, { gap: 4 });
 
   if (input.snapshot) {
@@ -633,12 +573,7 @@ export function downloadReportPdf(input: ReportInput): void {
     const a = l.analysis;
     const stepMs = a.series.stepMinutes * 60_000;
     w.ensure(60);
-    w.para(
-      `Lander ${a.id}  ·  ${l.siteName ?? latLon(a.lat, a.lon)}`,
-      9,
-      C.ink,
-      { style: "bold", gap: 1.5 },
-    );
+    w.para(`Lander ${a.id}  ·  ${l.siteName ?? latLon(a.lat, a.lon)}`, 9, C.ink, { style: "bold", gap: 1.5 });
     chart(w, M, w.y, half, 52, {
       title: "Sun",
       unit: "elevation, °",
@@ -717,11 +652,7 @@ export function downloadReportPdf(input: ReportInput): void {
     w.font(6.5, C.faint);
     w.draw(C.line);
     doc.line(M, PAGE_H - 12, M + CW, PAGE_H - 12);
-    doc.text(
-      latin1(`Malapert  ·  Site Selection Report  ·  ${input.regionName}`),
-      M,
-      PAGE_H - 8,
-    );
+    doc.text(latin1(`Malapert  ·  Site Selection Report  ·  ${input.regionName}`), M, PAGE_H - 8);
     doc.text(`Page ${p} of ${pages}`, M + CW, PAGE_H - 8, { align: "right" });
   }
 

@@ -7,16 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { useLiveVisibility, usePointAnalysis } from "@/lib/analysis";
 import { cn } from "@/lib/cn";
 import { type LanderId, useApp } from "@/lib/store";
-import {
-  CRITERIA,
-  CRITERIA_SOURCE,
-  DASH,
-  deg,
-  fmt,
-  pct,
-  screen,
-  stepIndex,
-} from "./format";
+import { CRITERIA, CRITERIA_SOURCE, DASH, deg, fmt, pct, screen, stepIndex } from "./format";
 import { Section, SourceLink } from "./Section";
 
 /** Mast heights with precomputed per-site horizons (see RegionSite.horizons). */
@@ -41,59 +32,30 @@ function VisRow({
   const up = vis !== undefined && vis > 0;
   return (
     <div className="flex items-center gap-3">
-      <span
-        className={cn(
-          "w-11 shrink-0 text-xs",
-          tone === "sun" ? "text-sun" : "text-earth",
-        )}
-      >
-        {label}
-      </span>
+      <span className={cn("w-11 shrink-0 text-xs", tone === "sun" ? "text-sun" : "text-earth")}>{label}</span>
       <span className="tabular min-w-0 flex-1 truncate text-fg-muted text-xs">
         <span className="text-fg">{deg(elev)}</span>
         <span className="text-fg-faint"> · terrain </span>
         {deg(horizon)}
       </span>
-      <Badge
-        tone={vis === undefined ? "neutral" : up ? tone : "night"}
-        className="tabular"
-      >
+      <Badge tone={vis === undefined ? "neutral" : up ? tone : "night"} className="tabular">
         {vis === undefined ? DASH : up ? `${pct(vis)}% visible` : "hidden"}
       </Badge>
     </div>
   );
 }
 
-function Chip({
-  pass,
-  children,
-}: {
-  pass: boolean | undefined;
-  children: ReactNode;
-}) {
+function Chip({ pass, children }: { pass: boolean | undefined; children: ReactNode }) {
   return (
-    <Badge
-      tone={pass === undefined ? "neutral" : pass ? "ok" : "danger"}
-      className="tabular"
-    >
-      {pass === undefined ? null : pass ? (
-        <Check size={11} weight="bold" />
-      ) : (
-        <X size={11} weight="bold" />
-      )}
+    <Badge tone={pass === undefined ? "neutral" : pass ? "ok" : "danger"} className="tabular">
+      {pass === undefined ? null : pass ? <Check size={11} weight="bold" /> : <X size={11} weight="bold" />}
       {children}
     </Badge>
   );
 }
 
 /** Location, live sky, mission-window results, screening and mast height for one lander. */
-export function LanderDetails({
-  id,
-  siteName,
-}: {
-  id: LanderId;
-  siteName?: string;
-}) {
+export function LanderDetails({ id, siteName }: { id: LanderId; siteName?: string }) {
   const a = usePointAnalysis(id);
   const live = useLiveVisibility(id);
   const time = useApp((s) => s.time);
@@ -124,32 +86,11 @@ export function LanderDetails({
 
   return (
     <>
-      <Section
-        title="Location"
-        aside={
-          siteName && (
-            <span className="truncate text-2xs text-fg-muted">{siteName}</span>
-          )
-        }
-      >
+      <Section title="Location" aside={siteName && <span className="truncate text-2xs text-fg-muted">{siteName}</span>}>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-          <Stat
-            size="sm"
-            label="Latitude"
-            value={a ? `${fmt(a.lat, 3)}°` : DASH}
-          />
-          <Stat
-            size="sm"
-            label="Longitude"
-            value={a ? `${fmt(a.lon, 3)}°` : DASH}
-          />
-          <Stat
-            size="sm"
-            label="Elevation"
-            value={fmt(a?.elevationM)}
-            unit="m"
-            hint="vs. 1737.4 km reference"
-          />
+          <Stat size="sm" label="Latitude" value={a ? `${fmt(a.lat, 3)}°` : DASH} />
+          <Stat size="sm" label="Longitude" value={a ? `${fmt(a.lon, 3)}°` : DASH} />
+          <Stat size="sm" label="Elevation" value={fmt(a?.elevationM)} unit="m" hint="vs. 1737.4 km reference" />
           <Stat
             size="sm"
             label="Slope"
@@ -170,58 +111,22 @@ export function LanderDetails({
         }
       >
         <div className="flex flex-col gap-2">
-          <VisRow
-            label="Sun"
-            tone="sun"
-            elev={live?.sunElev}
-            horizon={live?.sunHorizon}
-            vis={live?.sunVis}
-          />
-          <VisRow
-            label="Earth"
-            tone="earth"
-            elev={live?.earthElev}
-            horizon={live?.earthHorizon}
-            vis={live?.earthVis}
-          />
+          <VisRow label="Sun" tone="sun" elev={live?.sunElev} horizon={live?.sunHorizon} vis={live?.sunVis} />
+          <VisRow label="Earth" tone="earth" elev={live?.earthElev} horizon={live?.earthHorizon} vis={live?.earthVis} />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-x-4">
-          <Stat
-            size="sm"
-            label="Power now"
-            value={fmt(wattsNow)}
-            unit="W"
-            tone="sun"
-          />
+          <Stat size="sm" label="Power now" value={fmt(wattsNow)} unit="W" tone="sun" />
           <Stat size="sm" label="Battery now" value={fmt(socNow)} unit="%" />
         </div>
-        {a && i === null && (
-          <p className="mt-2 text-2xs text-fg-faint">
-            Playhead is outside the mission window.
-          </p>
-        )}
+        {a && i === null && <p className="mt-2 text-2xs text-fg-faint">Playhead is outside the mission window.</p>}
       </Section>
 
       <Section
         title="Mission window"
-        aside={
-          <span className="tabular text-2xs text-fg-faint">{`${windowDays} d from ${start}`}</span>
-        }
+        aside={<span className="tabular text-2xs text-fg-faint">{`${windowDays} d from ${start}`}</span>}
       >
-        <div
-          className={cn(
-            "grid grid-cols-2 gap-x-4 gap-y-2.5 transition-opacity duration-200",
-            !a && "opacity-60",
-          )}
-        >
-          <Stat
-            size="sm"
-            label="Sunlight"
-            value={pct(a?.sunMean)}
-            unit="%"
-            tone="sun"
-            hint="mean visible Sun disc"
-          />
+        <div className={cn("grid grid-cols-2 gap-x-4 gap-y-2.5 transition-opacity duration-200", !a && "opacity-60")}>
+          <Stat size="sm" label="Sunlight" value={pct(a?.sunMean)} unit="%" tone="sun" hint="mean visible Sun disc" />
           <Stat
             size="sm"
             label="Earth contact"
@@ -230,19 +135,8 @@ export function LanderDetails({
             tone="earth"
             hint="time Earth in view"
           />
-          <Stat
-            size="sm"
-            label="Longest darkness"
-            value={fmt(a?.longestDarkHours)}
-            unit="h"
-          />
-          <Stat
-            size="sm"
-            label="Longest blackout"
-            value={fmt(a?.longestBlackoutHours)}
-            unit="h"
-            hint="no Earth link"
-          />
+          <Stat size="sm" label="Longest darkness" value={fmt(a?.longestDarkHours)} unit="h" />
+          <Stat size="sm" label="Longest blackout" value={fmt(a?.longestBlackoutHours)} unit="h" hint="no Earth link" />
           <Stat
             size="sm"
             label="Energy"
@@ -255,18 +149,14 @@ export function LanderDetails({
             label="Min battery"
             value={fmt(a?.power.minSocPct)}
             unit="%"
-            tone={
-              a ? (a.power.minSocPct > 0 ? "neutral" : "danger") : "neutral"
-            }
+            tone={a ? (a.power.minSocPct > 0 ? "neutral" : "danger") : "neutral"}
           />
           <Stat
             size="sm"
             className="col-span-2"
             label="Survives the window"
             value={!a ? DASH : a.power.depletedAt === null ? "Yes" : "No"}
-            tone={
-              !a ? "neutral" : a.power.depletedAt === null ? "ok" : "danger"
-            }
+            tone={!a ? "neutral" : a.power.depletedAt === null ? "ok" : "danger"}
             hint={
               a?.power.depletedAt != null
                 ? `battery empty ${new Date(a.power.depletedAt).toISOString().slice(0, 16).replace("T", " ")} UTC`
@@ -276,11 +166,9 @@ export function LanderDetails({
         </div>
         <p className="mt-2.5 text-2xs text-fg-faint leading-4">
           {a ? "" : "Computing… "}
-          Assumes vertical sun-tracking panels ({power.panelAreaM2} m²,{" "}
-          {Math.round(power.efficiency * 100)}%), a{" "}
-          {(power.batteryWh / 1000).toFixed(1)} kWh battery and a {power.loadW}{" "}
-          W load (illustrative). Flat panels would catch only ~2.6% of the light
-          at the pole.
+          Assumes vertical sun-tracking panels ({power.panelAreaM2} m², {Math.round(power.efficiency * 100)}%), a{" "}
+          {(power.batteryWh / 1000).toFixed(1)} kWh battery and a {power.loadW} W load (illustrative). Flat panels would
+          catch only ~2.6% of the light at the pole.
         </p>
       </Section>
 
@@ -298,8 +186,7 @@ export function LanderDetails({
       >
         <div className="flex flex-wrap gap-1.5">
           <Chip pass={s?.slope}>
-            Slope {a ? `${a.slopeDeg.toFixed(1)}°` : DASH} {"<"}{" "}
-            {CRITERIA.maxSlopeDeg}°
+            Slope {a ? `${a.slopeDeg.toFixed(1)}°` : DASH} {"<"} {CRITERIA.maxSlopeDeg}°
           </Chip>
           <Chip pass={s?.earth}>
             Earth {pct(a?.earthMean)}% ≥ {CRITERIA.minEarth * 100}%
@@ -331,9 +218,8 @@ export function LanderDetails({
             ))}
           </div>
           <p className="mt-2 text-2xs text-fg-muted leading-4">
-            Raising the panels catches light over nearby ridges. At Connecting
-            Ridge, average light rises from about 76% at ground level to 88% on
-            a 2 m mast.
+            Raising the panels catches light over nearby ridges. At Connecting Ridge, average light rises from about 76%
+            at ground level to 88% on a 2 m mast.
           </p>
         </Section>
       )}

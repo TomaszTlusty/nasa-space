@@ -20,10 +20,7 @@ interface Bucket {
 }
 
 /** `capacity` tokens per key, refilled continuously at `capacity` per `windowMs`. */
-export function createRateLimiter(
-  capacity: number,
-  windowMs: number,
-): RateLimiter {
+export function createRateLimiter(capacity: number, windowMs: number): RateLimiter {
   const buckets = new Map<string, Bucket>();
   const perMs = capacity / windowMs;
 
@@ -33,9 +30,7 @@ export function createRateLimiter(
       if (!b) {
         // bound memory: drop buckets that have fully refilled (they behave like new ones)
         if (buckets.size >= 10_000) {
-          for (const [k, v] of buckets)
-            if (v.tokens + (now - v.updated) * perMs >= capacity)
-              buckets.delete(k);
+          for (const [k, v] of buckets) if (v.tokens + (now - v.updated) * perMs >= capacity) buckets.delete(k);
         }
         b = { tokens: capacity, updated: now };
         buckets.set(key, b);

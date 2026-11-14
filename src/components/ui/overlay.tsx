@@ -136,7 +136,12 @@ export function Switch({
 }) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: Base UI Switch.Root renders the control inside the label
-    <label className={cn("flex cursor-pointer select-none items-center justify-between gap-3 text-fg-muted text-xs", className)}>
+    <label
+      className={cn(
+        "flex cursor-pointer select-none items-center justify-between gap-3 text-fg-muted text-xs",
+        className,
+      )}
+    >
       <span>{label}</span>
       <BaseSwitch.Root
         checked={checked}

@@ -14,11 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { isStaticToolUIPart, type ToolUIPart } from "ai";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
-import type {
-  MissionUIMessage,
-  MissionUITools,
-  WindowInfo,
-} from "@/lib/ai/tools";
+import type { MissionUIMessage, MissionUITools, WindowInfo } from "@/lib/ai/tools";
 import { cn } from "@/lib/cn";
 
 type Part = MissionUIMessage["parts"][number];
@@ -58,10 +54,8 @@ const fullFmt = new Intl.DateTimeFormat("en-GB", {
 export function formatWindow(w: WindowInfo): string {
   const a = new Date(w.startUtc);
   const b = new Date(w.endUtc);
-  if (a.getUTCFullYear() !== b.getUTCFullYear())
-    return `${fullFmt.format(a)} – ${fullFmt.format(b)}`;
-  if (a.getUTCMonth() !== b.getUTCMonth())
-    return `${dayMonthFmt.format(a)} – ${fullFmt.format(b)}`;
+  if (a.getUTCFullYear() !== b.getUTCFullYear()) return `${fullFmt.format(a)} – ${fullFmt.format(b)}`;
+  if (a.getUTCMonth() !== b.getUTCMonth()) return `${dayMonthFmt.format(a)} – ${fullFmt.format(b)}`;
   return `${dayFmt.format(a)}–${fullFmt.format(b)}`;
 }
 
@@ -85,18 +79,14 @@ function describe(part: ToolPart): ChipInfo {
       return {
         icon: CalendarBlank,
         running: "Setting mission window",
-        done: part.output
-          ? `Set window ${formatWindow(part.output.window)}`
-          : null,
+        done: part.output ? `Set window ${formatWindow(part.output.window)}` : null,
       };
     case "tool-slip_launch": {
       const d = part.output?.slippedDays;
       return {
         icon: CalendarPlus,
         running: "Slipping launch",
-        done: part.output
-          ? `Slipped ${d && d > 0 ? "+" : ""}${d} d → ${formatWindow(part.output.window)}`
-          : null,
+        done: part.output ? `Slipped ${d && d > 0 ? "+" : ""}${d} d → ${formatWindow(part.output.window)}` : null,
       };
     }
     case "tool-set_discovery_criteria_and_run":
@@ -117,9 +107,7 @@ function describe(part: ToolPart): ChipInfo {
       return {
         icon: MapPin,
         running: `Placing lander${part.input?.lander ? ` ${part.input.lander}` : ""}`,
-        done: part.output
-          ? `Placed ${part.output.lander} at ${part.output.label}`
-          : null,
+        done: part.output ? `Placed ${part.output.lander} at ${part.output.label}` : null,
       };
     case "tool-compare_landers":
       return {
@@ -132,13 +120,10 @@ function describe(part: ToolPart): ChipInfo {
 
 function ToolChip({ part }: { part: ToolPart }) {
   const info = describe(part);
-  const failed =
-    part.state === "output-error" || part.state === "output-denied";
+  const failed = part.state === "output-error" || part.state === "output-denied";
   const done = part.state === "output-available" ? info.done : null;
   const Glyph = failed ? WarningCircle : done ? info.icon : CircleNotch;
-  const label = failed
-    ? `${info.running} failed`
-    : (done ?? `${info.running}…`);
+  const label = failed ? `${info.running} failed` : (done ?? `${info.running}…`);
 
   return (
     <span
@@ -146,17 +131,10 @@ function ToolChip({ part }: { part: ToolPart }) {
       className={cn(
         "inline-flex h-6 max-w-full items-center gap-1.5 rounded-full px-2 text-2xs ring-1",
         "transition-[opacity,transform] duration-200 ease-(--ease-out) starting:translate-y-1 starting:opacity-0",
-        failed
-          ? "bg-danger-soft text-danger ring-danger/25"
-          : "bg-white/5 text-fg-muted ring-line",
+        failed ? "bg-danger-soft text-danger ring-danger/25" : "bg-white/5 text-fg-muted ring-line",
       )}
     >
-      <Glyph
-        size={13}
-        weight="regular"
-        className={cn("shrink-0", !failed && !done && "animate-spin")}
-        aria-hidden
-      />
+      <Glyph size={13} weight="regular" className={cn("shrink-0", !failed && !done && "animate-spin")} aria-hidden />
       <span className="truncate">
         <Digits text={label} />
       </span>
@@ -186,10 +164,7 @@ function RichText({ text }: { text: string }) {
   const flush = () => {
     if (bullets.length === 0) return;
     blocks.push(
-      <ul
-        key={`ul${blocks.length}`}
-        className="flex list-disc flex-col gap-1 pl-4 marker:text-fg-faint"
-      >
+      <ul key={`ul${blocks.length}`} className="flex list-disc flex-col gap-1 pl-4 marker:text-fg-faint">
         {bullets.map((b, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: lines of an append-only stream
           <li key={i}>
@@ -219,9 +194,7 @@ function RichText({ text }: { text: string }) {
   return <div className="flex flex-col gap-2">{blocks}</div>;
 }
 
-type Block =
-  | { kind: "tools"; parts: ToolPart[] }
-  | { kind: "text"; text: string };
+type Block = { kind: "tools"; parts: ToolPart[] } | { kind: "text"; text: string };
 
 function toBlocks(parts: Part[]): Block[] {
   const blocks: Block[] = [];
@@ -254,24 +227,16 @@ export function ChatThread({
   const last = messages.at(-1);
   // "Thinking…" until the current step shows text or a tool chip (reasoning parts are not shown)
   const currentStep =
-    last?.role === "assistant"
-      ? last.parts.slice(
-          last.parts.findLastIndex((p) => p.type === "step-start") + 1,
-        )
-      : [];
+    last?.role === "assistant" ? last.parts.slice(last.parts.findLastIndex((p) => p.type === "step-start") + 1) : [];
   const thinking =
     busy &&
     (last?.role === "user" ||
-      !currentStep.some(
-        (p) =>
-          (p.type === "text" && p.text.trim() !== "") || isStaticToolUIPart(p),
-      ));
+      !currentStep.some((p) => (p.type === "text" && p.text.trim() !== "") || isStaticToolUIPart(p)));
 
   // keep the newest content in view while streaming, unless the user scrolled up to read
   useEffect(() => {
     const el = scroller.current;
-    if (el && stick.current && messages.length > 0)
-      el.scrollTop = el.scrollHeight;
+    if (el && stick.current && messages.length > 0) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   return (
@@ -283,10 +248,7 @@ export function ChatThread({
       }}
       aria-live="polite"
       aria-busy={busy}
-      className={cn(
-        "flex flex-col gap-4 overflow-y-auto overscroll-contain",
-        className,
-      )}
+      className={cn("flex flex-col gap-4 overflow-y-auto overscroll-contain", className)}
     >
       {messages.map((m) =>
         m.role === "user" ? (
@@ -317,9 +279,7 @@ export function ChatThread({
           </div>
         ),
       )}
-      {thinking && (
-        <div className="animate-pulse text-fg-faint text-xs">Thinking…</div>
-      )}
+      {thinking && <div className="animate-pulse text-fg-faint text-xs">Thinking…</div>}
     </div>
   );
 }

@@ -179,18 +179,18 @@ function World({ region }: { region: LoadedRegion }) {
       {landerEntries
         .filter((l) => !(fpLander && l.id === activeLander))
         .map((l) => (
-        <Lander
-          key={l.id}
-          id={l.id}
-          position={l.pos}
-          earthDir={earthThree}
-          sunVis={l.live.sunVis}
-          earthVis={l.live.earthVis}
-          scale={fpLander ? 0.001 : ORBIT_LANDER_SCALE}
-          showLabel={!fpLander}
-          active={l.id === activeLander}
-          onSelect={() => setActiveLander(l.id)}
-        />
+          <Lander
+            key={l.id}
+            id={l.id}
+            position={l.pos}
+            earthDir={earthThree}
+            sunVis={l.live.sunVis}
+            earthVis={l.live.earthVis}
+            scale={fpLander ? 0.001 : ORBIT_LANDER_SCALE}
+            showLabel={!fpLander}
+            active={l.id === activeLander}
+            onSelect={() => setActiveLander(l.id)}
+          />
         ))}
       <CameraRig region={region} centerHeight={centerHeight} lander={fpLander} />
     </>

@@ -39,17 +39,10 @@ export function DateJump() {
             "data-popup-open:bg-white/5",
           )}
         >
-          <CalendarBlank
-            size={15}
-            weight="light"
-            className="shrink-0 text-fg-faint max-xl:hidden"
-          />
+          <CalendarBlank size={15} weight="light" className="shrink-0 text-fg-faint max-xl:hidden" />
           <span className="tabular whitespace-nowrap text-xs">
             {formatDayMonth(time)}
-            <span className="max-xl:hidden">
-              {" "}
-              {new Date(time).getUTCFullYear()}
-            </span>{" "}
+            <span className="max-xl:hidden"> {new Date(time).getUTCFullYear()}</span>{" "}
             <span className="text-fg-muted">{formatClock(time)}</span>
             <span className="ml-1 text-fg-faint">UTC</span>
           </span>
@@ -60,9 +53,7 @@ export function DateJump() {
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="eyebrow">Landing date</span>
-          <p className="text-fg-muted text-xs">
-            Moves the mission window start. Times are UTC.
-          </p>
+          <p className="text-fg-muted text-xs">Moves the mission window start. Times are UTC.</p>
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg-muted text-xs">Date</span>

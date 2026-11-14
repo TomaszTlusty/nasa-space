@@ -39,8 +39,7 @@ function GuideDock() {
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    const onChange = () =>
-      setPageVisible(document.visibilityState === "visible");
+    const onChange = () => setPageVisible(document.visibilityState === "visible");
     document.addEventListener("visibilitychange", onChange);
     return () => document.removeEventListener("visibilitychange", onChange);
   }, []);
@@ -66,16 +65,8 @@ function GuideDock() {
           <motion.section
             key="bubble"
             aria-label="LUNA-Bot"
-            initial={
-              reduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, transform: "translateY(6px) scale(0.97)" }
-            }
-            animate={
-              reduceMotion
-                ? { opacity: 1 }
-                : { opacity: 1, transform: "translateY(0px) scale(1)" }
-            }
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, transform: "translateY(6px) scale(0.97)" }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, transform: "translateY(0px) scale(1)" }}
             exit={
               reduceMotion
                 ? { opacity: 0, transition: { duration: 0.12 } }
@@ -113,9 +104,7 @@ function GuideDock() {
               >
                 {current ? (
                   <>
-                    <p className="text-pretty text-fg text-sm">
-                      {current.text}
-                    </p>
+                    <p className="text-pretty text-fg text-sm">{current.text}</p>
                     {current.source && (
                       <a
                         href={current.source.url}
@@ -123,21 +112,14 @@ function GuideDock() {
                         rel="noreferrer"
                         className="mt-1.5 inline-flex max-w-full items-center gap-1 text-2xs text-fg-faint transition-colors duration-150 hover:text-fg-muted"
                       >
-                        <ArrowUpRight
-                          size={12}
-                          aria-hidden
-                          className="shrink-0"
-                        />
-                        <span className="truncate">
-                          Source: {current.source.label}
-                        </span>
+                        <ArrowUpRight size={12} aria-hidden className="shrink-0" />
+                        <span className="truncate">Source: {current.source.label}</span>
                       </a>
                     )}
                   </>
                 ) : (
                   <p className="text-pretty text-fg-muted text-sm">
-                    Ask me anything about the Moon's south pole: sunlight,
-                    shadows, Earth or landing.
+                    Ask me anything about the Moon's south pole: sunlight, shadows, Earth or landing.
                   </p>
                 )}
               </motion.div>
@@ -150,12 +132,7 @@ function GuideDock() {
             </div>
 
             <footer className="flex items-center justify-between gap-2 border-line border-t px-2 py-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-expanded={chatOpen}
-                onClick={() => setChatOpen((o) => !o)}
-              >
+              <Button variant="ghost" size="sm" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}>
                 <ChatCircle size={14} aria-hidden />
                 {chatOpen ? "Hide questions" : "Ask a question"}
               </Button>

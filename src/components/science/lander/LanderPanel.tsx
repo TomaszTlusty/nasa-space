@@ -22,13 +22,7 @@ const KIND_LABEL: Record<RegionSite["kind"], string> = {
   reference: "Reference",
 };
 
-function SitePicks({
-  id,
-  sites,
-}: {
-  id: LanderId;
-  sites: RegionSite[] | null;
-}) {
+function SitePicks({ id, sites }: { id: LanderId; sites: RegionSite[] | null }) {
   const placeLander = useApp((s) => s.placeLander);
   return (
     <Section title="Known sites">
@@ -38,23 +32,13 @@ function SitePicks({
             <li key={site.id} className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() =>
-                  placeLander(id, { x: site.x, y: site.y, siteId: site.id })
-                }
+                onClick={() => placeLander(id, { x: site.x, y: site.y, siteId: site.id })}
                 className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm px-2 py-1.5 text-left transition-[background-color,transform] duration-150 ease-(--ease-out) hover:bg-white/5 active:scale-[0.98]"
               >
-                <MapPin
-                  size={14}
-                  weight="light"
-                  className="shrink-0 text-fg-faint"
-                />
+                <MapPin size={14} weight="light" className="shrink-0 text-fg-faint" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-fg text-xs">
-                    {site.name}
-                  </span>
-                  <span className="block truncate text-2xs text-fg-faint">
-                    {KIND_LABEL[site.kind]}
-                  </span>
+                  <span className="block truncate text-fg text-xs">{site.name}</span>
+                  <span className="block truncate text-2xs text-fg-faint">{KIND_LABEL[site.kind]}</span>
                 </span>
               </button>
               <SourceLink href={site.source}>Coords</SourceLink>
@@ -89,9 +73,7 @@ export function LanderPanel() {
   const both = Boolean(landers.A && landers.B);
   const tab: Tab = compare && both ? "compare" : activeLander;
   const placement = landers[activeLander];
-  const siteName = placement?.siteId
-    ? sites?.find((s) => s.id === placement.siteId)?.name
-    : undefined;
+  const siteName = placement?.siteId ? sites?.find((s) => s.id === placement.siteId)?.name : undefined;
 
   const selectTab = (t: Tab) => {
     if (t === "compare") return setCompare(true);
@@ -104,11 +86,7 @@ export function LanderPanel() {
     <Panel className="flex max-h-full min-h-0 flex-col overflow-hidden">
       <PanelHeader
         eyebrow="Landing site"
-        title={
-          tab === "compare"
-            ? "Compare A and B"
-            : (siteName ?? `Lander ${activeLander}`)
-        }
+        title={tab === "compare" ? "Compare A and B" : (siteName ?? `Lander ${activeLander}`)}
       />
       <div className="px-4 pb-3">
         <Segmented<Tab>
@@ -132,11 +110,7 @@ export function LanderPanel() {
           <>
             <div className="flex flex-col gap-2.5 border-line border-t px-4 py-3">
               <Switch
-                label={
-                  placement
-                    ? `Click terrain to move ${activeLander}`
-                    : `Click terrain to place ${activeLander}`
-                }
+                label={placement ? `Click terrain to move ${activeLander}` : `Click terrain to place ${activeLander}`}
                 checked={placing === activeLander}
                 onChange={(on) => setPlacing(on ? activeLander : null)}
               />
@@ -147,24 +121,12 @@ export function LanderPanel() {
                     variant={camera === "lander" ? "primary" : "secondary"}
                     className="flex-1"
                     aria-pressed={camera === "lander"}
-                    onClick={() =>
-                      setCamera(camera === "lander" ? "orbit" : "lander")
-                    }
+                    onClick={() => setCamera(camera === "lander" ? "orbit" : "lander")}
                   >
-                    {camera === "lander" ? (
-                      <Cube size={14} weight="regular" />
-                    ) : (
-                      <Eye size={14} weight="regular" />
-                    )}
-                    {camera === "lander"
-                      ? "Back to orbit view"
-                      : "View from lander"}
+                    {camera === "lander" ? <Cube size={14} weight="regular" /> : <Eye size={14} weight="regular" />}
+                    {camera === "lander" ? "Back to orbit view" : "View from lander"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removeLander(activeLander)}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => removeLander(activeLander)}>
                     <Trash size={14} weight="regular" />
                     Remove
                   </Button>
@@ -176,8 +138,7 @@ export function LanderPanel() {
             ) : (
               <>
                 <p className="border-line border-t px-4 py-3 text-fg-muted text-sm leading-5">
-                  Click anywhere on the terrain to land lander {activeLander},
-                  or start from a known site below.
+                  Click anywhere on the terrain to land lander {activeLander}, or start from a known site below.
                 </p>
                 <SitePicks id={activeLander} sites={sites} />
               </>
