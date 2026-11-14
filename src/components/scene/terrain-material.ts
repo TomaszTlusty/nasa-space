@@ -110,16 +110,19 @@ const fragment = /* glsl */ `
     float sunVis = uSunDir.z > -0.2 ? visibility(uSunDir, p, uSunRadius) : 0.0;
     float earthVis = uEarthDir.z > -0.3 ? visibility(uEarthDir, p, uEarthRadius) : 0.0;
 
-    // Lommel-Seeliger reflectance (mu0 / (mu0 + mu)): the standard first-order model for lunar regolith.
-    // Unlike Lambert it keeps grazing-lit ground bright when seen at a grazing angle, as in lander photos.
+    // Lommel-Seeliger reflectance (mu0 / (mu0 + mu)) times a backscattering phase function: the standard
+    // first-order model for lunar regolith. Grazing-lit ground stays bright when the Sun is behind the
+    // viewer and turns dark looking into the Sun, as in lander photos.
     vec3 vt = normalize(cameraPosition - vWorld);
     vec3 view = vec3(vt.x, -vt.z, vt.y);
     float mu = max(dot(n, view), 0.05);
     float sunLambert = max(dot(n, uSunDir), 0.0);
     float earthLambert = max(dot(n, uEarthDir), 0.0);
-    float ls = sunLambert / (sunLambert + mu);
+    float phaseAngle = acos(clamp(dot(uSunDir, view), -1.0, 1.0));
+    float phase = exp(-0.9 * phaseAngle);
+    float ls = sunLambert / (sunLambert + mu) * phase;
     vec3 albedo = vec3(0.62, 0.61, 0.6);
-    vec3 light = vec3(1.0, 0.97, 0.92) * ls * sunVis * 3.4
+    vec3 light = vec3(1.0, 0.97, 0.92) * ls * sunVis * 12.0
                + vec3(0.32, 0.42, 0.62) * (earthLambert / (earthLambert + mu)) * earthVis * 0.04
                + vec3(0.012, 0.014, 0.02);
     vec3 col = albedo * light;

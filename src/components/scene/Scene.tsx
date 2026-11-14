@@ -96,8 +96,11 @@ function CameraRig({
   }, [firstPerson, lander, region, centerHeight, camera]);
 
   const ext = region.meta.extent / 1000;
+  // Distinct keys: R3F would otherwise reuse one OrbitControls instance and reset removed props to 0
+  // (e.g. maxDistance/rotateSpeed), freezing the camera after switching views.
   return firstPerson ? (
     <OrbitControls
+      key="first-person"
       ref={controls}
       makeDefault
       enableZoom={false}
@@ -108,6 +111,7 @@ function CameraRig({
     />
   ) : (
     <OrbitControls
+      key="orbit"
       ref={controls}
       makeDefault
       enableDamping
