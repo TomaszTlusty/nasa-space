@@ -1,5 +1,5 @@
 {
-  "name": "malapert-scaffold",
+  "name": "malapert",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "test": "bun test src/lib/moon",
+    "test": "bun test src",
+    "data:fetch": "bash scripts/data/fetch.sh",
     "data:build": "bun scripts/data/build.ts",
     "data:validate": "bun scripts/data/validate.ts"
   },
