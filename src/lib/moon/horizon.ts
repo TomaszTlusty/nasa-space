@@ -23,23 +23,31 @@ export interface LoadedRegion {
   slope: Uint8Array;
 }
 
+/**
+ * Body bytes of a fetched file. "*.gz" files are gunzipped with DecompressionStream (browsers, Web
+ * Workers, Bun) unless the server already removed the gzip layer (e.g. it sent
+ * `Content-Encoding: gzip` and fetch decoded it), detected by the gzip magic bytes 1f 8b.
+ */
+async function fileBytes(r: Response, gzipped: boolean): Promise<ArrayBuffer> {
+  const buf = await r.arrayBuffer();
+  const head = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+  if (!gzipped || head[0] !== 0x1f || head[1] !== 0x8b) return buf;
+  const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Response(stream).arrayBuffer();
+}
+
 /** Fetches `${baseUrl}/regions/${id}/…` (baseUrl may be "" for same-origin). */
-export async function loadRegion(
-  baseUrl: string,
-  id: string,
-): Promise<LoadedRegion> {
+export async function loadRegion(baseUrl: string, id: string): Promise<LoadedRegion> {
   const root = `${baseUrl.replace(/\/$/, "")}/regions/${id}`;
   const get = async (file: string) => {
     const r = await fetch(`${root}/${file}`);
     if (!r.ok) throw new Error(`${root}/${file}: HTTP ${r.status}`);
-    return r;
+    return fileBytes(r, file.endsWith(".gz"));
   };
-  const meta = (await (await get("meta.json")).json()) as RegionMeta;
-  const [h, hz, sl] = await Promise.all([
-    get(meta.terrain.file).then((r) => r.arrayBuffer()),
-    get(meta.horizon.file).then((r) => r.arrayBuffer()),
-    get(meta.slope.file).then((r) => r.arrayBuffer()),
-  ]);
+  const metaRes = await fetch(`${root}/meta.json`);
+  if (!metaRes.ok) throw new Error(`${root}/meta.json: HTTP ${metaRes.status}`);
+  const meta = (await metaRes.json()) as RegionMeta;
+  const [h, hz, sl] = await Promise.all([get(meta.terrain.file), get(meta.horizon.file), get(meta.slope.file)]);
   const t = meta.terrain;
   const g = meta.horizon;
   const heights = new Float32Array(h);

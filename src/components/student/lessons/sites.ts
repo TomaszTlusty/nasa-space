@@ -8,7 +8,11 @@ import { heightAt, inTile } from "@/lib/terrain";
  * Site lookup that never depends on one exact id: lessons try preferred ids first, then fall back to
  * matching by kind and name, so a renamed or missing site degrades to "skip this part" instead of a crash.
  */
-function findSite(meta: RegionMeta, ids: string[], match: (s: RegionSite) => boolean): RegionSite | null {
+function findSite(
+  meta: RegionMeta,
+  ids: string[],
+  match: (s: RegionSite) => boolean,
+): RegionSite | null {
   for (const id of ids) {
     const site = meta.sites.find((s) => s.id === id);
     if (site) return site;

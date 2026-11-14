@@ -2,7 +2,13 @@
 
 import { create } from "zustand";
 import { type Overlay, useApp } from "@/lib/store";
-import { MISSIONS, type MissionId, type MissionResult, RANKS, type Rank } from "./missions";
+import {
+  MISSIONS,
+  type MissionId,
+  type MissionResult,
+  RANKS,
+  type Rank,
+} from "./missions";
 
 /**
  * Game flow shared by `GamePanel` (left column) and `GameOverlay` (full-screen layer).
@@ -12,7 +18,13 @@ import { MISSIONS, type MissionId, type MissionResult, RANKS, type Rank } from "
  * camera back to orbit, playing false, placing off, overlay as it was before the game.
  */
 
-export type GamePhase = "select" | "brief" | "choose" | "missed" | "landing" | "result";
+export type GamePhase =
+  | "select"
+  | "brief"
+  | "choose"
+  | "missed"
+  | "landing"
+  | "result";
 
 export const CHOOSE_SECONDS = 45;
 
@@ -69,7 +81,11 @@ export const useGame = create<GameState>((set, get) => ({
     app.setCamera("orbit");
     app.setActiveLander("A");
     app.setPlacing("A");
-    set({ phase: "choose", savedOverlay, deadline: performance.now() + CHOOSE_SECONDS * 1000 });
+    set({
+      phase: "choose",
+      savedOverlay,
+      deadline: performance.now() + CHOOSE_SECONDS * 1000,
+    });
   },
 
   land: () => {
@@ -100,7 +116,8 @@ export const useGame = create<GameState>((set, get) => ({
     restoreScene(get().savedOverlay);
     const { best } = get();
     const prev = best[result.missionId];
-    const better = prev === undefined || RANKS.indexOf(result.rank) > RANKS.indexOf(prev);
+    const better =
+      prev === undefined || RANKS.indexOf(result.rank) > RANKS.indexOf(prev);
     set({
       phase: "result",
       result,

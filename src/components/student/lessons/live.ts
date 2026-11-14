@@ -14,7 +14,8 @@ export function useLanderAnalysis(id: LanderId): PointAnalysis | null {
   const placement = useApp((s) => s.landers[id]);
   const windowStart = useApp((s) => s.windowStart);
   if (!analysis || !placement) return null;
-  if (Math.hypot(analysis.x - placement.x, analysis.y - placement.y) > 50) return null;
+  if (Math.hypot(analysis.x - placement.x, analysis.y - placement.y) > 50)
+    return null;
   if (Math.abs(analysis.series.start - windowStart) > HOUR) return null;
   return analysis;
 }

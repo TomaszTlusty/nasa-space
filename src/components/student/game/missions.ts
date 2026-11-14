@@ -44,7 +44,8 @@ export const MISSIONS: Mission[] = [
     minDays: 7,
     minEarth: 0.25,
     difficulty: 1,
-    story: "Land near Shackleton crater in January 2027 and keep your lander alive for one week.",
+    story:
+      "Land near Shackleton crater in January 2027 and keep your lander alive for one week.",
     hint: "High ridges catch the low Sun. Crater floors stay dark.",
   },
   {
@@ -57,7 +58,8 @@ export const MISSIONS: Mission[] = [
     minDays: 7,
     minEarth: 0.25,
     difficulty: 2,
-    story: "April 2027 is a darker season near the pole: the Sun barely clears the hills. Survive a week at Malapert.",
+    story:
+      "April 2027 is a darker season near the pole: the Sun barely clears the hills. Survive a week at Malapert.",
     hint: "Only a few peaks stay lit. Turn on the helper map and look for the brightest spots.",
   },
   {
@@ -70,13 +72,23 @@ export const MISSIONS: Mission[] = [
     minDays: 10,
     minEarth: 0.6,
     difficulty: 3,
-    story: "A long science mission in November 2027: stay powered for 10 days and keep Earth in view most of the time.",
+    story:
+      "A long science mission in November 2027: stay powered for 10 days and keep Earth in view most of the time.",
     hint: "You need a spot that sees the Sun and Earth. Earth sits low over the near side of the Moon.",
   },
 ];
 
-export type Rank = "Cadet" | "Navigator" | "Mission Specialist" | "Flight Director";
-export const RANKS: Rank[] = ["Cadet", "Navigator", "Mission Specialist", "Flight Director"];
+export type Rank =
+  | "Cadet"
+  | "Navigator"
+  | "Mission Specialist"
+  | "Flight Director";
+export const RANKS: Rank[] = [
+  "Cadet",
+  "Navigator",
+  "Mission Specialist",
+  "Flight Director",
+];
 
 export interface MissionResult {
   missionId: MissionId;
@@ -110,7 +122,10 @@ export function duration(hours: number): string {
   return `${(hours / 24).toFixed(1).replace(/\.0$/, "")} days`;
 }
 
-export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult {
+export function scoreMission(
+  mission: Mission,
+  a: PointAnalysis,
+): MissionResult {
   const { series, power } = a;
   const n = series.sunFraction.length;
   let lit = 0;
@@ -123,7 +138,10 @@ export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult 
   const survivedWindow = power.depletedAt === null;
   const aliveDays = survivedWindow
     ? mission.days
-    : Math.min(mission.days, Math.max(0, ((power.depletedAt ?? series.start) - series.start) / DAY));
+    : Math.min(
+        mission.days,
+        Math.max(0, ((power.depletedAt ?? series.start) - series.start) / DAY),
+      );
   const minSocPct = Math.max(0, power.minSocPct);
   const goalSurvive = aliveDays >= mission.minDays;
   const goalEarth = earthUp >= mission.minEarth;
@@ -159,7 +177,8 @@ export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult 
   const goal = pct(mission.minEarth);
   let earth2: string;
   if (longestEarthGapHours === 0) {
-    earth2 = "Earth stayed above your horizon the whole time, so mission control could hear you every hour.";
+    earth2 =
+      "Earth stayed above your horizon the whole time, so mission control could hear you every hour.";
   } else if (earthUp === 0) {
     earth2 = `Earth never rose above the hills around you, so you could not radio home (goal: ${goal}% of the time).`;
   } else if (goalEarth) {
@@ -186,7 +205,10 @@ export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult 
 }
 
 /** Index of the hourly sample at or before `t`, plus the interpolation weight to the next one. */
-export function sampleAt(series: PointAnalysis["series"], t: number): { i: number; j: number; f: number } {
+export function sampleAt(
+  series: PointAnalysis["series"],
+  t: number,
+): { i: number; j: number; f: number } {
   const n = series.sunFraction.length;
   const u = Math.max(0, (t - series.start) / (series.stepMinutes * 60_000));
   const i = Math.min(n - 1, Math.floor(u));

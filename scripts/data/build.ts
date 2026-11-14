@@ -1,8 +1,10 @@
 /**
  * Region precompute: `bun run data:build shackleton|malapert|all [--terrain-only]`
- * Writes public/regions/<id>/{meta.json, heights.bin, normal.png, horizon.bin, slope.bin}.
+ * Writes public/regions/<id>/{meta.json, heights.bin.gz, normal.webp, horizon.bin.gz, slope.bin}.
  */
-import { mkdir } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
+import { gzipSync } from "node:zlib";
+import sharp from "sharp";
 import {
   MOON_RADIUS_M,
   polarToLatLon,
@@ -12,7 +14,6 @@ import {
 import type { RegionMeta, RegionSite } from "../../src/lib/moon/types";
 import { MultiDem } from "./dem";
 import { HorizonMarcher } from "./horizon-core";
-import { encodePngRgb } from "./png";
 import { HorizonPool } from "./pool";
 import {
   DATA_BOOK_URL,
@@ -35,6 +36,14 @@ const QUANT = 0.1;
 const OFFSET = -5;
 const SITE_BINS = 720;
 const SITE_MASTS = [0, 2, 5, 10];
+/**
+ * WebP near-lossless (quality 60 = pixel values pre-quantised by at most 2 levels before lossless
+ * coding): measured normal error vs the 8-bit RGB source mean 0.67 deg / max 1.6 deg (Shackleton),
+ * versus lossy q90: mean 2.1 deg / max 56 deg (4:2:0 chroma blurs nx, ny on sharp rims).
+ */
+const NORMAL_WEBP = { nearLossless: true, quality: 60, effort: 6 } as const;
+const gz = (data: Uint8Array | Float32Array) =>
+  gzipSync(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), { level: 9 });
 
 class RegionSampler {
   /** finest raster index used for the whole region (finest covering all four corners) */
@@ -84,7 +93,7 @@ function buildHeights(s: RegionSampler): Float32Array {
  * RGB = round((n + 1) / 2 * 255) for (nx, ny, nz); pixel centres at x0 + (i + 0.5) * pix;
  * image row 0 = max y.
  */
-function buildNormals(s: RegionSampler): Uint8Array {
+async function buildNormals(s: RegionSampler): Promise<Uint8Array> {
   const pix = EXTENT / NORMAL_N;
   const d = s.scale;
   const rgb = new Uint8Array(NORMAL_N * NORMAL_N * 3);
@@ -101,7 +110,8 @@ function buildNormals(s: RegionSampler): Uint8Array {
       rgb[o + 2] = Math.round((inv + 1) * 127.5);
     }
   }
-  return encodePngRgb(NORMAL_N, NORMAL_N, rgb);
+  const raw = { width: NORMAL_N, height: NORMAL_N, channels: 3 } as const;
+  return new Uint8Array(await sharp(rgb, { raw }).webp(NORMAL_WEBP).toBuffer());
 }
 
 /** Local slope (deg, relative to the local vertical) on the horizon grid, +-1 DEM pixel baseline. */
@@ -236,9 +246,11 @@ async function buildRegion(
     if (v < minH) minH = v;
     if (v > maxH) maxH = v;
   }
-  await Bun.write(`${dir}/heights.bin`, heights);
-  await Bun.write(`${dir}/normal.png`, buildNormals(s));
+  await Bun.write(`${dir}/heights.bin.gz`, gz(heights));
+  await Bun.write(`${dir}/normal.webp`, await buildNormals(s));
   await Bun.write(`${dir}/slope.bin`, buildSlope(s));
+  // outputs of earlier contract versions
+  for (const stale of ["heights.bin", "normal.png", "horizon.bin"]) await rm(`${dir}/${stale}`, { force: true });
   const tTerrain = performance.now();
 
   let siteDefs = def.sites;
@@ -274,7 +286,7 @@ async function buildRegion(
   });
 
   if (pool)
-    await Bun.write(`${dir}/horizon.bin`, await buildHorizonGrid(pool, def));
+    await Bun.write(`${dir}/horizon.bin.gz`, gz(await buildHorizonGrid(pool, def)));
   const tEnd = performance.now();
 
   const hstep = EXTENT / (HORIZON_N - 1);
@@ -285,7 +297,7 @@ async function buildRegion(
     center: metaCenter,
     extent: EXTENT,
     terrain: {
-      file: "heights.bin",
+      file: "heights.bin.gz",
       width: TERRAIN_N,
       height: TERRAIN_N,
       x0: -EXTENT / 2,
@@ -294,9 +306,9 @@ async function buildRegion(
       minHeight: minH,
       maxHeight: maxH,
     },
-    normalMap: { file: "normal.png", size: NORMAL_N },
+    normalMap: { file: "normal.webp", size: NORMAL_N },
     horizon: {
-      file: "horizon.bin",
+      file: "horizon.bin.gz",
       width: HORIZON_N,
       height: HORIZON_N,
       x0: -EXTENT / 2,

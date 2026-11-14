@@ -21,7 +21,12 @@ import { CountdownRing } from "./CountdownRing";
 import { CHOOSE_SECONDS, useGame } from "./game-store";
 import { EARTH_GOAL_SOURCE, MISSIONS, type Mission } from "./missions";
 
-const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const dateFmt = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 /**
  * "Mission: Survive" — left column in Student mode. Mission list, brief, the 45 s spot picker and
@@ -30,7 +35,10 @@ const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short
 export function GamePanel() {
   const phase = useGame((s) => s.phase);
   return (
-    <Panel aria-label="Mission: Survive" className="flex min-h-0 flex-col overflow-y-auto">
+    <Panel
+      aria-label="Mission: Survive"
+      className="flex min-h-0 flex-col overflow-y-auto"
+    >
       {phase === "select" || phase === "result" ? (
         <MissionList />
       ) : phase === "brief" ? (
@@ -48,9 +56,19 @@ export function GamePanel() {
 
 function Difficulty({ level }: { level: Mission["difficulty"] }) {
   return (
-    <span className="flex items-center gap-1" role="img" aria-label={`Difficulty ${level} of 3`}>
+    <span
+      className="flex items-center gap-1"
+      role="img"
+      aria-label={`Difficulty ${level} of 3`}
+    >
       {[1, 2, 3].map((d) => (
-        <span key={d} className={cn("size-1.5 rounded-full", d <= level ? "bg-fg-muted" : "bg-white/10")} />
+        <span
+          key={d}
+          className={cn(
+            "size-1.5 rounded-full",
+            d <= level ? "bg-fg-muted" : "bg-white/10",
+          )}
+        />
       ))}
     </span>
   );
@@ -63,7 +81,8 @@ function MissionList() {
     <>
       <PanelHeader eyebrow="Mission: Survive" title="Land the lander!" />
       <p className="px-4 pb-3 text-fg-muted text-sm">
-        Pick a spot on the real lunar terrain. Your lander needs sunlight for power and Earth in view to radio home.
+        Pick a spot on the real lunar terrain. Your lander needs sunlight for
+        power and Earth in view to radio home.
       </p>
       <ul className="flex flex-col gap-2 px-3 pb-3">
         {MISSIONS.map((m, i) => {
@@ -84,7 +103,8 @@ function MissionList() {
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <span className="truncate text-fg-muted text-xs">
-                    {m.regionName} · <span className="tabular">{dateFmt.format(m.start)}</span> ·{" "}
+                    {m.regionName} ·{" "}
+                    <span className="tabular">{dateFmt.format(m.start)}</span> ·{" "}
                     <span className="tabular">{m.days}</span> days
                   </span>
                   {rank && <Badge tone="sun">{rank}</Badge>}
@@ -102,7 +122,12 @@ function Goals({ mission }: { mission: Mission }) {
   return (
     <ul className="flex flex-col gap-2 text-fg text-sm">
       <li className="flex items-start gap-2.5">
-        <BatteryHigh size={16} weight="light" className="mt-0.5 shrink-0 text-sun" aria-hidden="true" />
+        <BatteryHigh
+          size={16}
+          weight="light"
+          className="mt-0.5 shrink-0 text-sun"
+          aria-hidden="true"
+        />
         <span>
           Keep the battery above <span className="tabular">0%</span> for{" "}
           {mission.minDays === mission.days ? (
@@ -118,10 +143,16 @@ function Goals({ mission }: { mission: Mission }) {
         </span>
       </li>
       <li className="flex items-start gap-2.5">
-        <CellSignalFull size={16} weight="light" className="mt-0.5 shrink-0 text-earth" aria-hidden="true" />
+        <CellSignalFull
+          size={16}
+          weight="light"
+          className="mt-0.5 shrink-0 text-earth"
+          aria-hidden="true"
+        />
         <span>
-          See Earth at least <span className="tabular">{Math.round(mission.minEarth * 100)}%</span> of the time, so you
-          can radio home{" "}
+          See Earth at least{" "}
+          <span className="tabular">{Math.round(mission.minEarth * 100)}%</span>{" "}
+          of the time, so you can radio home{" "}
           <a
             href={EARTH_GOAL_SOURCE}
             target="_blank"
@@ -156,7 +187,8 @@ function Brief() {
       <div className="flex flex-col gap-3 px-4 pb-4">
         <p className="text-fg-muted text-sm">{mission.story}</p>
         <div className="text-fg-faint text-xs">
-          {mission.regionName} · <span className="tabular">{dateFmt.format(mission.start)}</span>
+          {mission.regionName} ·{" "}
+          <span className="tabular">{dateFmt.format(mission.start)}</span>
         </div>
         <Divider />
         <div>
@@ -164,17 +196,29 @@ function Brief() {
           <Goals mission={mission} />
         </div>
         <p className="flex items-start gap-2.5 text-fg-muted text-xs">
-          <Target size={14} weight="light" className="mt-0.5 shrink-0" aria-hidden="true" />
+          <Target
+            size={14}
+            weight="light"
+            className="mt-0.5 shrink-0"
+            aria-hidden="true"
+          />
           {mission.hint}
         </p>
         <p className="text-2xs text-fg-faint">
-          Your lander: <span className="tabular">{(power.batteryWh / 1000).toFixed(1)}</span> kWh battery,{" "}
-          <span className="tabular">{power.loadW}</span> W always on, upright Sun-tracking solar panels (an illustrative
-          design).
+          Your lander:{" "}
+          <span className="tabular">{(power.batteryWh / 1000).toFixed(1)}</span>{" "}
+          kWh battery, <span className="tabular">{power.loadW}</span> W always
+          on, upright Sun-tracking solar panels (an illustrative design).
         </p>
-        <Button variant="primary" size="lg" onClick={start} className="mt-1 w-full">
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={start}
+          className="mt-1 w-full"
+        >
           <RocketLaunch size={18} weight="regular" />
-          Start: <span className="tabular">{CHOOSE_SECONDS}</span> s to pick a spot
+          Start: <span className="tabular">{CHOOSE_SECONDS}</span> s to pick a
+          spot
         </Button>
       </div>
     </>
@@ -206,7 +250,10 @@ function Choose() {
 
   return (
     <>
-      <PanelHeader eyebrow={`Mission ${index + 1} · ${mission.title}`} title="Pick your landing spot" />
+      <PanelHeader
+        eyebrow={`Mission ${index + 1} · ${mission.title}`}
+        title="Pick your landing spot"
+      />
       <div className="flex flex-col gap-4 px-4 pb-4">
         <div className="flex items-center gap-4">
           <CountdownRing
@@ -216,7 +263,8 @@ function Choose() {
             onDone={timeUp}
           />
           <p className="text-fg-muted text-sm">
-            Click the terrain to place your lander. Click again to move it. When time runs out, it lands where it is.
+            Click the terrain to place your lander. Click again to move it. When
+            time runs out, it lands where it is.
           </p>
         </div>
         <div className="rounded-lg bg-white/3 p-3 ring-1 ring-line">
@@ -231,18 +279,37 @@ function Choose() {
             }
           />
           <p className="mt-1.5 text-fg-faint text-xs">
-            Shows how much sunlight each spot gets during this mission. Brighter ground means more power.
+            Shows how much sunlight each spot gets during this mission. Brighter
+            ground means more power.
           </p>
         </div>
-        <div className="flex items-center justify-between text-xs" aria-live="polite">
+        <div
+          className="flex items-center justify-between text-xs"
+          aria-live="polite"
+        >
           <span className="text-fg-faint">Landing spot</span>
-          {lander ? <Badge tone="ok">Picked</Badge> : <Badge>Not picked yet</Badge>}
+          {lander ? (
+            <Badge tone="ok">Picked</Badge>
+          ) : (
+            <Badge>Not picked yet</Badge>
+          )}
         </div>
-        <Button variant="primary" size="lg" disabled={!lander} onClick={land} className="w-full">
+        <Button
+          variant="primary"
+          size="lg"
+          disabled={!lander}
+          onClick={land}
+          className="w-full"
+        >
           <RocketLaunch size={18} weight="regular" />
           LAND HERE
         </Button>
-        <Button variant="ghost" size="sm" onClick={abort} className="self-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={abort}
+          className="self-center"
+        >
           Cancel mission
         </Button>
       </div>
@@ -258,7 +325,8 @@ function Missed() {
       <PanelHeader eyebrow="Mission: Survive" title="Time's up" />
       <div className="flex flex-col gap-3 px-4 pb-4">
         <p className="text-fg-muted text-sm">
-          The lander ran out of hover time before a landing spot was picked. Click the terrain sooner next time.
+          The lander ran out of hover time before a landing spot was picked.
+          Click the terrain sooner next time.
         </p>
         <div className="flex gap-2">
           <Button variant="primary" onClick={start} className="flex-1">
@@ -278,14 +346,22 @@ function InFlight() {
   const mission = MISSIONS[index];
   return (
     <>
-      <PanelHeader eyebrow={`Mission ${index + 1} · ${mission.title}`} title="Touchdown!" />
+      <PanelHeader
+        eyebrow={`Mission ${index + 1} · ${mission.title}`}
+        title="Touchdown!"
+      />
       <div className="flex flex-col gap-3 px-4 pb-4">
         <p className="text-fg-muted text-sm">
-          You are looking out from your lander. Watch the battery, the Sun and the Earth signal while the mission days
-          fly by.
+          You are looking out from your lander. Watch the battery, the Sun and
+          the Earth signal while the mission days fly by.
         </p>
         <Goals mission={mission} />
-        <Button variant="ghost" size="sm" onClick={abort} className="self-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={abort}
+          className="self-center"
+        >
           Cancel mission
         </Button>
       </div>

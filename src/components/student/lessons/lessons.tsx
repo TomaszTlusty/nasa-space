@@ -2,7 +2,11 @@
 
 import { type ComponentType, type ReactNode, useMemo } from "react";
 import { Stat } from "@/components/ui/panel";
-import { analyzePoint, useLiveVisibility, useWindowAverage } from "@/lib/analysis";
+import {
+  analyzePoint,
+  useLiveVisibility,
+  useWindowAverage,
+} from "@/lib/analysis";
 import type { LoadedRegion } from "@/lib/moon/horizon";
 import { type RegionId, useApp } from "@/lib/store";
 import { deg, pct, useLanderAnalysis } from "./live";
@@ -23,7 +27,11 @@ import { SOURCES, type Source } from "./sources";
  * hooks, facts only from the cited sources.
  */
 
-export type LessonId = "shadows" | "eternal-light" | "earth-dance" | "short-move";
+export type LessonId =
+  | "shadows"
+  | "eternal-light"
+  | "earth-dance"
+  | "short-move";
 
 export interface LessonEnv {
   /** loaded assets of the lesson's region */
@@ -98,8 +106,18 @@ function SunAtA() {
   return (
     <Readout
       items={[
-        { label: "Sun height at A", value: live ? deg(live.sunElev) : null, unit: "°", tone: "sun" },
-        { label: "Sun disc visible", value: live ? pct(live.sunVis) : null, unit: "%", tone: "sun" },
+        {
+          label: "Sun height at A",
+          value: live ? deg(live.sunElev) : null,
+          unit: "°",
+          tone: "sun",
+        },
+        {
+          label: "Sun disc visible",
+          value: live ? pct(live.sunVis) : null,
+          unit: "%",
+          tone: "sun",
+        },
       ]}
     />
   );
@@ -109,8 +127,9 @@ function RimBody() {
   return (
     <>
       <Text>
-        The rim of Shackleton crater is in full sunlight, yet the inside is black. The Sun is so low here that even
-        small hills cast very long shadows.
+        The rim of Shackleton crater is in full sunlight, yet the inside is
+        black. The Sun is so low here that even small hills cast very long
+        shadows.
       </Text>
       <SunAtA />
     </>
@@ -121,8 +140,9 @@ function NoAirBody() {
   return (
     <>
       <Text>
-        On Earth, air scatters sunlight into every shadow, so you can still see inside them. The Moon has almost no
-        air, so nothing lights the shadows up: they stay pitch black.
+        On Earth, air scatters sunlight into every shadow, so you can still see
+        inside them. The Moon has almost no air, so nothing lights the shadows
+        up: they stay pitch black.
       </Text>
       <SunAtA />
     </>
@@ -136,16 +156,23 @@ function FloorBody() {
   return (
     <>
       <Text>
-        Deep crater floors near the pole can go without direct sunlight for ages. They get as cold as{" "}
-        <Num>−238 °C</Num> (<Num>35 K</Num>), cold enough to keep water ice frozen.
+        Deep crater floors near the pole can go without direct sunlight for
+        ages. They get as cold as <Num>−238 °C</Num> (<Num>35 K</Num>), cold
+        enough to keep water ice frozen.
       </Text>
       {hasB && (
         <Readout
           items={[
-            { label: "Sunlight at B, 30 d", value: b ? pct(b.sunMean) : null, unit: "%", tone: "night" },
+            {
+              label: "Sunlight at B, 30 d",
+              value: b ? pct(b.sunMean) : null,
+              unit: "%",
+              tone: "night",
+            },
             {
               label: "B below rim A",
-              value: a && b ? String(Math.round(a.elevationM - b.elevationM)) : null,
+              value:
+                a && b ? String(Math.round(a.elevationM - b.elevationM)) : null,
               unit: "m",
             },
           ]}
@@ -172,13 +199,24 @@ function AverageMapBody() {
   return (
     <>
       <Text>
-        This map colours every spot by its average sunlight over the next 30 days. Bright ground is sunny most of the
-        time; dark ground almost never sees the Sun.
+        This map colours every spot by its average sunlight over the next 30
+        days. Bright ground is sunny most of the time; dark ground almost never
+        sees the Sun.
       </Text>
       <Readout
         items={[
-          { label: "Map lit > half the time", value: shares ? pct(shares.sunny) : null, unit: "%", tone: "sun" },
-          { label: "Map lit < 2% of the time", value: shares ? pct(shares.dark) : null, unit: "%", tone: "night" },
+          {
+            label: "Map lit > half the time",
+            value: shares ? pct(shares.sunny) : null,
+            unit: "%",
+            tone: "sun",
+          },
+          {
+            label: "Map lit < 2% of the time",
+            value: shares ? pct(shares.dark) : null,
+            unit: "%",
+            tone: "night",
+          },
         ]}
       />
     </>
@@ -189,7 +227,10 @@ function PeakVsPitBody() {
   const a = useLanderAnalysis("A");
   const b = useLanderAnalysis("B");
   const landers = useApp((s) => s.landers);
-  const km = landers.A && landers.B ? Math.hypot(landers.A.x - landers.B.x, landers.A.y - landers.B.y) / 1000 : null;
+  const km =
+    landers.A && landers.B
+      ? Math.hypot(landers.A.x - landers.B.x, landers.A.y - landers.B.y) / 1000
+      : null;
   return (
     <>
       <Text>
@@ -203,8 +244,18 @@ function PeakVsPitBody() {
       </Text>
       <Readout
         items={[
-          { label: "Sunlight at A, 30 d", value: a ? pct(a.sunMean) : null, unit: "%", tone: "sun" },
-          { label: "Sunlight at B, 30 d", value: b ? pct(b.sunMean) : null, unit: "%", tone: "night" },
+          {
+            label: "Sunlight at A, 30 d",
+            value: a ? pct(a.sunMean) : null,
+            unit: "%",
+            tone: "sun",
+          },
+          {
+            label: "Sunlight at B, 30 d",
+            value: b ? pct(b.sunMean) : null,
+            unit: "%",
+            tone: "night",
+          },
         ]}
       />
     </>
@@ -217,8 +268,9 @@ function WhyBody() {
   return (
     <>
       <Text>
-        At the pole the Sun circles only about <Num>1.5°</Num> above or below the horizon, so a high ridge peeks over
-        the hills while a deep crater floor never can. Over many years, Connecting Ridge gets about{" "}
+        At the pole the Sun circles only about <Num>1.5°</Num> above or below
+        the horizon, so a high ridge peeks over the hills while a deep crater
+        floor never can. Over many years, Connecting Ridge gets about{" "}
         <Num>76%</Num> sunlight.
       </Text>
       <Readout
@@ -248,13 +300,23 @@ function FindEarthBody() {
   return (
     <>
       <Text>
-        You are looking around from lander A. Find the small blue Earth near the skyline: its disc is only about{" "}
-        <Num>2°</Num> wide.
+        You are looking around from lander A. Find the small blue Earth near the
+        skyline: its disc is only about <Num>2°</Num> wide.
       </Text>
       <Readout
         items={[
-          { label: "Earth height", value: live ? deg(live.earthElev) : null, unit: "°", tone: "earth" },
-          { label: "Earth disc visible", value: live ? pct(live.earthVis) : null, unit: "%", tone: "earth" },
+          {
+            label: "Earth height",
+            value: live ? deg(live.earthElev) : null,
+            unit: "°",
+            tone: "earth",
+          },
+          {
+            label: "Earth disc visible",
+            value: live ? pct(live.earthVis) : null,
+            unit: "%",
+            tone: "earth",
+          },
         ]}
       />
     </>
@@ -266,13 +328,24 @@ function BobBody() {
   return (
     <>
       <Text>
-        Now one Earth day passes every second. Earth does not cross the sky like the Sun: it stays in roughly the same
-        direction and slowly bobs up and down.
+        Now one Earth day passes every second. Earth does not cross the sky like
+        the Sun: it stays in roughly the same direction and slowly bobs up and
+        down.
       </Text>
       <Readout
         items={[
-          { label: "Earth height", value: live ? deg(live.earthElev) : null, unit: "°", tone: "earth" },
-          { label: "Earth direction", value: live ? deg(live.earthAz) : null, unit: "°", tone: "earth" },
+          {
+            label: "Earth height",
+            value: live ? deg(live.earthElev) : null,
+            unit: "°",
+            tone: "earth",
+          },
+          {
+            label: "Earth direction",
+            value: live ? deg(live.earthAz) : null,
+            unit: "°",
+            tone: "earth",
+          },
         ]}
       />
     </>
@@ -284,13 +357,22 @@ function LibrationBody() {
   return (
     <>
       <Text>
-        This wobble is called libration. Seen from the Moon, Earth sways up to <Num>6.7°</Num> up and down and{" "}
-        <Num>7.9°</Num> side to side.
+        This wobble is called libration. Seen from the Moon, Earth sways up to{" "}
+        <Num>6.7°</Num> up and down and <Num>7.9°</Num> side to side.
       </Text>
       <Readout
         items={[
-          { label: "Earth height", value: live ? deg(live.earthElev) : null, unit: "°", tone: "earth" },
-          { label: "Skyline under Earth", value: live ? deg(live.earthHorizon) : null, unit: "°" },
+          {
+            label: "Earth height",
+            value: live ? deg(live.earthElev) : null,
+            unit: "°",
+            tone: "earth",
+          },
+          {
+            label: "Skyline under Earth",
+            value: live ? deg(live.earthHorizon) : null,
+            unit: "°",
+          },
         ]}
       />
     </>
@@ -302,12 +384,18 @@ function TwoWeeksBody() {
   return (
     <>
       <Text>
-        Near the pole, Earth spends about two weeks above the horizon and then about two weeks below it. While it is
-        down, a lander cannot radio home directly.
+        Near the pole, Earth spends about two weeks above the horizon and then
+        about two weeks below it. While it is down, a lander cannot radio home
+        directly.
       </Text>
       <Readout
         items={[
-          { label: "Earth in view, 30 d", value: a ? pct(a.earthMean) : null, unit: "%", tone: "earth" },
+          {
+            label: "Earth in view, 30 d",
+            value: a ? pct(a.earthMean) : null,
+            unit: "%",
+            tone: "earth",
+          },
           {
             label: "Longest blackout",
             value: a ? String(Math.round(a.longestBlackoutHours)) : null,
@@ -326,16 +414,27 @@ function NeighboursBody() {
   const a = useLanderAnalysis("A");
   const b = useLanderAnalysis("B");
   const landers = useApp((s) => s.landers);
-  const metres = landers.A && landers.B ? Math.hypot(landers.A.x - landers.B.x, landers.A.y - landers.B.y) : null;
+  const metres =
+    landers.A && landers.B
+      ? Math.hypot(landers.A.x - landers.B.x, landers.A.y - landers.B.y)
+      : null;
   return (
     <>
-      <Text>A is on Connecting Ridge. B is a short walk away, a little further down the slope.</Text>
+      <Text>
+        A is on Connecting Ridge. B is a short walk away, a little further down
+        the slope.
+      </Text>
       <Readout
         items={[
-          { label: "Distance A to B", value: metres === null ? null : String(Math.round(metres)), unit: "m" },
+          {
+            label: "Distance A to B",
+            value: metres === null ? null : String(Math.round(metres)),
+            unit: "m",
+          },
           {
             label: "B lower than A",
-            value: a && b ? String(Math.round(a.elevationM - b.elevationM)) : null,
+            value:
+              a && b ? String(Math.round(a.elevationM - b.elevationM)) : null,
             unit: "m",
           },
         ]}
@@ -355,8 +454,8 @@ function CountSunBody() {
           "Counting the hours of sunlight at both landers over the next 30 days…"
         ) : gap >= 3 ? (
           <>
-            Over these 30 days B gets <Num>{gap}</Num> percentage points less sunlight than A. Lower ground hides behind
-            nearby hills more often.
+            Over these 30 days B gets <Num>{gap}</Num> percentage points less
+            sunlight than A. Lower ground hides behind nearby hills more often.
           </>
         ) : (
           "This month the two spots get about the same sunlight. Lower ground usually hides behind nearby hills more often; try a later date on the timeline."
@@ -364,8 +463,18 @@ function CountSunBody() {
       </Text>
       <Readout
         items={[
-          { label: "Sunlight at A, 30 d", value: a ? pct(a.sunMean) : null, unit: "%", tone: "sun" },
-          { label: "Sunlight at B, 30 d", value: b ? pct(b.sunMean) : null, unit: "%", tone: "sun" },
+          {
+            label: "Sunlight at A, 30 d",
+            value: a ? pct(a.sunMean) : null,
+            unit: "%",
+            tone: "sun",
+          },
+          {
+            label: "Sunlight at B, 30 d",
+            value: b ? pct(b.sunMean) : null,
+            unit: "%",
+            tone: "sun",
+          },
         ]}
       />
     </>
@@ -375,13 +484,18 @@ function CountSunBody() {
 function SurviveBody() {
   const a = useLanderAnalysis("A");
   const b = useLanderAnalysis("B");
-  const battery = (depletedAt: number | null): Pick<ReadoutItem, "value" | "tone"> =>
-    depletedAt === null ? { value: "Survives", tone: "ok" } : { value: "Runs out", tone: "danger" };
+  const battery = (
+    depletedAt: number | null,
+  ): Pick<ReadoutItem, "value" | "tone"> =>
+    depletedAt === null
+      ? { value: "Survives", tone: "ok" }
+      : { value: "Runs out", tone: "danger" };
   return (
     <>
       <Text>
-        Every dark hour runs on batteries, so the longest night decides how big the battery must be. Even on Connecting
-        Ridge, the longest darkness can last about <Num>112 h</Num>.
+        Every dark hour runs on batteries, so the longest night decides how big
+        the battery must be. Even on Connecting Ridge, the longest darkness can
+        last about <Num>112 h</Num>.
       </Text>
       <Readout
         items={[
@@ -397,12 +511,19 @@ function SurviveBody() {
             unit: "h",
             tone: "night",
           },
-          { label: "Battery at A", ...(a ? battery(a.power.depletedAt) : { value: null }) },
-          { label: "Battery at B", ...(b ? battery(b.power.depletedAt) : { value: null }) },
+          {
+            label: "Battery at A",
+            ...(a ? battery(a.power.depletedAt) : { value: null }),
+          },
+          {
+            label: "Battery at B",
+            ...(b ? battery(b.power.depletedAt) : { value: null }),
+          },
         ]}
       />
       <p className="mt-2 text-2xs text-fg-faint">
-        Battery: example lander with vertical, sun-tracking solar panels (our assumption).
+        Battery: example lander with vertical, sun-tracking solar panels (our
+        assumption).
       </p>
     </>
   );
@@ -410,8 +531,10 @@ function SurviveBody() {
 
 /* ───────────────────────── step setup ───────────────────────── */
 
-const NO_RIDGE = "This map has no ridge site in its data, so LUNA-Bot skipped placing lander A.";
-const NO_FLOOR = "This map has no crater-floor site in its data, so LUNA-Bot skipped placing lander B.";
+const NO_RIDGE =
+  "This map has no ridge site in its data, so LUNA-Bot skipped placing lander A.";
+const NO_FLOOR =
+  "This map has no crater-floor site in its data, so LUNA-Bot skipped placing lander B.";
 
 /** Common start of a lesson step: paused, seen from orbit, 30-day window. */
 function resetView(overlay: "none" | "instant" | "average") {
@@ -438,7 +561,8 @@ export const LESSONS: Lesson[] = [
         apply: async ({ region, isCurrent }) => {
           resetView("instant");
           const rim = findCraterRim(region.meta);
-          if (!rim) return "This map has no crater-rim site in its data, so LUNA-Bot kept the current time.";
+          if (!rim)
+            return "This map has no crater-rim site in its data, so LUNA-Bot kept the current time.";
           placeAtSite("A", rim);
           const analysis = await analyzePoint(
             { x: rim.x, y: rim.y, siteId: rim.id, id: "A" },
@@ -447,7 +571,8 @@ export const LESSONS: Lesson[] = [
           );
           if (!isCurrent()) return null;
           const t = brightestMoment(analysis);
-          if (t === null) return "The rim stays dark for this whole month. Try a later date on the timeline.";
+          if (t === null)
+            return "The rim stays dark for this whole month. Try a later date on the timeline.";
           useApp.getState().setTime(t);
           return null;
         },
@@ -459,7 +584,8 @@ export const LESSONS: Lesson[] = [
         apply: () => {
           const app = useApp.getState();
           app.setPlaying(false);
-          if (!app.landers.A) return "Lander A is not placed, so the first-person view was skipped.";
+          if (!app.landers.A)
+            return "Lander A is not placed, so the first-person view was skipped.";
           app.setActiveLander("A");
           app.setCamera("lander");
           return null;
@@ -485,7 +611,8 @@ export const LESSONS: Lesson[] = [
   {
     id: "eternal-light",
     title: "Peaks of eternal light vs craters of eternal night",
-    summary: "Why a ridge and a crater floor next door live in different worlds.",
+    summary:
+      "Why a ridge and a crater floor next door live in different worlds.",
     regionId: "shackleton",
     steps: [
       {
@@ -511,10 +638,18 @@ export const LESSONS: Lesson[] = [
           if (floor) placeAtSite("B", floor);
           if (ridge) placeAtSite("A", ridge);
           if (ridge && floor) app.setActiveLander("A");
-          return [ridge ? null : NO_RIDGE, floor ? null : NO_FLOOR].filter(Boolean).join(" ") || null;
+          return (
+            [ridge ? null : NO_RIDGE, floor ? null : NO_FLOOR]
+              .filter(Boolean)
+              .join(" ") || null
+          );
         },
       },
-      { title: "Why the difference?", Body: WhyBody, source: SOURCES.glaser2018 },
+      {
+        title: "Why the difference?",
+        Body: WhyBody,
+        source: SOURCES.glaser2018,
+      },
     ],
   },
   {
@@ -530,7 +665,8 @@ export const LESSONS: Lesson[] = [
         apply: async ({ region, isCurrent }) => {
           resetView("none");
           const site = findRidge(region.meta) ?? region.meta.sites[0];
-          if (!site) return "This map has no landing sites in its data, so the first-person view was skipped.";
+          if (!site)
+            return "This map has no landing sites in its data, so the first-person view was skipped.";
           placeAtSite("A", site);
           useApp.getState().setCamera("lander");
           const analysis = await analyzePoint(
@@ -540,7 +676,8 @@ export const LESSONS: Lesson[] = [
           );
           if (!isCurrent()) return null;
           const t = earthriseMoment(analysis);
-          if (t === null) return "Earth stays hidden from here for this whole month. Try a later date on the timeline.";
+          if (t === null)
+            return "Earth stays hidden from here for this whole month. Try a later date on the timeline.";
           useApp.getState().setTime(t);
           return null;
         },
@@ -560,8 +697,16 @@ export const LESSONS: Lesson[] = [
           return null;
         },
       },
-      { title: "The libration wobble", Body: LibrationBody, source: SOURCES.hls2024 },
-      { title: "Two weeks on, two weeks off", Body: TwoWeeksBody, source: SOURCES.hls2024 },
+      {
+        title: "The libration wobble",
+        Body: LibrationBody,
+        source: SOURCES.hls2024,
+      },
+      {
+        title: "Two weeks on, two weeks off",
+        Body: TwoWeeksBody,
+        source: SOURCES.hls2024,
+      },
     ],
   },
   {
@@ -580,15 +725,24 @@ export const LESSONS: Lesson[] = [
           if (!ridge) return NO_RIDGE;
           placeAtSite("A", ridge);
           const down = downslopePoint(region, ridge.x, ridge.y, 300);
-          if (!down) return "There is no terrain data around the ridge, so LUNA-Bot skipped placing lander B.";
+          if (!down)
+            return "There is no terrain data around the ridge, so LUNA-Bot skipped placing lander B.";
           const app = useApp.getState();
           app.placeLander("B", { x: down.x, y: down.y });
           app.setActiveLander("A");
           return null;
         },
       },
-      { title: "Count the sunlight", Body: CountSunBody, source: SOURCES.glaser2018 },
-      { title: "Surviving the night", Body: SurviveBody, source: SOURCES.glaser2018 },
+      {
+        title: "Count the sunlight",
+        Body: CountSunBody,
+        source: SOURCES.glaser2018,
+      },
+      {
+        title: "Surviving the night",
+        Body: SurviveBody,
+        source: SOURCES.glaser2018,
+      },
     ],
   },
 ];

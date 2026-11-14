@@ -252,9 +252,20 @@ export function ChatThread({
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const last = messages.at(-1);
+  // "Thinking…" until the current step shows text or a tool chip (reasoning parts are not shown)
+  const currentStep =
+    last?.role === "assistant"
+      ? last.parts.slice(
+          last.parts.findLastIndex((p) => p.type === "step-start") + 1,
+        )
+      : [];
   const thinking =
     busy &&
-    (last?.role === "user" || last?.parts.at(-1)?.type === "step-start");
+    (last?.role === "user" ||
+      !currentStep.some(
+        (p) =>
+          (p.type === "text" && p.text.trim() !== "") || isStaticToolUIPart(p),
+      ));
 
   // keep the newest content in view while streaming, unless the user scrolled up to read
   useEffect(() => {

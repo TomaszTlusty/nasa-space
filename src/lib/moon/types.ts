@@ -73,12 +73,15 @@ export interface RegionMeta {
   center: { lat: number; lon: number; X: number; Y: number };
   /** side length of the square region (metres) */
   extent: number;
-  /** `heights.bin`: Float32 heights (m), layout row * width + col, row 0 = min y */
-  terrain: RegionGrid & { file: "heights.bin"; minHeight: number; maxHeight: number };
-  /** `normal.png`: RGB tangent-space-free world normal map in region frame, row 0 = max y (image top) */
-  normalMap: { file: "normal.png"; size: number };
-  /** `horizon.bin` */
-  horizon: HorizonGridInfo & { file: "horizon.bin" };
+  /**
+   * Float32 heights (m), layout row * width + col, row 0 = min y. "*.gz" = gzip-compressed bytes
+   * (decompress client-side; `loadRegion` handles it).
+   */
+  terrain: RegionGrid & { file: "heights.bin" | "heights.bin.gz"; minHeight: number; maxHeight: number };
+  /** RGB world normal map in region frame (not tangent space), row 0 = max y (image top) */
+  normalMap: { file: "normal.png" | "normal.webp"; size: number };
+  /** Uint8 horizon grid, see HorizonGridInfo; "*.gz" = gzip-compressed */
+  horizon: HorizonGridInfo & { file: "horizon.bin" | "horizon.bin.gz" };
   /** `slope.bin`: Uint8 slope in degrees (0..90) on the horizon grid, layout row * width + col */
   slope: { file: "slope.bin" };
   sites: RegionSite[];
