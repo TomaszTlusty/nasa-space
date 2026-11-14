@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/*
+ * Malapert design system — "precision instrument".
+ * Dark only. The Moon is the only dramatic element; chrome stays calm, hairline and translucent.
+ * Data colours carry meaning and are never reused for decoration:
+ *   sun   = warm amber   (power, sunlight, the single UI accent)
+ *   earth = cool blue    (direct-to-Earth link)
+ *   night = slate/indigo (shadow, blackout)
+ */
+
+@theme {
+  --font-sans: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* surfaces */
+  --color-canvas: oklch(0.13 0.006 260);
+  --color-surface: oklch(0.17 0.007 260);
+  --color-surface-2: oklch(0.21 0.008 260);
+  --color-surface-3: oklch(0.26 0.009 260);
+  --color-glass: oklch(0.16 0.007 260 / 0.72);
+  --color-glass-strong: oklch(0.15 0.007 260 / 0.88);
+
+  /* lines */
+  --color-line: oklch(1 0 0 / 0.08);
+  --color-line-strong: oklch(1 0 0 / 0.14);
+  --color-highlight: oklch(1 0 0 / 0.06);
+
+  /* text */
+  --color-fg: oklch(0.95 0.005 260);
+  --color-fg-muted: oklch(0.72 0.012 260);
+  --color-fg-faint: oklch(0.55 0.012 260);
+
+  /* data + accent */
+  --color-sun: oklch(0.83 0.145 75);
+  --color-sun-strong: oklch(0.78 0.16 65);
+  --color-sun-soft: oklch(0.83 0.145 75 / 0.14);
+  --color-earth: oklch(0.76 0.115 235);
+  --color-earth-soft: oklch(0.76 0.115 235 / 0.14);
+  --color-night: oklch(0.42 0.04 270);
+  --color-night-soft: oklch(0.42 0.04 270 / 0.22);
+  --color-danger: oklch(0.7 0.17 25);
+  --color-danger-soft: oklch(0.7 0.17 25 / 0.14);
+  --color-ok: oklch(0.8 0.13 160);
+  --color-ok-soft: oklch(0.8 0.13 160 / 0.14);
+  --color-beacon: oklch(0.98 0 0);
+
+  /* radii */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* type scale (size / leading / tracking tuned per size) */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.45rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.6rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.8rem;
+  --text-2xl: 1.875rem;
+  --text-2xl--line-height: 2.2rem;
+  --text-3xl: 2.75rem;
+  --text-3xl--line-height: 1.05;
+  --text-4xl: 4.25rem;
+  --text-4xl--line-height: 1;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* elevation: soft, diffused, never harsh */
+  --shadow-panel: 0 1px 0 0 oklch(1 0 0 / 0.05) inset, 0 24px 48px -24px oklch(0 0 0 / 0.6),
+    0 2px 8px -2px oklch(0 0 0 / 0.4);
+  --shadow-pop: 0 1px 0 0 oklch(1 0 0 / 0.06) inset, 0 16px 40px -12px oklch(0 0 0 / 0.7);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-canvas);
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-sun-soft);
+    color: var(--color-fg);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-sun);
+    outline-offset: 2px;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+@utility tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  letter-spacing: -0.01em;
+}
+
+/* Small uppercase label used above values ("eyebrow"). */
+@utility eyebrow {
+  font-size: var(--text-2xs);
+  line-height: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--color-fg-faint);
+}
+
+/* Translucent HUD material. Only used on fixed overlay surfaces above the 3D canvas. */
+@utility glass {
+  background: var(--color-glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: var(--shadow-panel);
+  border: 1px solid var(--color-line);
+}
+
+@utility hairline {
+  border: 1px solid var(--color-line);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--color-glass-strong);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}

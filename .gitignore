@@ -1,0 +1,23 @@
+# deps
+node_modules/
+
+# next / build
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# env
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# raw NASA data (re-download with `bun run data:fetch`)
+data/raw/
+
+# misc
+.DS_Store
+*.log
