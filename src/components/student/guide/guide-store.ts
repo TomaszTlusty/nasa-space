@@ -1,21 +1,24 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { create } from "zustand";
 import type { Source } from "@/components/student/lessons/sources";
+import type { Mood } from "./moods";
 
 /**
- * LUNA-Bot's message queue. One bubble at a time; repeats are dropped by key, chatty event kinds have a
- * cooldown, and a newer message of the same kind replaces the queued one so the bot never lags behind.
+ * LUNA's message queue. One bubble at a time; repeats are dropped by key, chatty event kinds have a
+ * cooldown, and a newer message of the same kind replaces the queued one so LUNA never lags behind.
  * Other Student-mode features may call `useGuide.getState().say(...)` with kind "custom".
  */
-export type GuideKind = "intro" | "crater" | "good-site" | "earth" | "sun" | "first-person" | "custom";
+export type GuideKind = "intro" | "crater" | "good-site" | "earth" | "sun" | "first-person" | "game" | "custom";
 
 export interface GuideMessage {
   /** dedupe key: identical keys are never queued twice; with `once` they are never shown twice per session */
   key: string;
   kind: GuideKind;
-  text: ReactNode;
+  /** plain text, revealed typewriter-style; numbers with units are set in the mono face automatically */
+  text: string;
+  /** LUNA's expression while this message is up (default "idle"); "excited" also fires a sparkle burst */
+  mood?: Mood;
   source?: Source;
   once?: boolean;
 }
@@ -27,6 +30,7 @@ const COOLDOWN_MS: Record<GuideKind, number> = {
   earth: 90_000,
   sun: 60_000,
   "first-person": 0,
+  game: 0,
   custom: 0,
 };
 

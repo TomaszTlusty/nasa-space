@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useGame } from "@/components/student/game/game-store";
 import { useLessons } from "@/components/student/lessons/lesson-store";
 import { pct, useLanderAnalysis } from "@/components/student/lessons/live";
 import { SOURCES } from "@/components/student/lessons/sources";
@@ -15,10 +16,6 @@ const INTRO_KEY = "malapert.luna-bot.intro";
 /** A dark spot only counts as a crater floor when it sits this far below the region centre (metres). */
 const CRATER_DEPTH_M = 1000;
 const CRATER_CHECK_DAYS = 30;
-
-function Num({ children }: { children: ReactNode }) {
-  return <span className="tabular whitespace-nowrap text-fg">{children}</span>;
-}
 
 /**
  * True only for a real cold trap: a named crater-floor site, or a spot that gets no sunlight at all over
@@ -39,9 +36,9 @@ async function isCraterFloor(analysis: PointAnalysis, siteId: string | undefined
 }
 
 /**
- * Watches the app and queues LUNA-Bot messages for the moments that teach something: landing in a dark
- * crater or a great spot, losing Earth, first-person view, and sunrise/sunset while time plays.
- * Silent while a lesson runs; the lesson already explains what is on screen.
+ * Watches the app and queues LUNA's messages (with a matching mood) for the moments that teach something:
+ * landing in a dark crater or a great spot, losing Earth, first-person view, sunrise/sunset while time plays,
+ * and the end of a game mission. Silent while a lesson runs; the lesson already explains what is on screen.
  */
 export function useGuideEvents(): void {
   const say = useGuide((s) => s.say);
@@ -65,10 +62,11 @@ export function useGuideEvents(): void {
     say({
       key: "intro",
       kind: "intro",
+      mood: "happy",
       once: true,
       text: hasLanderA
-        ? "Hi, I'm LUNA-Bot! This is real terrain near the Moon's south pole. Your lander is down; press play on the timeline and watch how the light moves."
-        : "Hi, I'm LUNA-Bot! This is real terrain near the Moon's south pole. Click anywhere on the ground to land your first lander.",
+        ? "Hi, I'm LUNA! Your lander is already down on real Moon terrain near the south pole. Press play on the timeline and watch the light move!"
+        : "Hi, I'm LUNA! We're floating over real Moon terrain near the south pole. Click anywhere on the ground to land your first lander!",
       source: SOURCES.lola,
     });
   }, [say, hasLanderA]);
@@ -96,25 +94,17 @@ export function useGuideEvents(): void {
                 ? {
                     key: `crater:${spot}`,
                     kind: "crater",
+                    mood: "cold",
                     once: true,
-                    text: (
-                      <>
-                        Lander {id} landed on a crater floor that gets no sunlight at all. Floors like this can sit in
-                        the dark for ages and drop to about <Num>−238 °C</Num>. Let's find higher ground!
-                      </>
-                    ),
+                    text: `Brrr! Lander ${id} landed on a crater floor that never sees the Sun. Floors like this can sit in the dark for ages and drop to about −238 °C. My visor is frosting up! Let's find higher ground.`,
                     source: SOURCES.paige2010,
                   }
                 : {
                     key: `shadow:${spot}`,
                     kind: "crater",
+                    mood: "worried",
                     once: true,
-                    text: (
-                      <>
-                        Lander {id}'s spot is in shadow for most of this window (<Num>{pct(analysis.sunMean)}%</Num>{" "}
-                        sunlight): the Sun is low and nearby terrain blocks it. Try higher ground or a later date.
-                      </>
-                    ),
+                    text: `Hmm, lander ${id} is in shadow for most of this window (${pct(analysis.sunMean)}% sunlight). The Sun sits so low here that nearby hills block it. Try higher ground, or a later date?`,
                     source: SOURCES.svs4944,
                   },
             );
@@ -125,13 +115,9 @@ export function useGuideEvents(): void {
         say({
           key: `good:${spot}`,
           kind: "good-site",
+          mood: "excited",
           once: true,
-          text: (
-            <>
-              Great spot! Lander {id} sees the Sun <Num>{pct(analysis.sunMean)}%</Num> of the time in this window. Over
-              many years, even the best ridge spots average under <Num>90%</Num>.
-            </>
-          ),
+          text: `Great spot! Lander ${id} sees the Sun ${pct(analysis.sunMean)}% of the time in this window. Over many years, even the best ridge spots average under 90%.`,
           source: SOURCES.glaser2018,
         });
       }
@@ -147,13 +133,9 @@ export function useGuideEvents(): void {
     say({
       key: "first-person",
       kind: "first-person",
+      mood: "amazed",
       once: true,
-      text: (
-        <>
-          At the pole the Sun doesn't rise and set like at home: it circles the sky, never more than about{" "}
-          <Num>1.5°</Num> above or below the horizon, skimming just over the mountains.
-        </>
-      ),
+      text: "Whoa, look around! At the pole the Sun doesn't rise and set like at home. It circles the sky, never more than about 1.5° above or below the horizon, skimming over the mountains.",
       source: SOURCES.svs4944,
     });
   }, [camera, lessonActive, say]);
@@ -179,10 +161,11 @@ export function useGuideEvents(): void {
       say({
         key: "earth-lost",
         kind: "earth",
+        mood: "sad",
         text:
           live.earthElev > 0
-            ? "A mountain is blocking Earth! No pictures home until it rises again."
-            : `Earth just slipped below the horizon at lander ${id}, so no direct radio link for a while. Near the pole, Earth is often up about two weeks and down about two weeks; high or Earth-facing spots see it longer.`,
+            ? "Oh no, a mountain is blocking Earth! No pictures home until it rises again."
+            : `Earth just slipped below the horizon at lander ${id}, so no radio link home for a while. Near the pole, Earth is often up about two weeks and down about two weeks; high or Earth-facing spots see it longer.`,
         source: SOURCES.hls2024,
       });
     }
@@ -190,11 +173,44 @@ export function useGuideEvents(): void {
       say({
         key: sun ? "sunrise" : "sunset",
         kind: "sun",
+        mood: sun ? "excited" : "worried",
         text: sun
           ? `Sunrise at lander ${id}! Its solar panels are making power again.`
-          : `Sunset at lander ${id}. From now on it runs on its batteries until the Sun comes back.`,
+          : `Sunset at lander ${id}. Now it runs on its batteries until the Sun comes back.`,
         source: SOURCES.glaser2018,
       });
     }
   }, [live, placementKey, activeLander, playing, lessonActive, say]);
+
+  // Game debrief: cheer (or comfort) when a mission result comes in.
+  const phase = useGame((s) => s.phase);
+  const result = useGame((s) => s.result);
+  const announced = useRef(result);
+  useEffect(() => {
+    if (phase !== "result" || !result || announced.current === result) return;
+    announced.current = result;
+    const key = `game:${result.missionId}:${result.score}:${Date.now()}`;
+    if (result.tipped) {
+      say({
+        key,
+        kind: "game",
+        mood: "worried",
+        text: "Whoops, the lander tipped over on steep ground. Landers need slopes under 10°, so look for flatter ground next time!",
+      });
+    } else if (result.survivedWindow) {
+      say({
+        key,
+        kind: "game",
+        mood: "excited",
+        text: `Mission complete! You earned the ${result.rank} badge. Your lander kept its lights on the whole time.`,
+      });
+    } else {
+      say({
+        key,
+        kind: "game",
+        mood: "sad",
+        text: "The battery ran out this time. A sunnier spot keeps the lights on longer. Want to try again?",
+      });
+    }
+  }, [phase, result, say]);
 }
