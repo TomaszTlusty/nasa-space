@@ -25,3 +25,8 @@ data/raw/
 # presentation build output
 deck/out/
 deck/node_modules/
+
+# cloudflare / opennext
+.open-next/
+.wrangler/
+.dev.vars*

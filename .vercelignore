@@ -1,4 +1,0 @@
-data/raw
-.env*.local
-node_modules
-.next

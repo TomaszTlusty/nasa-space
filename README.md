@@ -38,12 +38,19 @@ bun run data:validate   # JPL Horizons + Mazarico comparison → public/validati
 bun run test
 ```
 
-## Deploy (Vercel)
+## Deploy (Cloudflare Workers)
+
+Built with `@opennextjs/cloudflare`. The prerendered page and region data are served as Workers static assets; the
+Worker itself only handles `/api/chat`.
 
 ```sh
-vercel --prod                       # data/raw is excluded via .vercelignore
-vercel env add ANTHROPIC_API_KEY    # production; optional AI_MODEL (default claude-haiku-5-5)
+bun run preview                          # build + run locally in workerd (reads secrets from .dev.vars)
+bun run deploy                           # build + deploy (account from `wrangler whoami`)
+bunx wrangler secret put ANTHROPIC_API_KEY   # once per account; optional AI_MODEL (default claude-haiku-5-5)
 ```
+
+Live: https://malapert.imalfect.workers.dev. For a custom domain, the domain's zone must be in the same Cloudflare
+account as the Worker; then uncomment the `routes` entry in `wrangler.jsonc` and deploy again.
 
 ## Stack
 
