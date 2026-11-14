@@ -151,7 +151,7 @@ export function ValidationCard({ className }: { className?: string }) {
           </p>
           {mazarico.map((m) => (
             <div key={m.region} className="text-xs">
-              <span className="text-fg">{m.region}</span>
+              <span className="text-fg capitalize">{m.region}</span>
               <span className="text-fg-muted">
                 {" "}
                 Sun MAE{" "}
@@ -168,7 +168,12 @@ export function ValidationCard({ className }: { className?: string }) {
                 </span>{" "}
                 points
               </span>
-              <div className="text-2xs text-fg-faint">{m.method}</div>
+              <p
+                className="line-clamp-2 text-2xs text-fg-faint"
+                title={m.method}
+              >
+                {m.method}
+              </p>
             </div>
           ))}
         </div>

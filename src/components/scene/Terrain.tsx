@@ -28,7 +28,7 @@ interface TerrainProps {
 
 export function Terrain({ region, centerHeight, sky, overlay, averageData, onPick, onHover }: TerrainProps) {
   const { meta, heights } = region;
-  const normalMap = useTexture(`/regions/${meta.id}/normal.png`);
+  const normalMap = useTexture(`/regions/${meta.id}/${meta.normalMap.file}`);
 
   const geometry = useMemo(() => {
     const t = meta.terrain;

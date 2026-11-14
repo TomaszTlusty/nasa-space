@@ -58,8 +58,9 @@ describe("region runtime", () => {
     // The 160 m grid smooths sharp rims / crests (sites sit on local optima), so only the smooth
     // crater floor and the ridge top C1 (~20 m from a node) are expected to agree closely.
     for (const id of ["shackleton-floor", "c1"]) {
-      const site = shackleton.meta.sites.find((s) => s.id === id)!;
-      const prof = site.horizons.find((h) => h.mastHeight === 2)!.values;
+      const site = shackleton.meta.sites.find((s) => s.id === id);
+      const prof = site?.horizons.find((h) => h.mastHeight === 2)?.values;
+      if (!site || !prof) throw new Error(`site ${id} missing 2 m horizon`);
       let err = 0;
       for (let k = 0; k < 720; k += 4)
         err += Math.abs(horizonAt(shackleton, site.x, site.y, k / 2) - prof[k]);
@@ -100,10 +101,10 @@ describe("region runtime", () => {
     const ws = windows(tl.times, tl.earthFraction, 0);
     const tr = nextTransition(shackleton, point, start, "earth");
     expect(ws.length).toBeGreaterThan(0);
-    expect(tr).not.toBeNull();
+    if (!tr) throw new Error("no Earth transition within 30 days");
     const firstEdge = ws[0].openStart ? ws[0].endMs : ws[0].startMs;
-    expect(Math.abs(tr!.date.getTime() - firstEdge)).toBeLessThan(15 * 60_000);
-    expect(tr!.kind).toBe(ws[0].openStart ? "set" : "rise");
+    expect(Math.abs(tr.date.getTime() - firstEdge)).toBeLessThan(15 * 60_000);
+    expect(tr.kind).toBe(ws[0].openStart ? "set" : "rise");
   });
 
   test("averageGrid equals the per-node timeline mean", () => {

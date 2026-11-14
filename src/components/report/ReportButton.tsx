@@ -66,7 +66,10 @@ export function ReportButton({ className }: { className?: string }) {
           variant="ghost"
           disabled
           focusableWhenDisabled
-          className={cn("data-disabled:pointer-events-auto data-disabled:cursor-not-allowed", className)}
+          className={cn(
+            "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed",
+            className,
+          )}
         >
           <FilePdf size={16} weight="light" />
           Report

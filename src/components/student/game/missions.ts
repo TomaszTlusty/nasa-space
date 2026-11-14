@@ -110,27 +110,14 @@ export function duration(hours: number): string {
   return `${(hours / 24).toFixed(1).replace(/\.0$/, "")} days`;
 }
 
-function longestRun(values: Float32Array, hidden: boolean): number {
-  let run = 0;
-  let best = 0;
-  for (const v of values) {
-    if (v > 0 !== hidden) {
-      run++;
-      if (run > best) best = run;
-    } else run = 0;
-  }
-  return best;
-}
-
 export function scoreMission(mission: Mission, a: PointAnalysis): MissionResult {
   const { series, power } = a;
-  const stepHours = series.stepMinutes / 60;
   const n = series.sunFraction.length;
   let lit = 0;
   for (const v of series.sunFraction) if (v > 0) lit++;
   const sunUp = n > 0 ? lit / n : 0;
   const earthUp = a.earthMean;
-  const longestEarthGapHours = longestRun(series.earthFraction, true) * stepHours;
+  const longestEarthGapHours = a.longestBlackoutHours;
   const longestDarkHours = a.longestDarkHours;
 
   const survivedWindow = power.depletedAt === null;

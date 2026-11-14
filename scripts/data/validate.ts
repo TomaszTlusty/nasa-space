@@ -196,7 +196,7 @@ const horizons: ValidationReport["horizons"] = HORIZONS_FIXTURES.map((f) => {
   return {
     body: f.body,
     lat: f.lat,
-    lon: normLon(f.lonE),
+    lon: +normLon(f.lonE).toFixed(6),
     utc: f.utc,
     jplAzimuth: f.az,
     jplElevation: f.el,

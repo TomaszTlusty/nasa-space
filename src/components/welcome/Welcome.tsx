@@ -14,7 +14,7 @@ import { type Mode, useApp } from "@/lib/store";
 import { useWelcome } from "./welcome-store";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
-/** 6 items x 48 ms + 300 ms = 540 ms: the whole entrance stays under 600 ms */
+/** last of 6 steps starts at 5 x 48 ms; + 300 ms = 540 ms, so the whole entrance stays under 600 ms */
 const STAGGER_S = 0.048;
 const ITEM_S = 0.3;
 

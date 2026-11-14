@@ -51,4 +51,7 @@ ${COMMON}
 - At most 80 words. No headings, tables or emojis. "- " bullets allowed. End with a short question or idea to try when it fits.
 `;
 
-export const INSTRUCTIONS: Record<ChatMode, string> = { science: SCIENCE, student: STUDENT };
+export const INSTRUCTIONS: Record<ChatMode, string> = {
+  science: SCIENCE,
+  student: STUDENT,
+};

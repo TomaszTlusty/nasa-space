@@ -1,9 +1,18 @@
 "use client";
 
 import { Chat } from "@ai-sdk/react";
-import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
 import { toolExecutors } from "@/lib/ai/client-tools";
-import { type ChatMode, countSteps, MAX_HISTORY, MAX_STEPS, type MissionUIMessage } from "@/lib/ai/tools";
+import {
+  type ChatMode,
+  countSteps,
+  MAX_HISTORY,
+  MAX_STEPS,
+  type MissionUIMessage,
+} from "@/lib/ai/tools";
 
 /**
  * One chat per mode, kept at module scope so conversations survive mode switches and panel
@@ -20,7 +29,8 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
       }),
     }),
     sendAutomaticallyWhen: ({ messages }) =>
-      lastAssistantMessageIsCompleteWithToolCalls({ messages }) && countSteps(messages.at(-1)) < MAX_STEPS,
+      lastAssistantMessageIsCompleteWithToolCalls({ messages }) &&
+      countSteps(messages.at(-1)) < MAX_STEPS,
     onToolCall: async ({ toolCall }) => {
       if (toolCall.dynamic) return;
       const { toolCallId } = toolCall;
@@ -28,7 +38,11 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
         // No await on addToolOutput: avoids deadlocking the stream that delivered this call.
         switch (toolCall.toolName) {
           case "get_context":
-            void chat.addToolOutput({ tool: "get_context", toolCallId, output: await toolExecutors.get_context() });
+            void chat.addToolOutput({
+              tool: "get_context",
+              toolCallId,
+              output: await toolExecutors.get_context(),
+            });
             break;
           case "set_mission_window":
             void chat.addToolOutput({
@@ -38,13 +52,19 @@ function createChat(mode: ChatMode): Chat<MissionUIMessage> {
             });
             break;
           case "slip_launch":
-            void chat.addToolOutput({ tool: "slip_launch", toolCallId, output: toolExecutors.slip_launch(toolCall.input) });
+            void chat.addToolOutput({
+              tool: "slip_launch",
+              toolCallId,
+              output: toolExecutors.slip_launch(toolCall.input),
+            });
             break;
           case "set_discovery_criteria_and_run":
             void chat.addToolOutput({
               tool: "set_discovery_criteria_and_run",
               toolCallId,
-              output: await toolExecutors.set_discovery_criteria_and_run(toolCall.input),
+              output: await toolExecutors.set_discovery_criteria_and_run(
+                toolCall.input,
+              ),
             });
             break;
           case "analyze_point":

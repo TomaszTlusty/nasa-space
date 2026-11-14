@@ -12,9 +12,13 @@ import {
   MapPin,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { isToolUIPart, type ToolUIPart } from "ai";
+import { isStaticToolUIPart, type ToolUIPart } from "ai";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
-import type { MissionUIMessage, MissionUITools, WindowInfo } from "@/lib/ai/tools";
+import type {
+  MissionUIMessage,
+  MissionUITools,
+  WindowInfo,
+} from "@/lib/ai/tools";
 import { cn } from "@/lib/cn";
 
 type Part = MissionUIMessage["parts"][number];
@@ -34,16 +38,30 @@ function Digits({ text }: { text: string }) {
   );
 }
 
-const dayFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric" });
-const dayMonthFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short" });
-const fullFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" });
+const dayFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "numeric",
+});
+const dayMonthFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "numeric",
+  month: "short",
+});
+const fullFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
 /** "1–16 Mar 2027", "28 Feb – 15 Mar 2027", "20 Dec 2027 – 4 Jan 2028" (UTC). */
 export function formatWindow(w: WindowInfo): string {
   const a = new Date(w.startUtc);
   const b = new Date(w.endUtc);
-  if (a.getUTCFullYear() !== b.getUTCFullYear()) return `${fullFmt.format(a)} – ${fullFmt.format(b)}`;
-  if (a.getUTCMonth() !== b.getUTCMonth()) return `${dayMonthFmt.format(a)} – ${fullFmt.format(b)}`;
+  if (a.getUTCFullYear() !== b.getUTCFullYear())
+    return `${fullFmt.format(a)} – ${fullFmt.format(b)}`;
+  if (a.getUTCMonth() !== b.getUTCMonth())
+    return `${dayMonthFmt.format(a)} – ${fullFmt.format(b)}`;
   return `${dayFmt.format(a)}–${fullFmt.format(b)}`;
 }
 
@@ -58,19 +76,27 @@ interface ChipInfo {
 function describe(part: ToolPart): ChipInfo {
   switch (part.type) {
     case "tool-get_context":
-      return { icon: ListMagnifyingGlass, running: "Reading mission setup", done: part.output ? "Read mission setup" : null };
+      return {
+        icon: ListMagnifyingGlass,
+        running: "Reading mission setup",
+        done: part.output ? "Read mission setup" : null,
+      };
     case "tool-set_mission_window":
       return {
         icon: CalendarBlank,
         running: "Setting mission window",
-        done: part.output ? `Set window ${formatWindow(part.output.window)}` : null,
+        done: part.output
+          ? `Set window ${formatWindow(part.output.window)}`
+          : null,
       };
     case "tool-slip_launch": {
       const d = part.output?.slippedDays;
       return {
         icon: CalendarPlus,
         running: "Slipping launch",
-        done: part.output ? `Slipped ${d && d > 0 ? "+" : ""}${d} d → ${formatWindow(part.output.window)}` : null,
+        done: part.output
+          ? `Slipped ${d && d > 0 ? "+" : ""}${d} d → ${formatWindow(part.output.window)}`
+          : null,
       };
     }
     case "tool-set_discovery_criteria_and_run":
@@ -91,19 +117,28 @@ function describe(part: ToolPart): ChipInfo {
       return {
         icon: MapPin,
         running: `Placing lander${part.input?.lander ? ` ${part.input.lander}` : ""}`,
-        done: part.output ? `Placed ${part.output.lander} at ${part.output.label}` : null,
+        done: part.output
+          ? `Placed ${part.output.lander} at ${part.output.label}`
+          : null,
       };
     case "tool-compare_landers":
-      return { icon: ArrowsLeftRight, running: "Comparing A and B", done: part.output ? "Compared A and B" : null };
+      return {
+        icon: ArrowsLeftRight,
+        running: "Comparing A and B",
+        done: part.output ? "Compared A and B" : null,
+      };
   }
 }
 
 function ToolChip({ part }: { part: ToolPart }) {
   const info = describe(part);
-  const failed = part.state === "output-error" || part.state === "output-denied";
-  const done = part.state === "output-available" && info.done;
+  const failed =
+    part.state === "output-error" || part.state === "output-denied";
+  const done = part.state === "output-available" ? info.done : null;
   const Glyph = failed ? WarningCircle : done ? info.icon : CircleNotch;
-  const label = failed ? `${info.running} failed` : (done ?? `${info.running}…`);
+  const label = failed
+    ? `${info.running} failed`
+    : (done ?? `${info.running}…`);
 
   return (
     <span
@@ -111,10 +146,17 @@ function ToolChip({ part }: { part: ToolPart }) {
       className={cn(
         "inline-flex h-6 max-w-full items-center gap-1.5 rounded-full px-2 text-2xs ring-1",
         "transition-[opacity,transform] duration-200 ease-(--ease-out) starting:translate-y-1 starting:opacity-0",
-        failed ? "bg-danger-soft text-danger ring-danger/25" : "bg-white/5 text-fg-muted ring-line",
+        failed
+          ? "bg-danger-soft text-danger ring-danger/25"
+          : "bg-white/5 text-fg-muted ring-line",
       )}
     >
-      <Glyph size={13} weight="regular" className={cn("shrink-0", !failed && !done && "animate-spin")} aria-hidden />
+      <Glyph
+        size={13}
+        weight="regular"
+        className={cn("shrink-0", !failed && !done && "animate-spin")}
+        aria-hidden
+      />
       <span className="truncate">
         <Digits text={label} />
       </span>
@@ -144,7 +186,10 @@ function RichText({ text }: { text: string }) {
   const flush = () => {
     if (bullets.length === 0) return;
     blocks.push(
-      <ul key={`ul${blocks.length}`} className="flex list-disc flex-col gap-1 pl-4 marker:text-fg-faint">
+      <ul
+        key={`ul${blocks.length}`}
+        className="flex list-disc flex-col gap-1 pl-4 marker:text-fg-faint"
+      >
         {bullets.map((b, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: lines of an append-only stream
           <li key={i}>
@@ -174,13 +219,15 @@ function RichText({ text }: { text: string }) {
   return <div className="flex flex-col gap-2">{blocks}</div>;
 }
 
-type Block = { kind: "tools"; parts: ToolPart[] } | { kind: "text"; text: string };
+type Block =
+  | { kind: "tools"; parts: ToolPart[] }
+  | { kind: "text"; text: string };
 
 function toBlocks(parts: Part[]): Block[] {
   const blocks: Block[] = [];
   for (const p of parts) {
     const prev = blocks.at(-1);
-    if (isToolUIPart(p)) {
+    if (isStaticToolUIPart(p)) {
       if (prev?.kind === "tools") prev.parts.push(p);
       else blocks.push({ kind: "tools", parts: [p] });
     } else if (p.type === "text" && p.text.trim()) {
@@ -205,12 +252,15 @@ export function ChatThread({
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const last = messages.at(-1);
-  const thinking = busy && (last?.role === "user" || last?.parts.at(-1)?.type === "step-start");
+  const thinking =
+    busy &&
+    (last?.role === "user" || last?.parts.at(-1)?.type === "step-start");
 
   // keep the newest content in view while streaming, unless the user scrolled up to read
   useEffect(() => {
     const el = scroller.current;
-    if (el && stick.current && messages.length > 0) el.scrollTop = el.scrollHeight;
+    if (el && stick.current && messages.length > 0)
+      el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   return (
@@ -222,7 +272,10 @@ export function ChatThread({
       }}
       aria-live="polite"
       aria-busy={busy}
-      className={cn("flex flex-col gap-4 overflow-y-auto overscroll-contain", className)}
+      className={cn(
+        "flex flex-col gap-4 overflow-y-auto overscroll-contain",
+        className,
+      )}
     >
       {messages.map((m) =>
         m.role === "user" ? (
@@ -253,7 +306,9 @@ export function ChatThread({
           </div>
         ),
       )}
-      {thinking && <div className="animate-pulse text-fg-faint text-xs">Thinking…</div>}
+      {thinking && (
+        <div className="animate-pulse text-fg-faint text-xs">Thinking…</div>
+      )}
     </div>
   );
 }

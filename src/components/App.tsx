@@ -1,13 +1,16 @@
 "use client";
 
+import { AboutButton } from "@/components/about/AboutButton";
 import { Timeline } from "@/components/hud/Timeline";
 import { TopBar } from "@/components/hud/TopBar";
+import { ReportButton } from "@/components/report/ReportButton";
 import { ChartsDrawer, ChartsToggle } from "@/components/science/charts/ChartsDrawer";
 import { DiscoveryPanel } from "@/components/science/discovery/DiscoveryPanel";
 import { LanderPanel } from "@/components/science/lander/LanderPanel";
 import { LayersPanel } from "@/components/science/layers/LayersPanel";
 import { AppShell } from "@/components/shell/AppShell";
 import { useApp } from "@/lib/store";
+import { Welcome } from "@/components/welcome/Welcome";
 
 /** Composition root. Feature panels plug into the shell slots here; each feature owns its own files. */
 export function App() {
@@ -16,7 +19,16 @@ export function App() {
 
   return (
     <AppShell
-      top={<TopBar />}
+      top={
+        <TopBar
+          right={
+            <div className="flex items-center gap-1">
+              {science && <ReportButton />}
+              <AboutButton />
+            </div>
+          }
+        />
+      }
       left={
         science ? (
           <>
@@ -34,7 +46,12 @@ export function App() {
           {science && <ChartsToggle className="mb-2" />}
         </div>
       }
-      overlay={science ? <ChartsDrawer /> : undefined}
+      overlay={
+        <>
+          {science && <ChartsDrawer />}
+          <Welcome />
+        </>
+      }
     />
   );
 }

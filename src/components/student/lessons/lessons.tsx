@@ -440,10 +440,9 @@ export const LESSONS: Lesson[] = [
           const rim = findCraterRim(region.meta);
           if (!rim) return "This map has no crater-rim site in its data, so LUNA-Bot kept the current time.";
           placeAtSite("A", rim);
-          const s = useApp.getState();
           const analysis = await analyzePoint(
-            { x: rim.x, y: rim.y, siteId: rim.id, mastHeight: s.mastHeight },
-            s.windowStart,
+            { x: rim.x, y: rim.y, siteId: rim.id, id: "A" },
+            useApp.getState().windowStart,
             MONTH,
           );
           if (!isCurrent()) return null;
@@ -534,10 +533,9 @@ export const LESSONS: Lesson[] = [
           if (!site) return "This map has no landing sites in its data, so the first-person view was skipped.";
           placeAtSite("A", site);
           useApp.getState().setCamera("lander");
-          const s = useApp.getState();
           const analysis = await analyzePoint(
-            { x: site.x, y: site.y, siteId: site.id, mastHeight: s.mastHeight },
-            s.windowStart,
+            { x: site.x, y: site.y, siteId: site.id, id: "A" },
+            useApp.getState().windowStart,
             MONTH,
           );
           if (!isCurrent()) return null;
