@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 // cacheComponents stays off: it breaks the R3F canvas on client navigation (pmndrs/react-three-fiber#3595).
 const nextConfig: NextConfig = {
+  // dev-only: lets the ngrok TCP tunnel load dev assets/HMR (hostname only; port is ignored by Next)
+  allowedDevOrigins: ["4.tcp.eu.ngrok.io"],
   turbopack: {
     rules: {
       "*.css": {
