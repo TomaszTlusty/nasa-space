@@ -6,60 +6,60 @@ Zespół: opsec demons x honda varadero xl125 2001 (Tomasz Tłusty, Nikodem Mare
 
 - **Slajd to film i jedno zdanie nagłówka z krótkim akapitem.** Resztę mówicie. Na slajdzie nie ma punktów ani numerów.
 - **Filmy lecą w pętli bez dźwięku.** Mówicie do tego, co widać, i nie czekacie na film.
-- **Jedna myśl przewodnia:** ten sam silnik obliczeń służy inżynierowi i uczniowi. Pojawia się na slajdzie 5 i wraca w ostatnim zdaniu.
-- **Czas:** tekst mówiony ma 280 słów. Przy spokojnym tempie to około 130–137 s, czyli zostaje kilkanaście sekund zapasu. Tempo to moje oszacowanie, zmierzcie stoperem.
+- **Jedna myśl przewodnia:** ten sam silnik obliczeń służy inżynierowi i uczniowi. Pojawia się na slajdach 4 i 5 i wraca w ostatnim zdaniu.
+- **Czas:** przy spokojnym tempie całość to około 135 s, czyli zostaje około 15 s zapasu. Tempo to moje oszacowanie, zmierzcie stoperem.
 
 ## Podział czasu
 
 | # | Slajd | Czas | Kto mówi |
 |---|---|---|---|
-| 1 | Hook | 12 s | ? |
-| 2 | Problem | 18 s | ? |
-| 3 | Poślizg startu | 28 s | ? |
-| 4 | Szukanie lądowiska | 16 s | ? |
-| 5 | Tryb nauki (fuzja) | 24 s | ? |
+| 1 | Hook i problem | 22 s | ? |
+| 2 | Poślizg startu | 28 s | ? |
+| 3 | Szukanie lądowiska | 16 s | ? |
+| 4 | Tryb nauki: LUNA | 18 s | ? |
+| 5 | Tryb nauki: gra | 12 s | ? |
 | 6 | Raport i dowód | 22 s | ? |
 | 7 | Dla kogo + finał | 17 s | ? |
-| | **Razem** | **137 s** | zapas około 13 s |
+| | **Razem** | **135 s** | zapas około 15 s |
 
-Propozycja podziału na osoby: 1–2 jedna osoba, 3–4 druga, 5–7 trzecia. To dwa przekazania głosu.
+Propozycja podziału na osoby: 1–3 jedna osoba, 4–5 druga, 6–7 trzecia. To dwa przekazania głosu.
 
 ---
 
-## 1. Hook (12 s)
+## 1. Hook i problem (22 s)
 
 - **Film:** cienie przesuwające się po kraterze Shackleton, 10 dni w 13 sekund.
 - **Napis:** Tydzień po lądowaniu lądownik IM-1 stracił Słońce i zamilkł.
 - **Mówisz:**
-  > Luty 2024. Lądownik IM-1 siada w rejonie bieguna Księżyca, przewraca się i po tygodniu milknie. Słońce zeszło z jedynego panelu, który jeszcze dawał prąd.
+  > Luty 2024. Lądownik IM-1 siada w rejonie bieguna Księżyca, przewraca się i po tygodniu milknie. Na biegunie Słońce wisi półtora stopnia nad horyzontem. Jedno wzgórze albo tydzień opóźnienia startu decyduje, czy lądownik ma prąd i łączność z Ziemią. Narzędzia, które to liczą, są dla ekspertów.
 
-## 2. Problem (18 s)
-
-- **Film:** widok z lądownika, Słońce sunie wzdłuż horyzontu, Ziemia po lewej.
-- **Napis:** Na biegunie Słońce wznosi się najwyżej około 1,5° nad horyzont.
-- **Mówisz:**
-  > Na biegunie Słońce wisi półtora stopnia nad horyzontem. Jedno wzgórze albo tydzień opóźnienia startu decyduje, czy lądownik ma prąd i łączność z Ziemią. Narzędzia, które to liczą, są dla ekspertów. Opis wyzwania mówi wprost, że są za trudne do szybkiego porównania.
-
-## 3. Poślizg startu (28 s)
+## 2. Poślizg startu (28 s)
 
 - **Film:** stawiamy lądownik na krawędzi Shackletona, klikamy „+7 d”, ocena zmienia się z GO na NO-GO.
 - **Napis:** Start opóźnia się o tydzień i to samo lądowisko przestaje się nadawać.
 - **Mówisz:**
   > To nasza aplikacja. Prawdziwy teren z danych NASA, krater Shackleton. Stawiam lądownik na krawędzi, lądowanie 15 stycznia 2027. Słońce jest, łączność z Ziemią przez 63 procent czasu, ocena: można lądować. Teraz rakieta spóźnia się o tydzień. Jedno kliknięcie. Łączność spada do 16 procent, bateria do 18, ocena: nie lądować. To samo miejsce, siedem dni różnicy.
 
-## 4. Szukanie lądowiska (16 s)
+## 3. Szukanie lądowiska (16 s)
 
 - **Film:** wpisujemy wymagania misji jednym zdaniem, asystent ustawia daty i stawia lądowniki, na koniec otwieramy menu raportu.
 - **Napis:** Opisujesz misję jednym zdaniem, a aplikacja znajduje lądowisko.
 - **Mówisz:**
   > Nie trzeba zgadywać, gdzie postawić lądownik. Wpisuję wymagania misji zwykłym zdaniem. Asystent ustawia daty, przeszukuje 66 tysięcy punktów terenu i stawia lądownik w najlepszym. Cytuje tylko liczby, które policzyła aplikacja.
 
-## 5. Tryb nauki, czyli fuzja (24 s)
+## 4. Tryb nauki: LUNA (18 s)
 
-- **Film:** przełączenie trybu, misja „First light”, wybór stoku 26°, lądownik się przewraca, ekran podsumowania wspomina IM-1.
+- **Film:** tryb nauki, lądownik na dnie krateru, LUNA marznie („−238 °C”); po przeniesieniu na grzbiet LUNA się cieszy („100%”).
+- **Napis:** Uczeń stawia lądownik w kraterze, a LUNA tłumaczy, dlaczego tam zamarznie.
+- **Mówisz:**
+  > I teraz to, co nas wyróżnia. Przełączam tryb. Ten sam Księżyc, te same obliczenia, ale dla ucznia. Stawia lądownik na dnie krateru, a LUNA marznie i tłumaczy: tu nigdy nie świeci Słońce, minus 238 stopni. Przenosi go na grzbiet i LUNA podaje wynik: Słońce przez cały czas.
+
+## 5. Tryb nauki: gra (12 s)
+
+- **Film:** misja „First light”, wybór stoku 26°, lądownik się przewraca, ekran podsumowania wspomina IM-1.
 - **Napis:** Uczeń gra na tych samych danych, na których pracuje inżynier.
 - **Mówisz:**
-  > I teraz to, co nas wyróżnia. Przełączam tryb. Ten sam Księżyc, te same obliczenia, ale dla ucznia. W grze ma 45 sekund na wybór lądowiska. Jak wybierze stok, lądownik się przewraca, tak jak IM-1. Niczego nie udajemy, uczeń gra na danych inżyniera.
+  > W grze ma 45 sekund na wybór lądowiska. Jak wybierze stok, lądownik się przewraca, tak jak IM-1. Niczego nie udajemy, uczeń gra na danych inżyniera.
 
 ## 6. Raport i dowód (22 s)
 

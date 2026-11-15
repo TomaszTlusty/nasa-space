@@ -22,20 +22,12 @@ const SLIDES: Slide[] = [
     side: "right",
     clip: "clip-hook-s.gif",
     title: "Tydzień po lądowaniu lądownik IM-1 stracił Słońce i zamilkł.",
-    body: "Luty 2024, okolice bieguna południowego Księżyca. Lądownik przewrócił się na stoku o nachyleniu <b>12°</b> i działał <b>7 dni</b>. Na nagraniu: <b>10 dni</b> światła nad kraterem Shackleton w 13 sekund.",
+    body: "Luty 2024, okolice bieguna południowego Księżyca: lądownik przewrócił się na stoku <b>12°</b> i działał <b>7 dni</b>. Na samym biegunie Słońce wznosi się najwyżej około <b>1,5°</b> nad horyzont, więc jedno wzgórze albo tydzień opóźnienia startu decyduje o prądzie i łączności z Ziemią.",
     notes:
-      "Luty 2024. Lądownik IM-1 siada w rejonie bieguna Księżyca, przewraca się i po tygodniu milknie. Słońce zeszło z jedynego panelu, który jeszcze dawał prąd.",
+      "Luty 2024. Lądownik IM-1 siada w rejonie bieguna Księżyca, przewraca się i po tygodniu milknie. Na biegunie Słońce wisi półtora stopnia nad horyzontem. Jedno wzgórze albo tydzień opóźnienia startu decyduje, czy lądownik ma prąd i łączność z Ziemią. Narzędzia, które to liczą, są dla ekspertów.",
   },
   {
     side: "left",
-    clip: "clip-sun.gif",
-    title: "Na biegunie Słońce wznosi się najwyżej około 1,5° nad horyzont.",
-    body: "Jedno wzgórze albo tydzień opóźnienia startu decyduje, czy lądownik ma prąd i łączność z Ziemią. Na nagraniu widok z lądownika: Słońce sunie wzdłuż horyzontu, Ziemia wisi po lewej.",
-    notes:
-      "Na biegunie Słońce wisi półtora stopnia nad horyzontem. Jedno wzgórze albo tydzień opóźnienia startu decyduje, czy lądownik ma prąd i łączność z Ziemią. Narzędzia, które to liczą, są dla ekspertów. Opis wyzwania mówi wprost, że są za trudne do szybkiego porównania.",
-  },
-  {
-    side: "right",
     clip: "clip-slip.gif",
     title: "Start opóźnia się o tydzień i to samo lądowisko przestaje się nadawać.",
     body: "Krawędź krateru Shackleton, lądowanie 15 stycznia 2027: łączność z Ziemią przez <b>63%</b> czasu, bateria cały czas pełna. Tydzień później: <b>16%</b> łączności, bateria spada do <b>18%</b>. Liczone na rzeczywistym terenie z danych NASA LOLA.",
@@ -43,7 +35,7 @@ const SLIDES: Slide[] = [
       "To nasza aplikacja. Prawdziwy teren z danych NASA, krater Shackleton. Stawiam lądownik na krawędzi, lądowanie 15 stycznia 2027. Słońce jest, łączność z Ziemią przez 63 procent czasu, ocena: można lądować. Teraz rakieta spóźnia się o tydzień. Jedno kliknięcie. Łączność spada do 16 procent, bateria do 18, ocena: nie lądować. To samo miejsce, siedem dni różnicy.",
   },
   {
-    side: "left",
+    side: "right",
     clip: "clip-ai.gif",
     title: "Opisujesz misję jednym zdaniem, a aplikacja znajduje lądowisko.",
     body: "Asystent AI ustawia daty i przeszukuje <b>66 049</b> punktów terenu. Każda liczba w jego odpowiedzi pochodzi z obliczeń aplikacji, a wynik od razu trafia do raportu.",
@@ -51,12 +43,20 @@ const SLIDES: Slide[] = [
       "Nie trzeba zgadywać, gdzie postawić lądownik. Wpisuję wymagania misji zwykłym zdaniem. Asystent ustawia daty, przeszukuje 66 tysięcy punktów terenu i stawia lądownik w najlepszym. Cytuje tylko liczby, które policzyła aplikacja.",
   },
   {
+    side: "left",
+    clip: "clip-luna.gif",
+    title: "Uczeń stawia lądownik w kraterze, a LUNA tłumaczy, dlaczego tam zamarznie.",
+    body: "Dno krateru Shackleton nigdy nie widzi Słońca i ma około <b>−238 °C</b>. Po przeniesieniu lądownika na grzbiet LUNA podaje wynik: Słońce przez <b>100%</b> tego okna. Komentuje to, co policzyła aplikacja.",
+    notes:
+      "I teraz to, co nas wyróżnia. Przełączam tryb. Ten sam Księżyc, te same obliczenia, ale dla ucznia. Stawia lądownik na dnie krateru, a LUNA marznie i tłumaczy: tu nigdy nie świeci Słońce, minus 238 stopni. Przenosi go na grzbiet i LUNA podaje wynik: Słońce przez cały czas.",
+  },
+  {
     side: "right",
     clip: "clip-game.gif",
     title: "Uczeń gra na tych samych danych, na których pracuje inżynier.",
     body: "Ma <b>45 sekund</b> na wybór lądowiska. Stok o nachyleniu <b>26°</b> kończy misję przewróceniem, tak jak było z IM-1. Obok gry są <b>4</b> lekcje po 30 sekund.",
     notes:
-      "I teraz to, co nas wyróżnia. Przełączam tryb. Ten sam Księżyc, te same obliczenia, ale dla ucznia. W grze ma 45 sekund na wybór lądowiska. Jak wybierze stok, lądownik się przewraca, tak jak IM-1. Niczego nie udajemy, uczeń gra na danych inżyniera.",
+      "W grze ma 45 sekund na wybór lądowiska. Jak wybierze stok, lądownik się przewraca, tak jak IM-1. Niczego nie udajemy, uczeń gra na danych inżyniera.",
   },
   {
     side: "left",
