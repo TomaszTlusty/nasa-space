@@ -36,3 +36,9 @@ p b { color: #f1f2f5; font-weight: 400; }
 .clip-right p { left: 96px; }
 .clip-left .clip { left: 60px; }
 .clip-left p { left: 1340px; width: 484px; }
+/* closing slide: QR, address, audience line and team in the text column */
+.outro { position: absolute; left: 96px; top: 300px; bottom: 50px; width: 470px; display: flex; flex-direction: column; }
+.outro .qr { width: 232px; height: 232px; padding: 14px; background: #fff; border-radius: 18px; }
+.outro .url { margin-top: 22px; font-size: 40px; font-weight: 500; letter-spacing: -0.01em; }
+.outro .who { margin-top: 26px; font-size: 25px; line-height: 1.42; color: #a4a8b4; text-wrap: pretty; }
+.outro .team { margin-top: auto; white-space: nowrap; font-size: 20px; line-height: 1.5; color: #6f7380; }
