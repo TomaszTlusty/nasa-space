@@ -49,8 +49,8 @@ bun run deploy                           # build + deploy (account from `wrangle
 bunx wrangler secret put ANTHROPIC_API_KEY   # once per account; optional AI_MODEL (default claude-haiku-5-5)
 ```
 
-Live: https://malapert.imalfect.workers.dev. For a custom domain, the domain's zone must be in the same Cloudflare
-account as the Worker; then uncomment the `routes` entry in `wrangler.jsonc` and deploy again.
+Live: https://malapert.us (also https://malapert.imalfect.workers.dev). Routes for the domain are in `wrangler.jsonc`; the zone
+must be in the same Cloudflare account as the Worker.
 
 ## Stack
 

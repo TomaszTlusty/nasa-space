@@ -5,7 +5,11 @@
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
-  "observability": { "enabled": true }
-  // Custom domain (needs the malapert.us zone in the same Cloudflare account as this Worker):
-  // "routes": [{ "pattern": "malapert.us", "custom_domain": true }]
+  "observability": { "enabled": true },
+  "workers_dev": true,
+  // malapert.us is a proxied zone in this account: plain Worker routes take over both hostnames.
+  "routes": [
+    { "pattern": "malapert.us/*", "zone_name": "malapert.us" },
+    { "pattern": "www.malapert.us/*", "zone_name": "malapert.us" }
+  ]
 }
