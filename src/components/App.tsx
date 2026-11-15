@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { AboutButton } from "@/components/about/AboutButton";
 import { Timeline } from "@/components/hud/Timeline";
 import { TopBar } from "@/components/hud/TopBar";
@@ -11,6 +12,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { GameOverlay, GamePanel } from "@/components/student/game";
 import { Guide } from "@/components/student/guide/Guide";
 import { LessonsPanel } from "@/components/student/lessons/LessonsPanel";
+import { StudentMap } from "@/components/student/StudentMap";
 import { Welcome } from "@/components/welcome/Welcome";
 import { useApp } from "@/lib/store";
 
@@ -18,6 +20,12 @@ import { useApp } from "@/lib/store";
 export function App() {
   const mode = useApp((s) => s.mode);
   const science = mode === "science";
+
+  // Each mode starts on the plain terrain. Runs after lesson/game exit handlers restore their snapshots,
+  // so a heatmap left on in one mode never carries over into the other.
+  useEffect(() => {
+    useApp.getState().setOverlay("none");
+  }, [mode]);
 
   return (
     <AppShell
@@ -31,7 +39,16 @@ export function App() {
           }
         />
       }
-      left={science ? <ScienceLeft /> : <GamePanel />}
+      left={
+        science ? (
+          <ScienceLeft />
+        ) : (
+          <>
+            <StudentMap />
+            <GamePanel />
+          </>
+        )
+      }
       right={science ? <LanderPanel /> : <LessonsPanel />}
       leftLabel={science ? "Layers & search" : "Landing game"}
       rightLabel={science ? "Lander" : "Lessons"}
