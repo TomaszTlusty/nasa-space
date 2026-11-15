@@ -20,9 +20,9 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     side: "right",
-    clip: "clip-hook-s.gif",
+    clip: "clip-intro.gif",
     title: "Tydzień po lądowaniu lądownik IM-1 stracił Słońce i zamilkł.",
-    body: "Luty 2024, okolice bieguna południowego Księżyca: lądownik przewrócił się na stoku <b>12°</b> i działał <b>7 dni</b>. Na samym biegunie Słońce wznosi się najwyżej około <b>1,5°</b> nad horyzont, więc jedno wzgórze albo tydzień opóźnienia startu decyduje o prądzie i łączności z Ziemią.",
+    body: "Luty 2024, okolice bieguna południowego Księżyca: lądownik przewrócił się na stoku <b>12°</b> i działał <b>7 dni</b>. Na samym biegunie Słońce wznosi się najwyżej około <b>1,5°</b> nad horyzont, więc jedno wzgórze albo tydzień opóźnienia startu decyduje o prądzie i łączności z Ziemią. Narzędzia, które to liczą, są dziś dla ekspertów.",
     notes:
       "Luty 2024. Lądownik IM-1 siada w rejonie bieguna Księżyca, przewraca się i po tygodniu milknie. Na biegunie Słońce wisi półtora stopnia nad horyzontem. Jedno wzgórze albo tydzień opóźnienia startu decyduje, czy lądownik ma prąd i łączność z Ziemią. Narzędzia, które to liczą, są dla ekspertów.",
   },
@@ -44,6 +44,14 @@ const SLIDES: Slide[] = [
   },
   {
     side: "left",
+    clip: "report.png",
+    title: "Raport PDF zbiera całą analizę w jednym dokumencie.",
+    body: "Porównanie lądowników z oceną GO albo NO-GO, wykresy Słońca, Ziemi i baterii, najlepsze miejsca z wyszukiwania, założenia i źródła. Pozycje Słońca i Ziemi zgadzają się z NASA JPL Horizons do <b>0,004°</b>, nasłonecznienie z mapami NASA ze średnim błędem najwyżej <b>2,1 pkt proc.</b>",
+    notes:
+      "Wynik da się zabrać ze sobą. Raport PDF porównuje lądowniki, pokazuje wykresy Słońca, Ziemi i baterii, najlepsze miejsca z wyszukiwania, założenia i źródła. Sprawdziliśmy wyniki: pozycje Słońca i Ziemi zgadzają się z kalkulatorem NASA JPL do czterech tysięcznych stopnia, a nasłonecznienie z mapami NASA z dokładnością do około dwóch punktów procentowych.",
+  },
+  {
+    side: "right",
     clip: "clip-luna.gif",
     title: "Uczeń stawia lądownik w kraterze, a LUNA tłumaczy, dlaczego tam zamarznie.",
     body: "Dno krateru Shackleton nigdy nie widzi Słońca i ma około <b>−238 °C</b>. Po przeniesieniu lądownika na grzbiet LUNA podaje wynik: Słońce przez <b>100%</b> tego okna. Komentuje to, co policzyła aplikacja.",
@@ -51,20 +59,12 @@ const SLIDES: Slide[] = [
       "I teraz to, co nas wyróżnia. Przełączam tryb. Ten sam Księżyc, te same obliczenia, ale dla ucznia. Stawia lądownik na dnie krateru, a LUNA marznie i tłumaczy: tu nigdy nie świeci Słońce, minus 238 stopni. Przenosi go na grzbiet i LUNA podaje wynik: Słońce przez cały czas.",
   },
   {
-    side: "right",
+    side: "left",
     clip: "clip-game.gif",
     title: "Uczeń gra na tych samych danych, na których pracuje inżynier.",
     body: "Ma <b>45 sekund</b> na wybór lądowiska. Stok o nachyleniu <b>26°</b> kończy misję przewróceniem, tak jak było z IM-1. Obok gry są <b>4</b> lekcje po 30 sekund.",
     notes:
       "W grze ma 45 sekund na wybór lądowiska. Jak wybierze stok, lądownik się przewraca, tak jak IM-1. Niczego nie udajemy, uczeń gra na danych inżyniera.",
-  },
-  {
-    side: "left",
-    clip: "report.png",
-    title: "Raport PDF zbiera całą analizę w jednym dokumencie.",
-    body: "Porównanie lądowników z oceną GO albo NO-GO, wykresy Słońca, Ziemi i baterii, najlepsze miejsca z wyszukiwania, założenia i źródła. Pozycje Słońca i Ziemi zgadzają się z NASA JPL Horizons do <b>0,004°</b>, nasłonecznienie z mapami NASA ze średnim błędem najwyżej <b>2,1 pkt proc.</b>",
-    notes:
-      "Wynik da się zabrać ze sobą. Raport PDF porównuje lądowniki, pokazuje wykresy Słońca, Ziemi i baterii, najlepsze miejsca z wyszukiwania, założenia i źródła. Sprawdziliśmy wyniki: pozycje Słońca i Ziemi zgadzają się z kalkulatorem NASA JPL do czterech tysięcznych stopnia, a nasłonecznienie z mapami NASA z dokładnością do około dwóch punktów procentowych.",
   },
   {
     side: "right",
@@ -74,10 +74,11 @@ const SLIDES: Slide[] = [
       <img class="qr" src="../out/qr.png" alt="" />
       <div class="url">malapert.us</div>
       <div class="who">Szkoły i centra nauki korzystają za darmo. Firmy budujące lądowniki dostają szybkie pierwsze sprawdzenie miejsca i daty.</div>
+      <div class="who next">Dziś dwa regiony: Shackleton i Malapert. Dalej kolejne regiony bieguna i lekcje po polsku.</div>
       <div class="team">opsec demons x honda varadero xl125 2001<br />Tomasz Tłusty, Nikodem Marek, Michał Urbaniak</div>
     </div>`,
     notes:
-      "Dla kogo? Szkoły i centra nauki dostają lekcje i grę za darmo. Firmy budujące lądowniki dostają szybkie pierwsze sprawdzenie miejsca i daty. Jeden silnik, od klasy szkolnej do sali planowania misji. Opsec Demons razy Honda Varadero, dziękujemy.",
+      "Dla kogo? Szkoły i centra nauki dostają lekcje i grę za darmo. Firmy budujące lądowniki dostają szybkie pierwsze sprawdzenie miejsca i daty. Dziś mamy dwa regiony, dalej kolejne regiony bieguna i lekcje po polsku. Jeden silnik, od klasy szkolnej do sali planowania misji. Opsec Demons razy Honda Varadero, dziękujemy.",
   },
 ];
 
