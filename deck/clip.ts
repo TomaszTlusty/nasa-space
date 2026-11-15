@@ -27,10 +27,10 @@ const total = stamps[stamps.length - 1] - t0;
 const [start, end] = spec.trim ?? [0, total];
 const speed = spec.speed ?? 1;
 
-// concat list with real per-frame durations (screencast frames arrive irregularly)
+// concat list with real per-frame durations (screencast frames arrive irregularly, sometimes out of order)
 let list = "";
 for (let i = 0; i < stamps.length; i++) {
-  const dur = i + 1 < stamps.length ? stamps[i + 1] - stamps[i] : 0.05;
+  const dur = Math.max(0.001, i + 1 < stamps.length ? stamps[i + 1] - stamps[i] : 0.05);
   list += `file '${castDir}/f${String(i).padStart(5, "0")}.jpg'\nduration ${dur.toFixed(4)}\n`;
 }
 await Bun.write(`${outBase}.txt`, list);
